@@ -1,0 +1,1 @@
+import{b as e,p as i}from"./chunk-BPMJMRBU.js";var c=(()=>{class t{constructor(){this.hiddenSubject=new e(!1),this.hidden$=this.hiddenSubject.asObservable()}hide(){this.hiddenSubject.next(!0)}show(){this.hiddenSubject.next(!1)}static{this.\u0275fac=function(r){return new(r||t)}}static{this.\u0275prov=i({token:t,factory:t.\u0275fac,providedIn:"root"})}}return t})();export{c as a};

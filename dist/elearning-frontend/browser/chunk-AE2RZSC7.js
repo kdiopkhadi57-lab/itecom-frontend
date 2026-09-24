@@ -1,0 +1,1 @@
+import{a as r}from"./chunk-NFNL23GK.js";import{ab as i,t as e}from"./chunk-BPMJMRBU.js";var h=(a,u)=>{let t=e(r),n=e(i);return t.isAuthenticated?!0:(n.navigate(["/auth/login"],{queryParams:{returnUrl:u.url}}),!1)};var d=(a,u)=>{let t=e(r);return t.isAuthenticated&&(t.isTeacher||t.isAdmin)};export{h as a,d as b};

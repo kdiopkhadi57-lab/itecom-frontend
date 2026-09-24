@@ -2,11 +2,17 @@
   "/api": {
     "target": "https://itecom-groupe-production.up.railway.app",
     "secure": false,
-    "changeOrigin": true
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/api": ""
+    }
   },
   "/uploads": {
     "target": "https://itecom-groupe-production.up.railway.app",
     "secure": false,
-    "changeOrigin": true
+    "changeOrigin": true,
+    "pathRewrite": {
+      "^/uploads": ""
+    }
   }
 }

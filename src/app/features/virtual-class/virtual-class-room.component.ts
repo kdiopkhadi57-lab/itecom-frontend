@@ -333,7 +333,8 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
     try {
       // 1. Capturer l'écran (+ audio système si l'utilisateur l'autorise)
       this.displayStream = await (navigator.mediaDevices as any).getDisplayMedia({
-        video: { width: 1920, height: 1080, frameRate: 30 },
+        // Qualité réduite : la vidéo est stockée en base64 dans MySQL (64 Mo max par requête)
+        video: { width: 1280, height: 720, frameRate: 15 },
         audio: true
       });
 
@@ -373,7 +374,12 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
       const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
         ? 'video/webm;codecs=vp9,opus'
         : 'video/webm';
-      this.mediaRecorder = new MediaRecorder(combined, { mimeType });
+      // ~280 kbit/s au total, soit environ 20 minutes d'enregistrement possibles
+      this.mediaRecorder = new MediaRecorder(combined, {
+        mimeType,
+        videoBitsPerSecond: 250_000,
+        audioBitsPerSecond: 32_000
+      });
       this.mediaRecorder.ondataavailable = (e: BlobEvent) => {
         if (e.data.size > 0) this.recordedChunks.push(e.data);
       };
@@ -414,6 +420,15 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
     }
     const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
     const filename = `session-${this.vc.id}.webm`;
+
+    // Le base64 ajoute ~33 % : au-delà de ~45 Mo de vidéo, MySQL refuse la requête
+    if (blob.size > 45 * 1024 * 1024) {
+      const sizeMb = Math.round(blob.size / (1024 * 1024));
+      this.uploadError = `Enregistrement trop volumineux (${sizeMb} Mo, maximum 45 Mo, soit environ 20 minutes). `
+        + 'Faites des enregistrements plus courts.';
+      onDone?.();
+      return;
+    }
 
     this.uploading = true;
     this.extractThumbnailFromBlob(blob).then(thumbnailBase64 => {

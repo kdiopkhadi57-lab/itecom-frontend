@@ -141,7 +141,11 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
               </div>
             </div>
 
-            <div *ngIf="detail.status !== 'SOUMIS'" class="alert alert-light border">L'étudiant n'a pas encore rendu sa copie.</div>
+            <div *ngIf="detail.status === 'EN_COURS'" class="alert alert-warning">
+              <i class="bi bi-hourglass-split me-1"></i>Devoir commencé, copie pas encore rendue. Les réponses sont enregistrées
+              au fil de l'eau : la copie est soumise et notée automatiquement à la fin du temps imparti.
+            </div>
+            <div *ngIf="detail.status === 'NON_COMMENCE'" class="alert alert-light border">L'étudiant n'a pas encore commencé ce devoir.</div>
 
             <a *ngIf="detail.paperCorrectionUrl" class="btn btn-sm btn-outline-primary mb-3"
                [href]="detail.paperCorrectionUrl" target="_blank" rel="noopener">

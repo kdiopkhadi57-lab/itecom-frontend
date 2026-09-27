@@ -30,6 +30,7 @@ interface QcmTake  {
   paperCorrectionUrl?: string | null;
   paperCorrectionFilename?: string | null;
   startedAt?: string | null;
+  draftAnswers?: string | null;
   questions: Question[];
 }
 interface QcmAcces {
@@ -473,6 +474,12 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                 {{ submitting ? 'Soumission...' : 'Soumettre mes réponses' }}
               </button>
               </div>
+              <div *ngIf="submitError" class="alert alert-danger small mt-3 mb-0" role="alert">
+                <i class="bi bi-exclamation-triangle me-1"></i>{{ submitError }}
+              </div>
+              <div *ngIf="draftSavedLabel" class="small text-muted mt-2 text-end">
+                <i class="bi bi-cloud-check me-1"></i>Réponses enregistrées {{ draftSavedLabel }}
+              </div>
             </div>
           </div>
         </div>
@@ -562,6 +569,10 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   acces: QcmAcces | null = null;
   starting = false;
   startError = '';
+  submitError = '';
+  draftSavedLabel = '';
+  private lastDraftSnapshot = '';
+  private draftInterval: ReturnType<typeof setInterval> | null = null;
   identity = { lastName: '', firstName: '', birthDate: '', level: '' };
   identityTouched = false;
   readonly maxBirthDate = new Date(new Date().getFullYear() - 10, 11, 31).toISOString().substring(0, 10);
@@ -834,6 +845,7 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
 
   private loadQcm(q: QcmTake) {
     this.qcm = q;
+    setTimeout(() => this.restoreDraft(q.draftAnswers));
     this.paperCorrectionUrl = q.paperCorrectionUrl || '';
     this.paperCorrectionFilename = q.paperCorrectionFilename || '';
     this.safeSubjectUrl = q.subjectFileUrl
@@ -847,6 +859,7 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
 
   private activate() {
     this.status = 'active';
+    this.startDraftAutosave();
     this.lockScroll();
     this.uiChrome.hide();
     this.startQcmCountdown();
@@ -913,9 +926,11 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   submit() {
     if (!this.qcm || this.submitting) return;
     this.submitting = true;
+    this.submitError = '';
     this.http.post<Resultat>(`/api/qcm/${this.qcmId}/soumettre`, {
       reponses: this.buildReponses(),
-      documentAnswer: this.documentAnswer
+      documentAnswer: this.documentAnswer,
+      forced: false
     }).subscribe({
       next: (r) => {
         this.resultat = r;
@@ -923,8 +938,60 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
         this.submitting = false;
         this.unlock();
       },
-      error: () => { this.submitting = false; }
+      error: (err) => {
+        this.submitting = false;
+        this.submitError = err.error?.message
+          || 'La soumission n’a pas abouti. Vos réponses sont enregistrées : réessayez dans un instant.';
+      }
     });
+  }
+
+  // --- Enregistrement régulier des réponses (brouillon côté serveur) ---
+
+  private saveDraft() {
+    if (!this.qcm || this.status !== 'active') return;
+    const body = { reponses: this.buildReponses(), documentAnswer: this.documentAnswer, forced: false };
+    const snapshot = JSON.stringify(body);
+    if (snapshot === this.lastDraftSnapshot) return;
+    this.http.post(`/api/qcm/${this.qcmId}/brouillon`, body).subscribe({
+      next: () => {
+        this.lastDraftSnapshot = snapshot;
+        this.draftSavedLabel = 'à ' + new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      },
+      error: () => {}
+    });
+  }
+
+  private startDraftAutosave() {
+    this.stopDraftAutosave();
+    this.draftInterval = setInterval(() => this.saveDraft(), 15000);
+  }
+
+  private stopDraftAutosave() {
+    if (this.draftInterval) {
+      clearInterval(this.draftInterval);
+      this.draftInterval = null;
+    }
+  }
+
+  /** Reprise après un rechargement de page : les réponses déjà enregistrées sont restaurées. */
+  private restoreDraft(raw: string | null | undefined) {
+    if (!raw) return;
+    try {
+      const draft = JSON.parse(raw) as { reponses?: { questionId: number; choiceId: number | null; values?: Record<string, string> }[]; documentAnswer?: string };
+      for (const r of draft.reponses || []) {
+        const question = this.qcm?.questions.find(q => q.id === r.questionId);
+        if (!question) continue;
+        if (r.choiceId) this.answers[r.questionId] = r.choiceId;
+        if (this.isCaseQuestion(question) || question.questionType?.toUpperCase() === 'LONG_TEXT') {
+          if (r.values?.['answer']) this.textAnswers[r.questionId] = r.values['answer'];
+        } else if (r.values && Object.keys(r.values).length) {
+          this.practicalAnswers[r.questionId] = { ...r.values };
+        }
+      }
+      if (draft.documentAnswer) this.documentAnswer = draft.documentAnswer;
+      this.lastDraftSnapshot = JSON.stringify({ reponses: this.buildReponses(), documentAnswer: this.documentAnswer, forced: false });
+    } catch {}
   }
 
   // --- Anti-cheat : blocage du défilement de la page ---
@@ -1046,6 +1113,7 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   }
 
   private unlock() {
+    this.stopDraftAutosave();
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
     }
@@ -1063,12 +1131,14 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
     this.terminationReason = reason;
     this.status = 'terminated';
     this.unlock();
-    this.http.post<Resultat>(`/api/qcm/${this.qcmId}/soumettre`, {
-      reponses: this.buildReponses(),
-      documentAnswer: this.documentAnswer
-    }).subscribe({
+    // Soumission forcée : acceptée même sans copie papier ; en cas d'échec réseau, le serveur
+    // soumettra lui-même la copie avec le dernier brouillon à la fin du temps imparti
+    const body = { reponses: this.buildReponses(), documentAnswer: this.documentAnswer, forced: true };
+    this.http.post<Resultat>(`/api/qcm/${this.qcmId}/soumettre`, body).subscribe({
       next: (r) => { this.resultat = r; },
-      error: () => {}
+      error: () => {
+        this.http.post(`/api/qcm/${this.qcmId}/brouillon`, body).subscribe({ error: () => {} });
+      }
     });
   }
 

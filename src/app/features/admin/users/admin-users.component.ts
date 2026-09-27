@@ -30,9 +30,79 @@ interface AppUser {
         <a routerLink="/dashboard" class="btn btn-outline-secondary btn-sm">
           <i class="bi bi-arrow-left"></i>
         </a>
-        <div>
+        <div class="flex-grow-1">
           <h1 class="fw-bold mb-0">Membres de la plateforme</h1>
           <p class="text-muted mb-0">Gérez les apprenants et les partenaires (professeurs)</p>
+        </div>
+        <button class="btn fw-semibold px-3" style="background:linear-gradient(135deg,#0b2a6f,#1d6ff2);color:#fff;border-radius:12px"
+                (click)="openCreate()">
+          <i class="bi bi-person-plus me-2"></i>Créer un compte
+        </button>
+      </div>
+
+      <div *ngIf="createMessage" class="alert d-flex align-items-center gap-2"
+           [class.alert-success]="createEmailSent" [class.alert-warning]="!createEmailSent">
+        <i class="bi" [class.bi-envelope-check]="createEmailSent" [class.bi-exclamation-triangle]="!createEmailSent"></i>
+        <span class="flex-grow-1">{{ createMessage }}</span>
+        <button type="button" class="btn-close" (click)="createMessage = ''" aria-label="Fermer"></button>
+      </div>
+
+      <!-- Création d'un compte (étudiant ou professeur) -->
+      <div *ngIf="showCreate" class="card border-0 shadow-sm mb-4" style="border-radius:16px">
+        <div class="card-body p-4">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold mb-0"><i class="bi bi-person-plus me-2 text-primary"></i>Nouveau compte</h5>
+            <button type="button" class="btn-close" (click)="showCreate = false" aria-label="Fermer"></button>
+          </div>
+          <form (ngSubmit)="createAccount()" #createForm="ngForm">
+            <div class="row g-3">
+              <div class="col-12">
+                <div class="btn-group w-100" role="group" aria-label="Type de compte">
+                  <input type="radio" class="btn-check" name="role" id="roleStudent" value="STUDENT" [(ngModel)]="newUser.role">
+                  <label class="btn btn-outline-primary" for="roleStudent"><i class="bi bi-mortarboard me-1"></i>Étudiant</label>
+                  <input type="radio" class="btn-check" name="role" id="roleTeacher" value="TEACHER" [(ngModel)]="newUser.role">
+                  <label class="btn btn-outline-primary" for="roleTeacher"><i class="bi bi-person-video3 me-1"></i>Professeur</label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small" for="newFirstName">Prénom</label>
+                <input id="newFirstName" class="form-control" name="firstName" [(ngModel)]="newUser.firstName" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small" for="newLastName">Nom</label>
+                <input id="newLastName" class="form-control" name="lastName" [(ngModel)]="newUser.lastName" required>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small" for="newEmail">Email</label>
+                <input id="newEmail" type="email" class="form-control" name="email" [(ngModel)]="newUser.email" required email>
+              </div>
+              <div class="col-md-6" *ngIf="newUser.role === 'STUDENT'">
+                <label class="form-label fw-semibold small" for="newSpecialization">Filière</label>
+                <select id="newSpecialization" class="form-select" name="specialization" [(ngModel)]="newUser.specialization">
+                  <option value="">— Aucune —</option>
+                  <option *ngFor="let f of specializations" [value]="f.value">{{ f.label }}</option>
+                </select>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold small" for="newPassword">Mot de passe</label>
+                <div class="input-group">
+                  <input id="newPassword" class="form-control font-monospace" name="password" [(ngModel)]="newUser.password"
+                         required minlength="6">
+                  <button type="button" class="btn btn-outline-secondary" (click)="newUser.password = generatePassword()"
+                          title="Générer un autre mot de passe"><i class="bi bi-arrow-repeat"></i></button>
+                </div>
+                <div class="form-text">Envoyé automatiquement par email à l'utilisateur.</div>
+              </div>
+            </div>
+            <div *ngIf="createError" class="alert alert-danger py-2 small mt-3 mb-0">{{ createError }}</div>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button type="button" class="btn btn-outline-secondary" (click)="showCreate = false">Annuler</button>
+              <button type="submit" class="btn btn-primary fw-semibold" [disabled]="creating || createForm.invalid">
+                <span *ngIf="creating" class="spinner-border spinner-border-sm me-2"></span>
+                <i *ngIf="!creating" class="bi bi-send me-2"></i>Créer et envoyer les identifiants
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 
@@ -220,6 +290,19 @@ export class AdminUsersComponent implements OnInit {
   pendingCount = 0;
   processing: Record<number, boolean> = {};
 
+  showCreate = false;
+  creating = false;
+  createError = '';
+  createMessage = '';
+  createEmailSent = true;
+  newUser = this.emptyUser();
+  readonly specializations = [
+    { value: 'genie-logiciel', label: 'Génie Logiciel' }, { value: 'reseau', label: 'Réseaux' },
+    { value: 'comptabilite', label: 'Comptabilité' }, { value: 'sante', label: 'Santé' },
+    { value: 'marketing-digital', label: 'Marketing Digital' },
+    { value: 'developpement-personnel', label: 'Développement Personnel' }
+  ];
+
   constructor(private http: HttpClient) {}
 
   ngOnInit() {
@@ -242,6 +325,50 @@ export class AdminUsersComponent implements OnInit {
     this.http.get<{pending: number}>('/api/admin/users/stats').subscribe({
       next: (d) => { this.pendingCount = d.pending; check(); },
       error: () => check()
+    });
+  }
+
+  private emptyUser() {
+    return { role: 'STUDENT', firstName: '', lastName: '', email: '', specialization: '', password: this.generatePassword() };
+  }
+
+  openCreate() {
+    this.newUser = this.emptyUser();
+    this.newUser.role = this.activeTab === 'teachers' ? 'TEACHER' : 'STUDENT';
+    this.createError = '';
+    this.showCreate = true;
+  }
+
+  generatePassword(): string {
+    // Sans caractères ambigus (0/O, 1/l/I) pour faciliter la saisie
+    const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    return Array.from(crypto.getRandomValues(new Uint32Array(10)), b => alphabet[b % alphabet.length]).join('');
+  }
+
+  createAccount() {
+    if (this.creating) return;
+    this.creating = true;
+    this.createError = '';
+    const body = { ...this.newUser, specialization: this.newUser.role === 'STUDENT' ? this.newUser.specialization : '' };
+    this.http.post<{ user: AppUser; emailSent: boolean; message: string }>('/api/admin/users', body).subscribe({
+      next: res => {
+        this.creating = false;
+        this.showCreate = false;
+        this.createEmailSent = res.emailSent;
+        this.createMessage = res.message;
+        if (res.user.role === 'ROLE_TEACHER') {
+          this.teachers = [res.user, ...this.teachers];
+          this.activeTab = 'teachers';
+        } else {
+          this.students = [res.user, ...this.students];
+          this.activeTab = 'students';
+        }
+        this.filterList();
+      },
+      error: err => {
+        this.creating = false;
+        this.createError = err.error?.message || 'Impossible de créer le compte.';
+      }
     });
   }
 

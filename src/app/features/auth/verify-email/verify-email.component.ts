@@ -31,7 +31,7 @@ import { CommonModule } from '@angular/common';
           <div style="font-size:4rem">❌</div>
           <h3 class="mt-3 fw-bold text-danger">Lien invalide</h3>
           <p class="text-muted">{{ error }}</p>
-          <a routerLink="/auth/register" class="btn btn-outline-primary mt-3">Réessayer</a>
+          <a routerLink="/auth/login" class="btn btn-outline-primary mt-3">Retour à la connexion</a>
         </ng-container>
       </div>
     </div>

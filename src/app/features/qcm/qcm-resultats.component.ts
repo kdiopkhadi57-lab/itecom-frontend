@@ -1,23 +1,24 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 
 interface ReponseDetail { questionText: string; points: number; choiceSelected: string; isCorrect: boolean; correctChoice: string; questionType?: string; textAnswer?: string; }
-interface PassageResult  { passageId?: number; studentName: string; studentEmail: string; studentLevel?: string; score?: number; maxScore?: number; manualScore?: number; manualCorrectionNote?: string; ocrScore?: number; ocrCorrectionNote?: string; percentage?: string; submittedAt?: string; status: string; paperCorrectionUrl?: string; paperCorrectionFilename?: string; documentAnswer?: string; correctionText?: string; reponses: ReponseDetail[]; _editing?: boolean; }
+interface PassageResult  { passageId?: number; studentName: string; studentEmail: string; studentLevel?: string; lastName?: string; firstName?: string; birthDate?: string; score?: number; maxScore?: number; manualScore?: number; manualCorrectionNote?: string; ocrScore?: number; ocrCorrectionNote?: string; percentage?: string; submittedAt?: string; status: string; paperCorrectionUrl?: string; paperCorrectionFilename?: string; documentAnswer?: string; correctionText?: string; reponses: ReponseDetail[]; }
 
 @Component({
   selector: 'app-qcm-resultats',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   template: `
     <div class="fade-in-up">
       <div class="d-flex align-items-center justify-content-between gap-3 mb-4 flex-wrap">
         <div class="d-flex align-items-center gap-3">
-          <a routerLink="/teacher/qcms" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+          <a routerLink="/teacher/qcms" class="btn btn-outline-secondary btn-sm" aria-label="Retour"><i class="bi bi-arrow-left"></i></a>
           <div>
-            <h1 class="fw-bold mb-0">Résultats du devoir</h1>
-            <p class="text-muted mb-0">{{ results.length }} étudiant(s) dans la liste du devoir</p>
+            <h1 class="fw-bold mb-0">Étudiants et notes</h1>
+            <p class="text-muted mb-0">{{ results.length }} étudiant(s) · {{ submittedCount }} copie(s) rendue(s)</p>
           </div>
         </div>
         <button (click)="downloadReport()" class="btn btn-success btn-sm" [disabled]="downloading">
@@ -27,133 +28,229 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
         </button>
       </div>
 
+      <!-- Indicateurs -->
+      <div class="row g-3 mb-4" *ngIf="!loading && results.length">
+        <div class="col-6 col-md-3"><div class="stat"><div class="stat-value">{{ results.length }}</div><div class="stat-label">Étudiants</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat"><div class="stat-value text-success">{{ submittedCount }}</div><div class="stat-label">Copies rendues</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat"><div class="stat-value" style="color:#1d6ff2">{{ averageLabel }}</div><div class="stat-label">Moyenne</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat"><div class="stat-value text-warning">{{ results.length - submittedCount }}</div><div class="stat-label">Non rendues</div></div></div>
+      </div>
+
       <div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-primary"></div></div>
 
       <div *ngIf="!loading && results.length === 0" class="text-center py-5">
         <div style="font-size:4rem">📭</div>
-        <h5 class="mt-3 fw-bold">Aucune soumission</h5>
-        <p class="text-muted">Les étudiants n'ont pas encore passé ce devoir.</p>
+        <h5 class="mt-3 fw-bold">Aucun étudiant</h5>
+        <p class="text-muted">Aucun étudiant n'est inscrit à ce devoir et personne ne l'a encore passé.</p>
       </div>
 
-      <div *ngFor="let r of results; let i = index" class="card border-0 shadow-sm mb-3" style="border-radius:16px;overflow:hidden">
-        <!-- En-tête étudiant -->
-        <div class="d-flex align-items-center justify-content-between p-4"
-             style="cursor:pointer;background:#fafafa"
-             (click)="r._open = !r._open">
-          <div class="d-flex align-items-center gap-3">
-            <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#6366f1,#4f46e5);display:flex;align-items:center;justify-content:center;color:white;font-weight:700">
-              {{ r.studentName.charAt(0) }}
-            </div>
-            <div>
-              <div class="fw-bold">{{ r.studentName }}</div>
-              <div class="text-muted small">{{ r.studentEmail }}<span *ngIf="r.studentLevel"> · Niveau {{ r.studentLevel }}</span></div>
-            </div>
+      <div *ngIf="!loading && results.length" class="card border-0 shadow-sm" style="border-radius:16px;overflow:hidden">
+        <div class="p-3 border-bottom d-flex gap-2 flex-wrap align-items-center">
+          <div class="input-group input-group-sm" style="max-width:320px">
+            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+            <input class="form-control" [(ngModel)]="search" placeholder="Rechercher un étudiant…" aria-label="Rechercher un étudiant">
           </div>
-          <div class="d-flex align-items-center gap-3">
-            <div class="text-end">
-              <div class="fw-bold fs-5"
-                   [style.color]="getColor(r.score, r.maxScore)">
-                {{ r.score ?? '—' }} / {{ r.maxScore ?? '—' }}
-              </div>
-              <div class="small" [style.color]="getColor(r.score, r.maxScore)">
-                {{ r.percentage }} · {{ getMention(r.score, r.maxScore) }}
-              </div>
-            </div>
-            <div style="width:52px;height:52px;position:relative">
-              <svg viewBox="0 0 36 36" style="transform:rotate(-90deg)">
-                <circle cx="18" cy="18" r="15" fill="none" stroke="#e5e7eb" stroke-width="3"/>
-                <circle cx="18" cy="18" r="15" fill="none"
-                        [attr.stroke]="getColor(r.score, r.maxScore)"
-                        stroke-width="3" stroke-linecap="round"
-                        [attr.stroke-dasharray]="getPct(r.score,r.maxScore) + ' 100'"
-                        stroke-dashoffset="0"/>
-              </svg>
-              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700">
-                {{ r.percentage || '—' }}
-              </div>
-            </div>
-            <i class="bi" [class.bi-chevron-down]="!r._open" [class.bi-chevron-up]="r._open" style="color:#9ca3af"></i>
-          </div>
+          <select class="form-select form-select-sm" style="max-width:200px" [(ngModel)]="statusFilter" aria-label="Filtrer par statut">
+            <option value="">Tous les statuts</option>
+            <option value="SOUMIS">Rendu</option>
+            <option value="EN_COURS">En cours</option>
+            <option value="NON_COMMENCE">Non commencé</option>
+          </select>
         </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 results-table">
+            <thead>
+              <tr>
+                <th style="width:48px">#</th>
+                <th>Nom</th>
+                <th>Prénom</th>
+                <th>Date de naissance</th>
+                <th>Niveau</th>
+                <th>Email</th>
+                <th>Statut</th>
+                <th class="text-end">Note</th>
+                <th class="text-end" style="width:110px">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let r of filteredResults; let i = index">
+                <td class="text-muted">{{ i + 1 }}</td>
+                <td class="fw-semibold">{{ r.lastName || lastNameOf(r) }}</td>
+                <td>{{ r.firstName || firstNameOf(r) }}</td>
+                <td>{{ r.birthDate ? (r.birthDate | date:'dd/MM/yyyy') : '—' }}</td>
+                <td>{{ r.studentLevel || '—' }}</td>
+                <td class="text-muted small">{{ r.studentEmail }}</td>
+                <td><span class="status-badge" [ngClass]="statusClass(r.status)">{{ statusLabel(r.status) }}</span></td>
+                <td class="text-end">
+                  <ng-container *ngIf="r.status === 'SOUMIS'; else noGrade">
+                    <div class="fw-bold" [style.color]="getColor(r.score, r.maxScore)">{{ r.score ?? '—' }} / {{ r.maxScore ?? '—' }}</div>
+                    <div class="small text-muted">{{ r.percentage }}<span *ngIf="r.manualScore != null" title="Note modifiée par le professeur"> · <i class="bi bi-pencil-fill"></i></span></div>
+                  </ng-container>
+                  <ng-template #noGrade><span class="text-muted">—</span></ng-template>
+                </td>
+                <td class="text-end text-nowrap">
+                  <button class="btn btn-sm btn-light action-btn" (click)="openDetail(r)" title="Voir le détail" aria-label="Voir le détail">
+                    <i class="bi bi-eye"></i>
+                  </button>
+                  <button class="btn btn-sm btn-light action-btn ms-1" (click)="openEdit(r)"
+                          [disabled]="r.status !== 'SOUMIS' || !r.passageId"
+                          [title]="r.status === 'SOUMIS' ? 'Modifier la note' : 'Disponible une fois la copie rendue'"
+                          aria-label="Modifier la note">
+                    <i class="bi bi-pencil-square"></i>
+                  </button>
+                </td>
+              </tr>
+              <tr *ngIf="filteredResults.length === 0">
+                <td colspan="9" class="text-center text-muted py-4">Aucun étudiant ne correspond à la recherche.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-        <!-- Détail des réponses -->
-        <div *ngIf="r._open" style="border-top:1px solid #f0f0f0">
-          <div class="p-4 border-bottom d-flex align-items-end gap-2 flex-wrap">
+      <!-- Détail d'une copie -->
+      <div *ngIf="detail" class="modal-backdrop-custom" (click)="detail = null">
+        <div class="modal-panel modal-lg-panel" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+          <div class="modal-head">
             <div>
-              <div class="small text-muted mb-1">Statut</div>
-              <span class="badge" [style.background]="r.status === 'SOUMIS' ? '#d1fae5' : '#e5e7eb'"
-                    [style.color]="r.status === 'SOUMIS' ? '#065f46' : '#374151'">{{ r.status }}</span>
+              <h5 id="detailTitle" class="fw-bold mb-0">{{ detail.lastName || lastNameOf(detail) }} {{ detail.firstName || firstNameOf(detail) }}</h5>
+              <div class="small text-muted">{{ detail.studentEmail }}</div>
             </div>
-            <a *ngIf="r.paperCorrectionUrl" class="btn btn-sm btn-outline-primary"
-               [href]="r.paperCorrectionUrl" target="_blank" rel="noopener">
-              <i class="bi bi-file-earmark-image me-1"></i>Voir la copie papier
-            </a>
-            <div *ngIf="r.status === 'SOUMIS' && r.passageId && r.maxScore" class="ms-auto">
-              <div *ngIf="!r._editing" class="d-flex align-items-center gap-3">
-                <div class="small">
-                  <span class="text-muted">Note corrigée :</span>
-                  <strong>{{ r.manualScore ?? r.score ?? '—' }} / {{ r.maxScore }}</strong>
-                  <span *ngIf="r.manualCorrectionNote" class="text-muted ms-2">{{ r.manualCorrectionNote }}</span>
-                </div>
-                <button class="btn btn-sm btn-outline-primary" (click)="startEditing(r)">
-                  <i class="bi bi-pencil me-1"></i>Modifier
+            <button type="button" class="btn-close" (click)="detail = null" aria-label="Fermer"></button>
+          </div>
+          <div class="modal-body-scroll">
+            <div class="row g-3 mb-3">
+              <div class="col-6 col-md-3"><div class="info-cell"><span>Date de naissance</span>{{ detail.birthDate ? (detail.birthDate | date:'dd/MM/yyyy') : '—' }}</div></div>
+              <div class="col-6 col-md-3"><div class="info-cell"><span>Niveau</span>{{ detail.studentLevel || '—' }}</div></div>
+              <div class="col-6 col-md-3"><div class="info-cell"><span>Statut</span>{{ statusLabel(detail.status) }}</div></div>
+              <div class="col-6 col-md-3"><div class="info-cell"><span>Rendu le</span>{{ detail.submittedAt ? (detail.submittedAt | date:'dd/MM/yyyy HH:mm') : '—' }}</div></div>
+            </div>
+
+            <div *ngIf="detail.status === 'SOUMIS'" class="grade-banner mb-3" [style.borderColor]="getColor(detail.score, detail.maxScore)">
+              <div>
+                <div class="small text-muted">Note</div>
+                <div class="fs-4 fw-bold" [style.color]="getColor(detail.score, detail.maxScore)">{{ detail.score ?? '—' }} / {{ detail.maxScore ?? '—' }}</div>
+                <div class="small">{{ detail.percentage }} · {{ getMention(detail.score, detail.maxScore) }}</div>
+              </div>
+              <div class="text-end small">
+                <div *ngIf="detail.manualScore != null"><i class="bi bi-pencil-fill me-1"></i>Note modifiée par le professeur</div>
+                <div *ngIf="detail.manualCorrectionNote" class="text-muted">« {{ detail.manualCorrectionNote }} »</div>
+                <button class="btn btn-sm btn-outline-primary mt-2" (click)="openEdit(detail)" [disabled]="!detail.passageId">
+                  <i class="bi bi-pencil-square me-1"></i>Modifier la note
                 </button>
               </div>
-              <div *ngIf="r._editing" class="d-flex align-items-end gap-2 flex-wrap">
-                <div><label class="small text-muted">Note</label><input #scoreInput type="number" class="form-control form-control-sm" min="0" [max]="r.maxScore" [value]="r.manualScore ?? r.score ?? 0" style="width:110px"></div>
-                <div><label class="small text-muted">Observation</label><input #noteInput type="text" class="form-control form-control-sm" [value]="r.manualCorrectionNote || ''" style="width:220px"></div>
-                <button class="btn btn-sm btn-primary" (click)="saveGrade(r, scoreInput.value, noteInput.value)"><i class="bi bi-check2 me-1"></i>Enregistrer</button>
-                <button class="btn btn-sm btn-outline-secondary" (click)="r._editing = false">Annuler</button>
-              </div>
             </div>
-          </div>
-          <div *ngIf="r.ocrScore != null || r.ocrCorrectionNote" class="p-3 border-bottom" style="background:#eff6ff">
-            <div class="fw-semibold small"><i class="bi bi-robot me-1"></i>Correction OCR / IA</div>
-            <div class="small mt-1">Note automatique : <strong>{{ r.ocrScore ?? '—' }} / {{ r.maxScore ?? '—' }}</strong></div>
-            <div *ngIf="r.ocrCorrectionNote" class="small text-muted mt-1" style="white-space:pre-wrap">{{ r.ocrCorrectionNote }}</div>
-          </div>
-          <div *ngIf="r.documentAnswer" class="p-4 border-bottom">
-            <h6 class="fw-bold">Réponse rédigée de l’étudiant</h6>
-            <pre class="p-3 mb-0" style="white-space:pre-wrap;background:#f8f9fa;border-radius:8px">{{ r.documentAnswer }}</pre>
-          </div>
-          <div *ngIf="r.correctionText" class="p-4 border-bottom">
-            <h6 class="fw-bold">Correction déposée par le professeur</h6>
-            <pre class="p-3 mb-0" style="white-space:pre-wrap;background:#fff8e1;border-radius:8px">{{ r.correctionText }}</pre>
-          </div>
-          <div *ngFor="let rep of r.reponses; let qi = index"
-               class="d-flex align-items-start gap-3 p-3"
-               [style.background]="qi % 2 === 0 ? '#ffffff' : '#fafafa'">
-            <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;flex-shrink:0"
-                 [style.background]="rep.isCorrect ? '#d1fae5' : '#fee2e2'"
-                 [style.color]="rep.isCorrect ? '#065f46' : '#991b1b'">
-              {{ rep.isCorrect ? '✓' : '✗' }}
+
+            <div *ngIf="detail.status !== 'SOUMIS'" class="alert alert-light border">L'étudiant n'a pas encore rendu sa copie.</div>
+
+            <a *ngIf="detail.paperCorrectionUrl" class="btn btn-sm btn-outline-primary mb-3"
+               [href]="detail.paperCorrectionUrl" target="_blank" rel="noopener">
+              <i class="bi bi-file-earmark-image me-1"></i>Voir la copie scannée
+            </a>
+
+            <div *ngIf="detail.ocrCorrectionNote" class="section-box mb-3" style="background:#eff6ff">
+              <div class="fw-semibold small mb-1"><i class="bi bi-calculator me-1"></i>Correction automatique</div>
+              <div class="small" style="white-space:pre-wrap">{{ detail.ocrCorrectionNote }}</div>
             </div>
-            <div class="flex-grow-1">
-              <div class="fw-semibold small mb-1">{{ rep.questionText }}
-                <span class="text-muted">({{ rep.points }} pt{{ rep.points > 1 ? 's' : '' }})</span>
-              </div>
-              <div class="small">
-                <span class="me-3">
+
+            <div *ngIf="detail.documentAnswer" class="mb-3">
+              <h6 class="fw-bold">Réponse rédigée</h6>
+              <pre class="answer-pre">{{ detail.documentAnswer }}</pre>
+            </div>
+
+            <div *ngFor="let rep of detail.reponses" class="answer-row">
+              <div class="answer-icon" [class.ok]="rep.isCorrect">{{ rep.isCorrect ? '✓' : '✗' }}</div>
+              <div class="flex-grow-1 min-w-0">
+                <div class="fw-semibold small mb-1 question-preview">{{ rep.questionText }}
+                  <span class="text-muted">({{ rep.points }} pt{{ rep.points > 1 ? 's' : '' }})</span>
+                </div>
+                <div class="small">
                   Réponse : <strong [style.color]="rep.isCorrect ? '#10b981' : '#ef4444'">{{ rep.choiceSelected }}</strong>
-                </span>
-                <span *ngIf="!rep.isCorrect && !rep.textAnswer" style="color:#6b7280">
-                  ✓ Attendu : <strong style="color:#10b981">{{ rep.correctChoice }}</strong>
-                </span>
+                  <span *ngIf="!rep.isCorrect && !rep.textAnswer && rep.correctChoice !== '—'" class="text-muted ms-2">
+                    Attendu : <strong class="text-success">{{ rep.correctChoice }}</strong>
+                  </span>
+                </div>
+                <pre *ngIf="rep.textAnswer" class="answer-pre mt-2">{{ rep.textAnswer }}</pre>
               </div>
-              <pre *ngIf="rep.textAnswer" class="p-3 mt-2 mb-0 small"
-                   style="white-space:pre-wrap;background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;max-height:360px;overflow:auto">{{ rep.textAnswer }}</pre>
+            </div>
+
+            <details *ngIf="detail.correctionText" class="mt-3">
+              <summary class="fw-semibold small">Correction déposée par le professeur</summary>
+              <pre class="answer-pre mt-2" style="background:#fff8e1">{{ detail.correctionText }}</pre>
+            </details>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modification de la note -->
+      <div *ngIf="editing" class="modal-backdrop-custom" (click)="closeEdit()">
+        <div class="modal-panel" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+          <div class="modal-head">
+            <h5 id="editTitle" class="fw-bold mb-0">Modifier la note</h5>
+            <button type="button" class="btn-close" (click)="closeEdit()" aria-label="Fermer"></button>
+          </div>
+          <div class="p-4">
+            <div class="small text-muted mb-3">{{ editing.lastName || lastNameOf(editing) }} {{ editing.firstName || firstNameOf(editing) }} · {{ editing.studentEmail }}</div>
+            <label class="form-label fw-semibold" for="editScore">Note (sur {{ editing.maxScore }})</label>
+            <input id="editScore" type="number" class="form-control mb-3" min="0" [max]="editing.maxScore ?? null" [(ngModel)]="editScore">
+            <label class="form-label fw-semibold" for="editNote">Observation</label>
+            <textarea id="editNote" class="form-control" rows="3" [(ngModel)]="editNote" placeholder="Commentaire pour l'étudiant (facultatif)"></textarea>
+            <div *ngIf="editError" class="alert alert-danger py-2 small mt-3 mb-0">{{ editError }}</div>
+            <div class="d-flex justify-content-end gap-2 mt-4">
+              <button class="btn btn-outline-secondary" (click)="closeEdit()">Annuler</button>
+              <button class="btn btn-primary fw-semibold" (click)="saveGrade()" [disabled]="saving">
+                <span *ngIf="saving" class="spinner-border spinner-border-sm me-2"></span>Enregistrer
+              </button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .stat { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(15, 23, 42, .08); text-align: center; }
+    .stat-value { font-size: 1.6rem; font-weight: 800; color: #0f172a; }
+    .stat-label { font-size: .8rem; color: #64748b; }
+    .results-table thead th { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; background: #f8fafc; white-space: nowrap; }
+    .results-table td { white-space: nowrap; }
+    .status-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .75rem; font-weight: 600; }
+    .status-badge.done { background: #d1fae5; color: #065f46; }
+    .status-badge.progress { background: #fef3c7; color: #92400e; }
+    .status-badge.todo { background: #e5e7eb; color: #374151; }
+    .action-btn { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; }
+    .action-btn:hover:not(:disabled) { background: #e0ebff; color: #1d6ff2; }
+    .modal-backdrop-custom { position: fixed; inset: 0; background: rgba(15, 23, 42, .5); z-index: 1060; display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; overflow-y: auto; }
+    .modal-panel { background: #fff; border-radius: 18px; width: 100%; max-width: 480px; box-shadow: 0 30px 60px rgba(15, 23, 42, .3); animation: pop .18s ease-out; }
+    .modal-lg-panel { max-width: 860px; }
+    .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 24px; border-bottom: 1px solid #e5e7eb; }
+    .modal-body-scroll { padding: 20px 24px; max-height: 75vh; overflow-y: auto; }
+    .info-cell { background: #f8fafc; border-radius: 10px; padding: 10px 12px; font-weight: 600; font-size: .9rem; }
+    .info-cell span { display: block; font-size: .72rem; font-weight: 500; color: #64748b; }
+    .grade-banner { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 14px; border-left: 5px solid; background: #f8fafc; }
+    .section-box { padding: 12px 14px; border-radius: 12px; }
+    .answer-row { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #f1f5f9; }
+    .answer-icon { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .8rem; background: #fee2e2; color: #991b1b; }
+    .answer-icon.ok { background: #d1fae5; color: #065f46; }
+    .question-preview { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .answer-pre { white-space: pre-wrap; background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: .85rem; max-height: 320px; overflow: auto; margin: 0; }
+    .min-w-0 { min-width: 0; }
+    @keyframes pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  `]
 })
 export class QcmResultatsComponent implements OnInit {
-  results: (PassageResult & { _open?: boolean })[] = [];
+  results: PassageResult[] = [];
   loading = true;
   downloading = false;
   qcmId!: number;
+  search = '';
+  statusFilter = '';
+
+  detail: PassageResult | null = null;
+  editing: PassageResult | null = null;
+  editScore: number | null = null;
+  editNote = '';
+  editError = '';
+  saving = false;
 
   constructor(private http: HttpClient, private route: ActivatedRoute) {}
 
@@ -163,6 +260,45 @@ export class QcmResultatsComponent implements OnInit {
       next: (d) => { this.results = d; this.loading = false; },
       error: () => { this.loading = false; }
     });
+  }
+
+  get filteredResults(): PassageResult[] {
+    const q = this.search.trim().toLowerCase();
+    return this.results.filter(r =>
+      (!this.statusFilter || r.status === this.statusFilter) &&
+      (!q || [r.lastName, r.firstName, r.studentName, r.studentEmail, r.studentLevel]
+        .some(v => (v || '').toLowerCase().includes(q))));
+  }
+
+  get submittedCount(): number {
+    return this.results.filter(r => r.status === 'SOUMIS').length;
+  }
+
+  /** Moyenne ramenée sur 20 des copies rendues. */
+  get averageLabel(): string {
+    const graded = this.results.filter(r => r.status === 'SOUMIS' && r.score != null && r.maxScore);
+    if (!graded.length) return '—';
+    const avg = graded.reduce((sum, r) => sum + (r.score! / r.maxScore!) * 20, 0) / graded.length;
+    return avg.toFixed(1).replace('.', ',') + ' / 20';
+  }
+
+  /** Découpage de secours « Prénom(s) Nom » quand l'étudiant n'a rien saisi. */
+  lastNameOf(r: PassageResult): string {
+    const parts = (r.studentName || '').trim().split(/\s+/);
+    return parts.length > 1 ? parts[parts.length - 1] : (parts[0] || '—');
+  }
+
+  firstNameOf(r: PassageResult): string {
+    const parts = (r.studentName || '').trim().split(/\s+/);
+    return parts.length > 1 ? parts.slice(0, -1).join(' ') : '—';
+  }
+
+  statusLabel(status: string): string {
+    return status === 'SOUMIS' ? 'Rendu' : status === 'EN_COURS' ? 'En cours' : 'Non commencé';
+  }
+
+  statusClass(status: string): string {
+    return status === 'SOUMIS' ? 'done' : status === 'EN_COURS' ? 'progress' : 'todo';
   }
 
   getPct(score?: number, max?: number) { return score != null && max != null && max > 0 ? Math.round((score / max) * 100) : 0; }
@@ -175,19 +311,52 @@ export class QcmResultatsComponent implements OnInit {
     return p >= 80 ? 'Excellent' : p >= 60 ? 'Bien' : p >= 50 ? 'Passable' : 'Insuffisant';
   }
 
-  saveGrade(result: PassageResult & { _open?: boolean }, rawScore: string, note: string) {
-    if (!result.passageId) return;
-    this.http.patch<PassageResult>(`/api/teacher/qcms/${this.qcmId}/passages/${result.passageId}/note`, {
-      score: Number(rawScore), note
-    }).subscribe({
-      next: updated => { Object.assign(result, updated); result._editing = false; },
-      error: () => alert('Impossible d’enregistrer la note.')
-    });
+  openDetail(r: PassageResult) {
+    this.detail = r;
   }
 
-  startEditing(result: PassageResult & { _open?: boolean }) {
-    this.results.forEach(item => item._editing = false);
-    result._editing = true;
+  openEdit(r: PassageResult) {
+    if (r.status !== 'SOUMIS' || !r.passageId) return;
+    this.editing = r;
+    this.editScore = r.manualScore ?? r.score ?? 0;
+    this.editNote = r.manualCorrectionNote || '';
+    this.editError = '';
+  }
+
+  closeEdit() {
+    this.editing = null;
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape() {
+    if (this.editing) this.closeEdit();
+    else this.detail = null;
+  }
+
+  saveGrade() {
+    const r = this.editing;
+    if (!r?.passageId || this.saving) return;
+    const score = Number(this.editScore);
+    if (!Number.isFinite(score) || score < 0 || (r.maxScore != null && score > r.maxScore)) {
+      this.editError = `La note doit être comprise entre 0 et ${r.maxScore}.`;
+      return;
+    }
+    this.saving = true;
+    this.http.patch<PassageResult>(`/api/teacher/qcms/${this.qcmId}/passages/${r.passageId}/note`, {
+      score, note: this.editNote
+    }).subscribe({
+      next: updated => {
+        // L'identité et le niveau affichés restent ceux de la liste
+        const { lastName, firstName, birthDate, studentLevel, studentName } = r;
+        Object.assign(r, updated, { lastName, firstName, birthDate, studentLevel, studentName });
+        this.saving = false;
+        this.editing = null;
+      },
+      error: () => {
+        this.saving = false;
+        this.editError = 'Impossible d’enregistrer la note.';
+      }
+    });
   }
 
   downloadReport() {

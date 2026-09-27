@@ -40,6 +40,10 @@ interface QcmAcces {
   questionCount: number;
   studentName: string;
   studentLevel?: string | null;
+  lastName?: string | null;
+  firstName?: string | null;
+  birthDate?: string | null;
+  level?: string | null;
 }
 interface Resultat { qcmTitle: string; score: number; maxScore: number; percentage: string; mention: string;
   detail: { questionText: string; points: number; choiceSelected: string; isCorrect: boolean; correctChoice: string; }[]; }
@@ -195,11 +199,39 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
           <div style="font-size:3rem">📝</div>
           <h3 class="mt-3 fw-bold">{{ acces.title }}</h3>
           <p class="text-muted mb-4" *ngIf="acces.description">{{ acces.description }}</p>
+          <div class="identity-box text-start mb-3">
+            <div class="fw-semibold mb-1"><i class="bi bi-person-vcard me-2"></i>Vos informations</div>
+            <div class="small text-muted mb-3">À renseigner avant de commencer : elles figureront sur votre copie.</div>
+            <div class="row g-3">
+              <div class="col-sm-6">
+                <label class="form-label small fw-semibold" for="idLastName">Nom *</label>
+                <input id="idLastName" class="form-control" [(ngModel)]="identity.lastName" autocomplete="family-name"
+                       [class.is-invalid]="identityTouched && !identity.lastName.trim()">
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label small fw-semibold" for="idFirstName">Prénom *</label>
+                <input id="idFirstName" class="form-control" [(ngModel)]="identity.firstName" autocomplete="given-name"
+                       [class.is-invalid]="identityTouched && !identity.firstName.trim()">
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label small fw-semibold" for="idBirthDate">Date de naissance *</label>
+                <input id="idBirthDate" type="date" class="form-control" [(ngModel)]="identity.birthDate" [max]="maxBirthDate"
+                       autocomplete="bday" [class.is-invalid]="identityTouched && !identity.birthDate">
+              </div>
+              <div class="col-sm-6">
+                <label class="form-label small fw-semibold" for="idLevel">Niveau *</label>
+                <input id="idLevel" class="form-control" [(ngModel)]="identity.level" placeholder="Ex. L1, L2, L3, M1…"
+                       list="levelOptions" [class.is-invalid]="identityTouched && !identity.level.trim()">
+                <datalist id="levelOptions">
+                  <option value="L1"></option><option value="L2"></option><option value="L3"></option>
+                  <option value="M1"></option><option value="M2"></option><option value="BTS 1"></option><option value="BTS 2"></option>
+                </datalist>
+              </div>
+            </div>
+          </div>
           <div class="alert alert-light border text-start mb-3">
-            <div><i class="bi bi-person me-1"></i><strong>Étudiant :</strong> {{ acces.studentName }}</div>
-            <div *ngIf="acces.studentLevel"><i class="bi bi-mortarboard me-1"></i><strong>Niveau :</strong> {{ acces.studentLevel }}</div>
-            <div><i class="bi bi-question-circle me-1"></i>
-              <strong>{{ acces.questionCount }}</strong> question(s) à répondre.</div>
+            <i class="bi bi-question-circle me-1"></i>
+            <strong>{{ acces.questionCount }}</strong> question(s) à répondre.
           </div>
           <div class="alert alert-primary small text-start mb-3">
             <i class="bi bi-clock-history me-1"></i>
@@ -449,6 +481,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
     </div>
   `,
   styles: [`
+    .identity-box { padding: 18px; border-radius: 14px; background: #f8faff; border: 1px solid #dbe4ff; }
     .case-block { display: flex; flex-direction: column; gap: 14px; }
     .case-banner {
       display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px;
@@ -529,6 +562,9 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   acces: QcmAcces | null = null;
   starting = false;
   startError = '';
+  identity = { lastName: '', firstName: '', birthDate: '', level: '' };
+  identityTouched = false;
+  readonly maxBirthDate = new Date(new Date().getFullYear() - 10, 11, 31).toISOString().substring(0, 10);
   resultat: Resultat | null = null;
   answers: Record<number, number> = {};
   practicalAnswers: Record<number, Record<string, string>> = {};
@@ -599,7 +635,14 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
         }
         // Pas encore passé → afficher les règles ; les questions sont chargées au démarrage (mot de passe vérifié)
         this.http.get<QcmAcces>(`/api/qcm/${this.qcmId}/acces`).subscribe({
-          next: (a) => { this.acces = a; this.status = 'welcome'; },
+          next: (a) => {
+            this.acces = a;
+            this.identity = {
+              lastName: a.lastName || '', firstName: a.firstName || '',
+              birthDate: a.birthDate || '', level: a.level || ''
+            };
+            this.status = 'welcome';
+          },
           error: () => { this.router.navigate(['/qcm']); }
         });
       }
@@ -756,13 +799,26 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
     return p >= 80 ? '#10b981' : p >= 60 ? '#3b82f6' : p >= 50 ? '#f59e0b' : '#ef4444';
   }
 
+  get identityComplete(): boolean {
+    const i = this.identity;
+    return !!(i.lastName.trim() && i.firstName.trim() && i.birthDate && i.level.trim());
+  }
+
   startQcm() {
     if (this.starting || !this.acces) return;
+    this.identityTouched = true;
+    if (!this.identityComplete) {
+      this.startError = 'Renseignez votre nom, prénom, date de naissance et niveau avant de commencer.';
+      return;
+    }
     // Le navigateur n'autorise le plein écran que pendant le geste utilisateur
     this.enterFullscreen();
     this.starting = true;
     this.startError = '';
-    this.http.post<QcmTake>(`/api/qcm/${this.qcmId}/commencer`, {}).subscribe({
+    this.http.post<QcmTake>(`/api/qcm/${this.qcmId}/commencer`, {
+      lastName: this.identity.lastName.trim(), firstName: this.identity.firstName.trim(),
+      birthDate: this.identity.birthDate, level: this.identity.level.trim()
+    }).subscribe({
       next: (q) => {
         this.starting = false;
         this.loadQcm(q);

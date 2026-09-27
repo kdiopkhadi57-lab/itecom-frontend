@@ -28,7 +28,7 @@ interface Qcm { id: number; title: string; description: string; status: string; 
       </div>
 
       <div *ngIf="!loading && qcms.length === 0" class="text-center py-5">
-        <div style="font-size:4rem">📝</div>
+        <div style="font-size:4rem"><i class="bi bi-journal-text"></i></div>
         <h5 class="mt-3 fw-bold">Aucun devoir créé</h5>
         <p class="text-muted">Commencez par créer votre premier questionnaire.</p>
         <a routerLink="/teacher/qcms/create" class="btn btn-primary px-4 mt-2">Créer un devoir</a>
@@ -46,7 +46,7 @@ interface Qcm { id: number; title: string; description: string; status: string; 
                 <span class="badge rounded-pill flex-shrink-0"
                       [style.background]="q.status === 'PUBLISHED' ? '#d1fae5' : '#e0e7ff'"
                       [style.color]="q.status === 'PUBLISHED' ? '#065f46' : '#3730a3'">
-                  {{ q.status === 'PUBLISHED' ? '✅ Publié' : '✏️ Brouillon' }}
+                  {{ q.status === 'PUBLISHED' ? 'Publié' : 'Brouillon' }}
                 </span>
               </div>
               <p class="text-muted small mb-3" *ngIf="q.description">{{ q.description }}</p>

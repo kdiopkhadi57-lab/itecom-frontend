@@ -40,20 +40,20 @@ export interface Progress {
 }
 
 export const COURSE_CATEGORIES = [
-  { key: 'algorithms', label: 'Algorithms', icon: '🔢', color: '#6366f1' },
-  { key: 'java', label: 'Java', icon: '☕', color: '#f59e0b' },
-  { key: 'python', label: 'Python', icon: '🐍', color: '#10b981' },
-  { key: 'javascript', label: 'JavaScript', icon: '🟨', color: '#eab308' },
+  { key: 'algorithms', label: 'Algorithms', icon: 'bi-123', color: '#6366f1' },
+  { key: 'java', label: 'Java', icon: 'bi-cup-hot', color: '#f59e0b' },
+  { key: 'python', label: 'Python', icon: 'bi-filetype-py', color: '#10b981' },
+  { key: 'javascript', label: 'JavaScript', icon: 'bi-filetype-js', color: '#eab308' },
   { key: 'angular', label: 'Angular', icon: '🅰️', color: '#ef4444' },
-  { key: 'springboot', label: 'Spring Boot', icon: '🍃', color: '#10b981' },
-  { key: 'sql', label: 'SQL', icon: '🗄️', color: '#06b6d4' },
-  { key: 'django', label: 'Django', icon: '🐬', color: '#0f172a' },
-  { key: 'fastapi', label: 'FastAPI', icon: '⚡', color: '#22c55e' },
-  { key: 'comptabilite', label: 'Comptabilité & Gestion', icon: '📊', color: '#0ea5e9' },
-  { key: 'sage-femme', label: 'Sage-Femme d\'État', icon: '🤰', color: '#ec4899' },
-  { key: 'marketing-digital', label: 'Marketing Digital', icon: '📣', color: '#f97316' },
-  { key: 'developpement-personnel', label: 'Développement Personnel', icon: '🌱', color: '#14b8a6' },
-  { key: 'virtual', label: 'Classes Virtuelles', icon: '🎥', color: '#8b5cf6' }
+  { key: 'springboot', label: 'Spring Boot', icon: 'bi-tree', color: '#10b981' },
+  { key: 'sql', label: 'SQL', icon: 'bi-database', color: '#06b6d4' },
+  { key: 'django', label: 'Django', icon: 'bi-filetype-py', color: '#0f172a' },
+  { key: 'fastapi', label: 'FastAPI', icon: 'bi-lightning-charge', color: '#22c55e' },
+  { key: 'comptabilite', label: 'Comptabilité & Gestion', icon: 'bi-bar-chart', color: '#0ea5e9' },
+  { key: 'sage-femme', label: 'Sage-Femme d\'État', icon: 'bi-heart-pulse', color: '#ec4899' },
+  { key: 'marketing-digital', label: 'Marketing Digital', icon: 'bi-megaphone', color: '#f97316' },
+  { key: 'developpement-personnel', label: 'Développement Personnel', icon: 'bi-flower2', color: '#14b8a6' },
+  { key: 'virtual', label: 'Classes Virtuelles', icon: 'bi-camera-video', color: '#8b5cf6' }
 ];
 
 // Catégories qui ne relèvent pas d'une filière "informatique/programmation"

@@ -17,18 +17,18 @@ import { CommonModule } from '@angular/common';
           <h4>Vérification en cours...</h4>
         </ng-container>
         <ng-container *ngIf="!loading && success">
-          <div style="font-size:4rem">✅</div>
+          <div style="font-size:4rem"><i class="bi bi-check-circle"></i></div>
           <h3 class="mt-3 fw-bold text-success">Email vérifié !</h3>
           <p class="text-muted">Veuillez maintenant procéder au paiement de l'inscription pour activer votre compte.</p>
           <div class="alert mt-3" style="background:#fef3c7;border:1px solid #f59e0b;border-radius:12px">
             <strong style="color:#92400e">Redirection dans {{ countdown }}s...</strong>
           </div>
           <button class="btn btn-warning fw-bold mt-2 w-100" (click)="goToPayment()" style="border-radius:10px">
-            💳 Payer maintenant
+            <i class="bi bi-credit-card me-1"></i>Payer maintenant
           </button>
         </ng-container>
         <ng-container *ngIf="!loading && !success">
-          <div style="font-size:4rem">❌</div>
+          <div style="font-size:4rem"><i class="bi bi-x-circle"></i></div>
           <h3 class="mt-3 fw-bold text-danger">Lien invalide</h3>
           <p class="text-muted">{{ error }}</p>
           <a routerLink="/auth/login" class="btn btn-outline-primary mt-3">Retour à la connexion</a>

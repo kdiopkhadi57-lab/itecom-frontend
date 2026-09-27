@@ -89,11 +89,11 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
     <!-- Reading mode -->
     <div class="d-flex gap-1">
       <button class="btn btn-sm btn-ghost mode-btn"
-              [class.active]="readingMode==='day'"    (click)="readingMode='day'"    title="Jour">☀️</button>
+              [class.active]="readingMode==='day'"    (click)="readingMode='day'"    title="Jour"><i class="bi bi-sun"></i></button>
       <button class="btn btn-sm btn-ghost mode-btn"
-              [class.active]="readingMode==='sepia'"  (click)="readingMode='sepia'"  title="Sépia">🟤</button>
+              [class.active]="readingMode==='sepia'"  (click)="readingMode='sepia'"  title="Sépia"><i class="bi bi-palette"></i></button>
       <button class="btn btn-sm btn-ghost mode-btn"
-              [class.active]="readingMode==='night'"  (click)="readingMode='night'"  title="Nuit">🌙</button>
+              [class.active]="readingMode==='night'"  (click)="readingMode='night'"  title="Nuit"><i class="bi bi-moon-stars"></i></button>
     </div>
 
     <div class="vr mx-1"></div>
@@ -170,7 +170,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
             </button>
           </div>
           <p class="ann-text">"{{ ann.selectedText }}"</p>
-          <p *ngIf="ann.note" class="ann-note">💬 {{ ann.note }}</p>
+          <p *ngIf="ann.note" class="ann-note"><i class="bi bi-chat-left-text me-1"></i>{{ ann.note }}</p>
         </div>
 
         <div *ngFor="let ann of notesList" class="annotation-card note-card" (click)="goToPage(ann.pageNumber)">
@@ -707,7 +707,7 @@ export class BookReaderComponent implements OnInit, OnDestroy {
     }).subscribe(ann => {
       this.annotations.push(ann);
       this.applyHighlightsToTextLayer();
-      this.showToast('Surlignage enregistré ✓');
+      this.showToast('Surlignage enregistré ');
       if (this.sidePanel === 'none') this.sidePanel = 'annotations';
     });
   }
@@ -732,7 +732,7 @@ export class BookReaderComponent implements OnInit, OnDestroy {
       this.annotations.push(ann);
       this.applyHighlightsToTextLayer();
       this.showNoteDialog = false;
-      this.showToast('Note enregistrée ✓');
+      this.showToast('Note enregistrée ');
       this.sidePanel = 'annotations';
     });
   }
@@ -748,7 +748,7 @@ export class BookReaderComponent implements OnInit, OnDestroy {
       selectedText: `Page ${this.currentPage}`, color: 'blue', type: 'BOOKMARK'
     }).subscribe(ann => {
       this.annotations.push(ann);
-      this.showToast(`Page ${this.currentPage} marquée ✓`);
+      this.showToast(`Page ${this.currentPage} marquée `);
     });
   }
 
@@ -847,7 +847,7 @@ export class BookReaderComponent implements OnInit, OnDestroy {
       next: () => {
         this.showRefDialog = false;
         this.savingRef = false;
-        this.showToast('Ajouté à vos références Zotero ✓');
+        this.showToast('Ajouté à vos références Zotero ');
       },
       error: () => {
         this.savingRef = false;

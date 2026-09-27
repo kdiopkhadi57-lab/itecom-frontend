@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm" style="height: var(--navbar-height);">
       <div class="container-fluid px-4">
         <a class="navbar-brand" routerLink="/dashboard">
-          🎓 ELearning
+          <i class="bi bi-mortarboard me-1"></i>ELearning
         </a>
         <div class="d-flex align-items-center ms-auto gap-3">
           <div class="dropdown">

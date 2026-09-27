@@ -142,7 +142,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'submitted' | 'error' | 'al
           </div>
           <div class="alert alert-danger small text-start">
             <i class="bi bi-shield-exclamation me-1"></i>
-            <strong>⚠️ Règles du mode plein écran :</strong> Vous ne pouvez quitter le plein écran que <strong>2 fois maximum</strong>. 
+            <strong><i class="bi bi-exclamation-triangle me-1"></i>Règles du mode plein écran :</strong> Vous ne pouvez quitter le plein écran que <strong>2 fois maximum</strong>. 
             À la <strong>3ème sortie, vous serez immédiatement exclu de l'examen</strong> et vos réponses seront soumises automatiquement. 
             <strong>Vous ne pourrez pas vous reconnecter tant que la session d'examen ne sera pas terminée.</strong>
           </div>

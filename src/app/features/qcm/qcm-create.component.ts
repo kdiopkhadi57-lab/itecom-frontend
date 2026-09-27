@@ -51,7 +51,7 @@ interface StudentEntry {
           <div class="d-flex align-items-center gap-3 mb-3">
             <div class="rounded-circle d-flex align-items-center justify-content-center"
                  style="width:44px;height:44px;background:#ede9fe;color:#6366f1;font-size:1.3rem;flex-shrink:0">
-              📄
+              <i class="bi bi-file-earmark-text"></i>
             </div>
             <div>
               <h6 class="fw-bold mb-0">Importer depuis un fichier Word</h6>
@@ -136,7 +136,7 @@ Bonne réponse: C</code>
       <!-- ═══ Infos générales ══════════════════════════════════════════════ -->
       <div class="card border-0 shadow-sm mb-4" style="border-radius:16px">
         <div class="card-body p-4">
-          <h5 class="fw-bold mb-3">📋 Informations générales</h5>
+          <h5 class="fw-bold mb-3"><i class="bi bi-clipboard-check me-1"></i>Informations générales</h5>
           <div class="mb-3">
             <label class="form-label fw-semibold">Titre du QCM *</label>
             <input type="text" class="form-control" [(ngModel)]="title" placeholder="Ex : Examen Java – Chapitre 3">
@@ -348,7 +348,7 @@ Bonne réponse: C</code>
         <div class="card-body p-4">
           <div class="d-flex align-items-center gap-3 flex-wrap">
             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:44px;height:44px;background:#ede9fe;color:#6366f1;font-size:1.3rem">👥</div>
+                 style="width:44px;height:44px;background:#ede9fe;color:#6366f1;font-size:1.3rem"><i class="bi bi-people"></i></div>
             <div class="flex-grow-1">
               <h6 class="fw-bold mb-0">Étudiants concernés <span class="badge rounded-pill bg-secondary ms-1" style="font-size:.7rem">Optionnel</span></h6>
               <p class="text-muted mb-0 small">

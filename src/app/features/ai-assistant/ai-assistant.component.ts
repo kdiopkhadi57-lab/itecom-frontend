@@ -20,7 +20,7 @@ interface Message {
     <div class="fade-in-up">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 class="fw-bold mb-1">🤖 Assistant IA</h1>
+          <h1 class="fw-bold mb-1"><i class="bi bi-robot me-1"></i>Assistant IA</h1>
           <p class="text-muted">Posez vos questions sur la programmation, obtenez des explications et des exemples</p>
         </div>
         <button class="btn btn-outline-danger btn-sm" (click)="clearChat()">
@@ -35,7 +35,7 @@ interface Message {
             <div class="ai-messages" #messagesContainer id="messages-container">
               <!-- Welcome -->
               <div class="text-center py-4" *ngIf="messages.length === 0">
-                <div style="font-size:3.5rem">🤖</div>
+                <div style="font-size:3.5rem"><i class="bi bi-robot"></i></div>
                 <h5 class="mt-2 fw-bold">Bonjour {{ authService.currentUser?.firstName }} !</h5>
                 <p class="text-muted small">Je suis votre assistant IA spécialisé en programmation.<br>Posez-moi toutes vos questions !</p>
               </div>
@@ -44,7 +44,7 @@ interface Message {
               <div *ngFor="let msg of messages" class="ai-message" [class.user]="msg.role === 'user'">
                 <div class="ai-avatar"
                      [style.background]="msg.role === 'bot' ? 'linear-gradient(135deg,#6366f1,#06b6d4)' : '#e2e8f0'">
-                  {{ msg.role === 'bot' ? '🤖' : (authService.currentUser?.firstName?.charAt(0) || '👤') }}
+                  <i class="bi" [ngClass]="msg.role === 'bot' ? 'bi-robot' : (authService.currentUser?.firstName?.charAt(0) || 'bi-person')"></i>
                 </div>
                 <div class="ai-bubble" [class.bot]="msg.role === 'bot'" [class.user]="msg.role === 'user'">
                   <div *ngIf="msg.loading" class="d-flex gap-1 align-items-center">
@@ -80,7 +80,7 @@ interface Message {
         <div class="col-lg-4">
           <div class="card border-0 shadow-sm mb-3" style="border-radius:16px">
             <div class="card-body p-4">
-              <h6 class="fw-bold mb-3">💡 Questions suggérées</h6>
+              <h6 class="fw-bold mb-3"><i class="bi bi-lightbulb me-1"></i>Questions suggérées</h6>
               <div class="d-flex flex-column gap-2">
                 <button *ngFor="let s of suggestions" class="btn btn-outline-secondary btn-sm text-start"
                         (click)="askSuggestion(s)" style="border-radius:8px">
@@ -92,7 +92,7 @@ interface Message {
 
           <div class="card border-0 shadow-sm" style="border-radius:16px">
             <div class="card-body p-4">
-              <h6 class="fw-bold mb-3">📚 Sujets disponibles</h6>
+              <h6 class="fw-bold mb-3"><i class="bi bi-journal-bookmark me-1"></i>Sujets disponibles</h6>
               <div class="d-flex flex-wrap gap-2">
                 <span *ngFor="let topic of topics" class="badge bg-light text-dark border px-3 py-2"
                       style="border-radius:20px; cursor:pointer; font-size:.8rem"
@@ -161,7 +161,7 @@ export class AiAssistantComponent {
         let idx = this.messages.indexOf(loadingMsg);
         if (idx !== -1) this.messages[idx] = {
           role: 'bot',
-          text: '⚠️ Désolé, je rencontre un problème de connexion. Vérifiez votre connexion et réessayez.',
+          text: 'Désolé, je rencontre un problème de connexion. Vérifiez votre connexion et réessayez.',
           timestamp: new Date()
         };
         this.loading = false;

@@ -15,7 +15,7 @@ import { HttpClient } from '@angular/common/http';
 
         <ng-container *ngIf="!submitted; else successBlock">
           <div class="text-center mb-4">
-            <div style="font-size:2.5rem">💳</div>
+            <div style="font-size:2.5rem"><i class="bi bi-credit-card"></i></div>
             <h2 class="fw-bold mt-2">Paiement de l'inscription</h2>
             <p class="text-muted small">Choisissez votre mode de paiement et envoyez le montant</p>
           </div>
@@ -23,7 +23,7 @@ import { HttpClient } from '@angular/common/http';
           <!-- Frais -->
           <div class="alert mb-4" style="background:linear-gradient(135deg,#f59e0b22,#d9770622);border:1px solid #f59e0b;border-radius:12px">
             <div class="d-flex align-items-center gap-3">
-              <span style="font-size:2rem">🏷️</span>
+              <span style="font-size:2rem"><i class="bi bi-tag"></i></span>
               <div>
                 <div class="fw-bold" style="color:#d97706">Frais d'inscription</div>
                 <div style="font-size:1.4rem;font-weight:800;color:#92400e">5 000 FCFA</div>
@@ -41,7 +41,7 @@ import { HttpClient } from '@angular/common/http';
                      [style.background]="method === 'WAVE' ? '#eff6ff' : 'white'"
                      style="cursor:pointer; transition:all .2s"
                      (click)="method = 'WAVE'">
-                  <div style="font-size:1.8rem">🌊</div>
+                  <div style="font-size:1.8rem"><i class="bi bi-water"></i></div>
                   <div class="fw-bold mt-1" [style.color]="method === 'WAVE' ? '#1d4ed8' : '#333'">Wave</div>
                   <div class="small text-muted">+221 70 000 0000</div>
                 </div>
@@ -52,7 +52,7 @@ import { HttpClient } from '@angular/common/http';
                      [style.background]="method === 'ORANGE_MONEY' ? '#fff7ed' : 'white'"
                      style="cursor:pointer; transition:all .2s"
                      (click)="method = 'ORANGE_MONEY'">
-                  <div style="font-size:1.8rem">🟠</div>
+                  <div style="font-size:1.8rem"><i class="bi bi-circle-fill"></i></div>
                   <div class="fw-bold mt-1" [style.color]="method === 'ORANGE_MONEY' ? '#c2410c' : '#333'">Orange Money</div>
                   <div class="small text-muted">+221 77 000 0000</div>
                 </div>
@@ -86,7 +86,7 @@ import { HttpClient } from '@angular/common/http';
           <div class="mb-3">
             <label class="form-label fw-semibold">Votre numéro {{ method === 'WAVE' ? 'Wave' : 'Orange Money' }}</label>
             <div class="input-group">
-              <span class="input-group-text">📱</span>
+              <span class="input-group-text"><i class="bi bi-phone"></i></span>
               <input type="tel" class="form-control" [(ngModel)]="paymentPhone"
                      placeholder="Ex: 77 123 45 67" [disabled]="!method">
             </div>
@@ -118,7 +118,7 @@ import { HttpClient } from '@angular/common/http';
 
         <ng-template #successBlock>
           <div class="text-center py-4">
-            <div style="font-size:4rem">⏳</div>
+            <div style="font-size:4rem"><i class="bi bi-hourglass-split"></i></div>
             <h4 class="mt-3 fw-bold">Paiement soumis !</h4>
             <p class="text-muted">Votre paiement a bien été enregistré. L'administrateur va vérifier votre transaction et activer votre compte sous <strong>24h</strong>.</p>
             <p class="text-muted small">Vous recevrez un email de confirmation dès que votre compte est activé.</p>

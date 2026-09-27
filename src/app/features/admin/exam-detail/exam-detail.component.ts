@@ -100,7 +100,7 @@ interface StudentPreview { name: string; email: string; }
           <div class="card-body p-4">
             <div class="d-flex align-items-center gap-3">
               <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                   style="width:44px;height:44px;background:#ede9fe;color:#6366f1;font-size:1.3rem">👥</div>
+                   style="width:44px;height:44px;background:#ede9fe;color:#6366f1;font-size:1.3rem"><i class="bi bi-people"></i></div>
               <div class="flex-grow-1">
                 <h6 class="fw-bold mb-0">Ajouter des étudiants</h6>
                 <p class="text-muted mb-0 small">Excel (.xlsx), PDF ou Word (.docx) — col. A = Nom, col. B = Email</p>

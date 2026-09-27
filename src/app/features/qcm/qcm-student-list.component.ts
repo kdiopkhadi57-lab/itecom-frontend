@@ -21,7 +21,7 @@ interface QcmItem { id: number; title: string; description: string; professorNam
       </div>
 
       <div *ngIf="!loading && qcms.length === 0" class="text-center py-5">
-        <div style="font-size:4rem">📭</div>
+        <div style="font-size:4rem"><i class="bi bi-inbox"></i></div>
         <h5 class="mt-3 fw-bold">Aucun devoir disponible</h5>
         <p class="text-muted">Vos professeurs n'ont pas encore publié de devoirs.</p>
       </div>
@@ -36,7 +36,7 @@ interface QcmItem { id: number; title: string; description: string; professorNam
               <div class="d-flex align-items-start justify-content-between mb-2">
                 <h6 class="fw-bold mb-0 flex-grow-1 me-2">{{ q.title }}</h6>
                 <span *ngIf="q.alreadyTaken" class="badge rounded-pill flex-shrink-0"
-                      style="background:#d1fae5;color:#065f46">✅ Déjà passé</span>
+                      style="background:#d1fae5;color:#065f46"><i class="bi bi-check-circle me-1"></i>Déjà passé</span>
                 <span *ngIf="!q.alreadyTaken" class="badge rounded-pill flex-shrink-0"
                       style="background:#ede9fe;color:#5b21b6">Nouveau</span>
               </div>

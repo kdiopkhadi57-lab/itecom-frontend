@@ -141,7 +141,7 @@ interface StudentPreview { name: string; email: string; }
           <div class="d-flex align-items-center gap-3 mb-3">
             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:44px;height:44px;background:#ede9fe;color:#6366f1;font-size:1.3rem">
-              👥
+              <i class="bi bi-people"></i>
             </div>
             <div class="flex-grow-1">
               <h6 class="fw-bold mb-0">Liste des étudiants *</h6>

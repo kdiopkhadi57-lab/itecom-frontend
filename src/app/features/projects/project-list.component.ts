@@ -13,7 +13,7 @@ import { DialogService } from '../../core/services/dialog.service';
     <div class="fade-in-up" *ngIf="!accessDenied">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 class="fw-bold mb-1">🚀 Projets</h1>
+          <h1 class="fw-bold mb-1"><i class="bi bi-rocket-takeoff me-1"></i>Projets</h1>
           <p class="text-muted">Cas pratiques Spring Boot — pom.xml prêt avec Lombok, JPA/Hibernate, Spring Data REST et MySQL.</p>
         </div>
         <button *ngIf="isTeacher" class="btn btn-primary-custom" (click)="startCreate()">
@@ -23,7 +23,7 @@ import { DialogService } from '../../core/services/dialog.service';
 
       <!-- Create / edit form -->
       <div *ngIf="form" class="card border-0 shadow-sm p-4 mb-4" style="border-radius:16px">
-        <h5 class="fw-bold mb-3">{{ editingId ? '✏️ Modifier' : '➕ Nouveau' }} projet</h5>
+        <h5 class="fw-bold mb-3">{{ editingId ? 'Modifier' : 'Nouveau' }} projet</h5>
         <form [formGroup]="form" (ngSubmit)="onSubmit()">
           <div class="mb-3">
             <label class="form-label fw-semibold">Titre du projet *</label>
@@ -77,7 +77,7 @@ import { DialogService } from '../../core/services/dialog.service';
       </div>
 
       <div *ngIf="!loading && projects.length === 0" class="text-center py-5 text-muted">
-        <div style="font-size:3rem">🚀</div>
+        <div style="font-size:3rem"><i class="bi bi-rocket-takeoff"></i></div>
         <p class="mt-2">Aucun projet pour le moment.</p>
       </div>
 
@@ -122,7 +122,7 @@ import { DialogService } from '../../core/services/dialog.service';
     </div>
 
     <div *ngIf="accessDenied" class="text-center py-5 text-muted">
-      <div style="font-size:3rem">🔒</div>
+      <div style="font-size:3rem"><i class="bi bi-lock"></i></div>
       <h5 class="mt-3">Cette section est réservée à la filière Génie logiciel.</h5>
     </div>
   `

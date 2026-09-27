@@ -19,7 +19,7 @@ import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
           <div class="col-lg-8">
             <div class="d-flex gap-2 mb-3">
               <span class="badge bg-white text-dark rounded-pill fw-semibold">
-                {{ getCategoryIcon(course.category) }} {{ getCategoryLabel(course.category) }}
+                <i class="bi me-1" [ngClass]="getCategoryIcon(course.category)"></i>{{ getCategoryLabel(course.category) }}
               </span>
               <span class="badge rounded-pill fw-semibold text-white"
                     [style.background]="getLevelColor(course.level)">
@@ -53,7 +53,7 @@ import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
           </div>
 
           <div class="col-lg-4 text-center d-none d-lg-block">
-            <div style="font-size:8rem; opacity:0.3">{{ getCategoryIcon(course.category) }}</div>
+            <div style="font-size:8rem; opacity:0.3"><i class="bi" [ngClass]="getCategoryIcon(course.category)"></i></div>
           </div>
         </div>
       </div>
@@ -61,7 +61,7 @@ import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
       <!-- Progress (if enrolled) -->
       <div *ngIf="isEnrolled && progress" class="card border-0 shadow-sm mb-4 p-4" style="border-radius:16px">
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <span class="fw-semibold">📈 Votre progression</span>
+          <span class="fw-semibold"><i class="bi bi-graph-up-arrow me-1"></i>Votre progression</span>
           <span class="badge bg-primary rounded-pill">{{ progress.overallPercentage | number:'1.0-0' }}%</span>
         </div>
         <div class="progress-custom">
@@ -75,11 +75,11 @@ import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
         <div class="col-lg-8">
           <div class="card border-0 shadow-sm" style="border-radius:16px">
             <div class="card-header bg-white border-0 p-4">
-              <h4 class="fw-bold mb-0">📋 Programme du cours</h4>
+              <h4 class="fw-bold mb-0"><i class="bi bi-clipboard-check me-1"></i>Programme du cours</h4>
             </div>
             <div class="card-body p-0">
               <div *ngIf="!course.lessons || course.lessons.length === 0" class="text-center py-5 text-muted">
-                <div style="font-size:3rem">📭</div>
+                <div style="font-size:3rem"><i class="bi bi-inbox"></i></div>
                 <p class="mt-2">Aucune leçon disponible pour l'instant</p>
               </div>
               <div *ngFor="let lesson of course.lessons; let i = index"
@@ -147,7 +147,7 @@ import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
     </div>
 
     <div *ngIf="error" class="text-center py-5">
-      <div style="font-size:4rem">😕</div>
+      <div style="font-size:4rem"><i class="bi bi-emoji-frown"></i></div>
       <h4 class="mt-3">Cours introuvable</h4>
       <a routerLink="/courses" class="btn btn-primary-custom mt-3">Retour aux cours</a>
     </div>
@@ -195,7 +195,7 @@ export class CourseDetailComponent implements OnInit {
     });
   }
 
-  getCategoryIcon(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.icon || '📚'; }
+  getCategoryIcon(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.icon || 'bi-journal-bookmark'; }
   getCategoryLabel(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.label || cat; }
   getCategoryGradient(cat: string) {
     let color = COURSE_CATEGORIES.find(c => c.key === cat)?.color || '#6366f1';

@@ -19,7 +19,7 @@ type View = 'list' | 'form' | 'citation';
   <!-- ── Header ──────────────────────────────────────────────────────── -->
   <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
-      <h1 class="fw-bold mb-1">🗂️ Gestionnaire de références</h1>
+      <h1 class="fw-bold mb-1"><i class="bi bi-folder2-open me-1"></i>Gestionnaire de références</h1>
       <p class="text-muted small">
         Bibliothèque personnelle Zotero-like : gérez vos références bibliographiques,
         générez des citations APA/MLA/Chicago/IEEE et exportez en BibTeX.
@@ -42,28 +42,28 @@ type View = 'list' | 'form' | 'citation';
   <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
       <div class="stat-card">
-        <div class="stat-icon">📚</div>
+        <div class="stat-icon"><i class="bi bi-journal-bookmark"></i></div>
         <div class="stat-value">{{ refs.length }}</div>
         <div class="stat-label">Références totales</div>
       </div>
     </div>
     <div class="col-6 col-md-3">
       <div class="stat-card">
-        <div class="stat-icon">📖</div>
+        <div class="stat-icon"><i class="bi bi-book"></i></div>
         <div class="stat-value">{{ countType('book') }}</div>
         <div class="stat-label">Livres</div>
       </div>
     </div>
     <div class="col-6 col-md-3">
       <div class="stat-card">
-        <div class="stat-icon">📰</div>
+        <div class="stat-icon"><i class="bi bi-newspaper"></i></div>
         <div class="stat-value">{{ countType('article') + countType('journal') }}</div>
         <div class="stat-label">Articles</div>
       </div>
     </div>
     <div class="col-6 col-md-3">
       <div class="stat-card">
-        <div class="stat-icon">🗂️</div>
+        <div class="stat-icon"><i class="bi bi-folder2-open"></i></div>
         <div class="stat-value">{{ collections.length }}</div>
         <div class="stat-label">Collections</div>
       </div>
@@ -84,7 +84,7 @@ type View = 'list' | 'form' | 'citation';
         <button *ngFor="let col of refTypes" class="sidebar-item"
                 [class.active]="activeCollection==='__type__'+col.type"
                 (click)="filterByType(col.type)">
-          <span class="me-2">{{ col.icon }}</span>{{ col.label }}
+          <span class="me-2"><i class="bi" [ngClass]="col.icon"></i></span>{{ col.label }}
           <span class="ms-auto badge bg-light text-secondary">{{ countType(col.type) }}</span>
         </button>
       </div>
@@ -133,7 +133,7 @@ type View = 'list' | 'form' | 'citation';
 
       <!-- Empty -->
       <div *ngIf="!loading && filteredRefs.length === 0" class="empty-state text-center py-5">
-        <div style="font-size:3.5rem">🗂️</div>
+        <div style="font-size:3.5rem"><i class="bi bi-folder2-open"></i></div>
         <h5 class="mt-3 fw-bold">Aucune référence</h5>
         <p class="text-muted small">Ajoutez votre première référence bibliographique.</p>
         <button class="btn btn-primary btn-sm" (click)="openForm()">
@@ -145,7 +145,7 @@ type View = 'list' | 'form' | 'citation';
       <div *ngFor="let ref of filteredRefs" class="ref-card">
         <div class="d-flex align-items-start gap-3">
           <div class="ref-type-badge" [style.background]="typeColor(ref.refType)">
-            {{ typeIcon(ref.refType) }}
+            <i class="bi" [ngClass]="typeIcon(ref.refType)"></i>
           </div>
           <div class="flex-grow-1 min-w-0">
             <div class="d-flex align-items-start justify-content-between gap-2">
@@ -284,7 +284,7 @@ type View = 'list' | 'form' | 'citation';
               [class.btn-primary]="form.refType===t.type"
               [class.btn-outline-secondary]="form.refType!==t.type"
               (click)="form.refType=t.type">
-        {{ t.icon }} {{ t.label }}
+        <i class="bi me-1" [ngClass]="t.icon"></i>{{ t.label }}
       </button>
     </div>
 
@@ -589,12 +589,12 @@ export class ReferenceManagerComponent implements OnInit {
   private activeTypeFilter = '';
 
   readonly refTypes = [
-    { type: 'book' as const,       label: 'Livre',       icon: '📖' },
-    { type: 'article' as const,    label: 'Article',     icon: '📰' },
-    { type: 'journal' as const,    label: 'Revue',       icon: '📓' },
-    { type: 'website' as const,    label: 'Site Web',    icon: '🌐' },
-    { type: 'thesis' as const,     label: 'Thèse',       icon: '🎓' },
-    { type: 'conference' as const, label: 'Conférence',  icon: '🎤' },
+    { type: 'book' as const,       label: 'Livre',       icon: 'bi-book' },
+    { type: 'article' as const,    label: 'Article',     icon: 'bi-newspaper' },
+    { type: 'journal' as const,    label: 'Revue',       icon: 'bi-journal' },
+    { type: 'website' as const,    label: 'Site Web',    icon: 'bi-globe' },
+    { type: 'thesis' as const,     label: 'Thèse',       icon: 'bi-mortarboard' },
+    { type: 'conference' as const, label: 'Conférence',  icon: 'bi-mic' },
   ];
 
   constructor(private dialogs: DialogService, private refService: ReferenceService) {}
@@ -647,7 +647,7 @@ export class ReferenceManagerComponent implements OnInit {
   countType(type: string): number { return this.refs.filter(r => r.refType === type).length; }
 
   typeIcon(t: string): string {
-    return this.refTypes.find(x => x.type === t)?.icon ?? '📄';
+    return this.refTypes.find(x => x.type === t)?.icon ?? 'bi-file-earmark-text';
   }
   typeLabel(t: string): string {
     return this.refTypes.find(x => x.type === t)?.label ?? t;

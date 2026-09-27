@@ -24,7 +24,7 @@ interface EditorTab {
     <div class="fade-in-up">
       <div class="d-flex justify-content-between align-items-center mb-3" *ngIf="!isPdfOnly">
         <div>
-          <h1 class="fw-bold mb-1">💻 IDE en ligne</h1>
+          <h1 class="fw-bold mb-1"><i class="bi bi-laptop me-1"></i>IDE en ligne</h1>
           <p class="text-muted small">Écrivez et exécutez votre code directement dans le navigateur</p>
         </div>
         <div class="d-flex gap-2 align-items-center">
@@ -40,7 +40,7 @@ interface EditorTab {
       </div>
 
       <div class="mb-3" *ngIf="isPdfOnly">
-        <h1 class="fw-bold mb-1">📄 Fiche d'exercice</h1>
+        <h1 class="fw-bold mb-1"><i class="bi bi-file-earmark-text me-1"></i>Fiche d'exercice</h1>
         <p class="text-muted small">Lisez l'énoncé ci-dessous, puis marquez-le comme terminé.</p>
       </div>
 
@@ -179,7 +179,7 @@ interface EditorTab {
             <h6 class="fw-bold"><i class="bi bi-info-circle text-primary me-2"></i>Limites</h6>
             <div class="small text-secondary">
               <div>⏱ Timeout: 10 secondes</div>
-              <div>🔒 Accès système désactivé</div>
+              <div><i class="bi bi-lock me-1"></i>Accès système désactivé</div>
             </div>
           </div>
         </div>
@@ -223,10 +223,10 @@ export class IdeComponent implements OnInit {
   ];
 
   templates: Record<string, string> = {
-    python: `# 🐍 Python - Bonjour le monde\nprint("Bonjour, ELearning!")\n\n# Calcul simple\ndef fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)\n\nfor i in range(10):\n    print(f"fib({i}) = {fibonacci(i)}")`,
-    javascript: `// 🟨 JavaScript - Bonjour le monde\nconsole.log("Bonjour, ELearning!");\n\n// Fonction fléchée\nconst factorielle = (n) => n <= 1 ? 1 : n * factorielle(n - 1);\n\nfor (let i = 0; i <= 10; i++) {\n  console.log(\`\${i}! = \${factorielle(i)}\`);\n}`,
-    java: `// ☕ Java - Bonjour le monde\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("Bonjour, ELearning!");\n        \n        // Boucle\n        for (int i = 1; i <= 5; i++) {\n            System.out.println("Ligne " + i);\n        }\n    }\n}`,
-    sql: `-- 🗄️ SQL - Exemples de requêtes\n-- (Simulation - pas d'exécution réelle)\nSELECT * FROM students;\nSELECT name, grade FROM students WHERE grade > 10;\nSELECT COUNT(*) FROM courses;`
+    python: `# Python - Bonjour le monde\nprint("Bonjour, ELearning!")\n\n# Calcul simple\ndef fibonacci(n):\n    if n <= 1:\n        return n\n    return fibonacci(n-1) + fibonacci(n-2)\n\nfor i in range(10):\n    print(f"fib({i}) = {fibonacci(i)}")`,
+    javascript: `// JavaScript - Bonjour le monde\nconsole.log("Bonjour, ELearning!");\n\n// Fonction fléchée\nconst factorielle = (n) => n <= 1 ? 1 : n * factorielle(n - 1);\n\nfor (let i = 0; i <= 10; i++) {\n  console.log(\`\${i}! = \${factorielle(i)}\`);\n}`,
+    java: `// Java - Bonjour le monde\npublic class Main {\n    public static void main(String[] args) {\n        System.out.println("Bonjour, ELearning!");\n        \n        // Boucle\n        for (int i = 1; i <= 5; i++) {\n            System.out.println("Ligne " + i);\n        }\n    }\n}`,
+    sql: `-- SQL - Exemples de requêtes\n-- (Simulation - pas d'exécution réelle)\nSELECT * FROM students;\nSELECT name, grade FROM students WHERE grade > 10;\nSELECT COUNT(*) FROM courses;`
   };
 
   get isPdfOnly(): boolean {

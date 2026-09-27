@@ -25,7 +25,7 @@ import { HttpClient } from '@angular/common/http';
                   [class.bg-primary]="authService.isStudent"
                   [class.bg-success]="authService.isTeacher"
                   [class.bg-danger]="authService.isAdmin">
-              {{ authService.isAdmin ? '⚙️ Admin' : authService.isTeacher ? '👨‍🏫 Professeur' : '👨‍🎓 Étudiant' }}
+              {{ authService.isAdmin ? 'Admin' : authService.isTeacher ? 'Professeur' : 'Étudiant' }}
             </span>
           </div>
         </div>

@@ -139,21 +139,21 @@ interface AppUser {
       <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
           <div class="card border-0 shadow-sm text-center p-3" style="border-radius:14px">
-            <div style="font-size:2rem">👨‍🎓</div>
+            <div style="font-size:2rem"><i class="bi bi-mortarboard"></i></div>
             <div class="fw-bold fs-4 mt-1" style="color:#6366f1">{{ students.length }}</div>
             <div class="text-muted small">Apprenants</div>
           </div>
         </div>
         <div class="col-6 col-md-3">
           <div class="card border-0 shadow-sm text-center p-3" style="border-radius:14px">
-            <div style="font-size:2rem">👨‍🏫</div>
+            <div style="font-size:2rem"><i class="bi bi-person-video3"></i></div>
             <div class="fw-bold fs-4 mt-1" style="color:#10b981">{{ teachers.length }}</div>
             <div class="text-muted small">Partenaires</div>
           </div>
         </div>
         <div class="col-6 col-md-3">
           <div class="card border-0 shadow-sm text-center p-3" style="border-radius:14px">
-            <div style="font-size:2rem">✅</div>
+            <div style="font-size:2rem"><i class="bi bi-check-circle"></i></div>
             <div class="fw-bold fs-4 mt-1" style="color:#059669">{{ students.length + teachers.length }}</div>
             <div class="text-muted small">Total actifs</div>
           </div>
@@ -162,7 +162,7 @@ interface AppUser {
           <a routerLink="/admin/registrations" class="text-decoration-none">
             <div class="card border-0 shadow-sm text-center p-3" style="border-radius:14px;cursor:pointer"
                  [style.background]="pendingCount > 0 ? '#fef3c7' : '#f9fafb'">
-              <div style="font-size:2rem">⏳</div>
+              <div style="font-size:2rem"><i class="bi bi-hourglass-split"></i></div>
               <div class="fw-bold fs-4 mt-1" [style.color]="pendingCount > 0 ? '#d97706' : '#6b7280'">{{ pendingCount }}</div>
               <div class="text-muted small">En attente</div>
             </div>
@@ -181,7 +181,7 @@ interface AppUser {
                       [style.color]="activeTab === 'students' ? 'white' : '#374151'"
                       style="border-radius:10px;border:none"
                       (click)="activeTab = 'students'; filterList()">
-                👨‍🎓 Apprenants
+                <i class="bi bi-mortarboard me-1"></i>Apprenants
                 <span class="badge ms-1 rounded-pill"
                       [style.background]="activeTab === 'students' ? 'rgba(255,255,255,.3)' : '#6366f1'"
                       style="color:white">{{ students.length }}</span>
@@ -191,7 +191,7 @@ interface AppUser {
                       [style.color]="activeTab === 'teachers' ? 'white' : '#374151'"
                       style="border-radius:10px;border:none"
                       (click)="activeTab = 'teachers'; filterList()">
-                👨‍🏫 Partenaires
+                <i class="bi bi-person-video3 me-1"></i>Partenaires
                 <span class="badge ms-1 rounded-pill"
                       [style.background]="activeTab === 'teachers' ? 'rgba(255,255,255,.3)' : '#10b981'"
                       style="color:white">{{ teachers.length }}</span>
@@ -221,7 +221,7 @@ interface AppUser {
 
       <!-- Liste vide -->
       <div *ngIf="!loading && filtered.length === 0" class="text-center py-5">
-        <div style="font-size:3.5rem">{{ activeTab === 'students' ? '👨‍🎓' : '👨‍🏫' }}</div>
+        <div style="font-size:3.5rem"><i class="bi" [ngClass]="activeTab === 'students' ? 'bi-mortarboard' : 'bi-person-video3'"></i></div>
         <h5 class="mt-3 fw-bold">Aucun {{ activeTab === 'students' ? 'apprenant' : 'partenaire' }} trouvé</h5>
         <p class="text-muted">{{ searchQuery ? 'Aucun résultat pour "' + searchQuery + '"' : 'Aucun compte validé pour l\'instant.' }}</p>
       </div>

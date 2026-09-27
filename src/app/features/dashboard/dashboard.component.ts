@@ -20,7 +20,7 @@ import { UserScopeService } from '../../core/services/user-scope.service';
       <!-- Header -->
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 class="fw-bold mb-1">Bonjour, {{ authService.currentUser?.firstName }} 👋</h1>
+          <h1 class="fw-bold mb-1">Bonjour, {{ authService.currentUser?.firstName }} <i class="bi bi-emoji-smile"></i></h1>
           <p class="text-muted">Continuez votre apprentissage aujourd'hui !</p>
         </div>
         <a routerLink="/courses" class="btn btn-primary-custom">
@@ -36,7 +36,7 @@ import { UserScopeService } from '../../core/services/user-scope.service';
              style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #f59e0b;border-radius:14px;cursor:pointer;transition:box-shadow .2s"
              onmouseenter="this.style.boxShadow='0 4px 20px rgba(245,158,11,.35)'"
              onmouseleave="this.style.boxShadow='none'">
-          <div style="font-size:2rem;flex-shrink:0">🔔</div>
+          <div style="font-size:2rem;flex-shrink:0"><i class="bi bi-bell"></i></div>
           <div class="flex-grow-1">
             <div class="fw-bold" style="color:#92400e;font-size:1rem">
               {{ pendingCount }} inscription{{ pendingCount > 1 ? 's' : '' }} en attente de validation
@@ -58,21 +58,21 @@ import { UserScopeService } from '../../core/services/user-scope.service';
       <div class="row g-3 mb-4">
         <div class="col-6 col-xl-3">
           <div class="stat-card" style="background: linear-gradient(135deg, #6366f1, #4f46e5)">
-            <div class="stat-icon">📚</div>
+            <div class="stat-icon"><i class="bi bi-journal-bookmark"></i></div>
             <div class="stat-value">{{ enrolledCourses.length }}</div>
             <div class="stat-label">Cours inscrits</div>
           </div>
         </div>
         <div class="col-6 col-xl-3">
           <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #059669)">
-            <div class="stat-icon">✅</div>
+            <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
             <div class="stat-value">{{ completedLessons }}</div>
             <div class="stat-label">Leçons complétées</div>
           </div>
         </div>
         <div class="col-6 col-xl-3">
           <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706)">
-            <div class="stat-icon">🔥</div>
+            <div class="stat-icon"><i class="bi bi-fire"></i></div>
             <div class="stat-value">{{ avgProgress }}%</div>
             <div class="stat-label">Progression moyenne</div>
           </div>
@@ -84,12 +84,12 @@ import { UserScopeService } from '../../core/services/user-scope.service';
         <div class="col-12 col-xl-8">
           <div class="card border-0 shadow-sm" style="border-radius:16px;">
             <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center p-4">
-              <h5 class="fw-bold mb-0">📈 Ma progression</h5>
+              <h5 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow me-1"></i>Ma progression</h5>
               <a routerLink="/courses/my-learning" class="btn btn-sm btn-outline-primary">Tout voir</a>
             </div>
             <div class="card-body px-4 pb-4">
               <div *ngIf="progressList.length === 0" class="text-center py-4 text-muted">
-                <div style="font-size:3rem">📚</div>
+                <div style="font-size:3rem"><i class="bi bi-journal-bookmark"></i></div>
                 <p class="mt-2">Pas encore inscrit à des cours</p>
                 <a routerLink="/courses" class="btn btn-primary-custom btn-sm">Explorer les cours</a>
               </div>
@@ -113,7 +113,7 @@ import { UserScopeService } from '../../core/services/user-scope.service';
         <div class="col-12 col-xl-4">
           <div class="card border-0 shadow-sm mb-3" style="border-radius:16px;">
             <div class="card-body p-4">
-              <h5 class="fw-bold mb-3">🚀 Accès rapide</h5>
+              <h5 class="fw-bold mb-3"><i class="bi bi-rocket-takeoff me-1"></i>Accès rapide</h5>
               <div class="d-grid gap-2">
                 <a routerLink="/virtual-class" class="btn btn-outline-primary text-start">
                   <i class="bi bi-camera-video me-2"></i>Classes virtuelles
@@ -124,11 +124,11 @@ import { UserScopeService } from '../../core/services/user-scope.service';
 
           <div class="card border-0 shadow-sm" style="border-radius:16px;">
             <div class="card-body p-4">
-              <h5 class="fw-bold mb-3">📂 Catégories</h5>
+              <h5 class="fw-bold mb-3"><i class="bi bi-folder2-open me-1"></i>Catégories</h5>
               <div class="d-flex flex-wrap gap-2">
                 <a *ngFor="let cat of visibleCategories" [routerLink]="['/courses']" [queryParams]="{category: cat.key}"
                    class="btn btn-sm btn-outline-secondary rounded-pill">
-                  {{ cat.icon }} {{ cat.label }}
+                  <i class="bi me-1" [ngClass]="cat.icon"></i>{{ cat.label }}
                 </a>
               </div>
             </div>

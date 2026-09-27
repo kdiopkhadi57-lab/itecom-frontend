@@ -29,7 +29,7 @@ interface VirtualClass {
     <div class="fade-in-up">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 class="fw-bold mb-1">🎥 Classes Virtuelles</h1>
+          <h1 class="fw-bold mb-1"><i class="bi bi-camera-video me-1"></i>Classes Virtuelles</h1>
           <p class="text-muted">Rejoignez des sessions en direct avec vos professeurs</p>
         </div>
         <div *ngIf="authService.isTeacher || authService.isAdmin">
@@ -43,17 +43,17 @@ interface VirtualClass {
       <ul class="nav nav-pills mb-4">
         <li class="nav-item">
           <button class="nav-link" [class.active]="activeTab === 'upcoming'" (click)="activeTab = 'upcoming'">
-            🗓️ À venir
+            <i class="bi bi-calendar3 me-1"></i>À venir
           </button>
         </li>
         <li class="nav-item">
           <button class="nav-link" [class.active]="activeTab === 'ongoing'" (click)="activeTab = 'ongoing'">
-            🔴 En cours
+            <i class="bi bi-record-circle me-1"></i>En cours
           </button>
         </li>
         <li class="nav-item">
           <button class="nav-link" [class.active]="activeTab === 'past'" (click)="activeTab = 'past'">
-            📁 Passées
+            <i class="bi bi-folder me-1"></i>Passées
           </button>
         </li>
       </ul>
@@ -66,7 +66,7 @@ interface VirtualClass {
       <!-- Classe list -->
       <div class="row g-4" *ngIf="!loading">
         <div *ngIf="filteredClasses.length === 0" class="col-12 text-center py-5">
-          <div style="font-size:4rem">📭</div>
+          <div style="font-size:4rem"><i class="bi bi-inbox"></i></div>
           <h4 class="mt-3">Aucune classe {{ getTabLabel() }}</h4>
         </div>
 
@@ -183,7 +183,7 @@ interface VirtualClass {
           <h4 class="fw-bold mb-4">Comment fonctionnent les classes virtuelles ?</h4>
           <div class="row g-4">
             <div class="col-md-3" *ngFor="let step of howItWorks">
-              <div style="font-size:2.5rem">{{ step.icon }}</div>
+              <div style="font-size:2.5rem"><i class="bi" [ngClass]="step.icon"></i></div>
               <h6 class="fw-bold mt-2">{{ step.title }}</h6>
               <p class="text-muted small">{{ step.desc }}</p>
             </div>
@@ -196,7 +196,7 @@ interface VirtualClass {
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content border-0 rounded-4">
             <div class="modal-header border-0 p-4">
-              <h5 class="modal-title fw-bold">📅 Créer une classe virtuelle</h5>
+              <h5 class="modal-title fw-bold"><i class="bi bi-calendar-event me-1"></i>Créer une classe virtuelle</h5>
               <button class="btn-close" (click)="showCreateModal = false"></button>
             </div>
             <div class="modal-body p-4">
@@ -258,7 +258,7 @@ interface VirtualClass {
         <div class="modal-dialog modal-dialog-centered">
           <div class="modal-content border-0 rounded-4">
             <div class="modal-body p-4 text-center">
-              <div style="font-size:2.5rem">🗑️</div>
+              <div style="font-size:2.5rem"><i class="bi bi-trash3"></i></div>
               <h5 class="fw-bold mt-2">Supprimer l'enregistrement ?</h5>
               <p class="text-muted">Cette action est irréversible. La vidéo sera définitivement supprimée.</p>
               <div class="d-flex gap-2 justify-content-center mt-3">
@@ -296,10 +296,10 @@ export class VirtualClassComponent implements OnInit {
   private currentVideoEl: HTMLVideoElement | null = null;
 
   howItWorks = [
-    { icon: '📅', title: 'Planifiez', desc: 'Les professeurs planifient des sessions en direct' },
-    { icon: '🎥', title: 'Rejoignez', desc: 'La visioconférence est intégrée à la plateforme, en un clic' },
+    { icon: 'bi-calendar-event', title: 'Planifiez', desc: 'Les professeurs planifient des sessions en direct' },
+    { icon: 'bi-camera-video', title: 'Rejoignez', desc: 'La visioconférence est intégrée à la plateforme, en un clic' },
     { icon: '⏺️', title: 'Enregistrez', desc: "Le professeur peut enregistrer la session" },
-    { icon: '📁', title: 'Revoyez', desc: "Le cours enregistré reste disponible dans l'onglet Passées" }
+    { icon: 'bi-folder', title: 'Revoyez', desc: "Le cours enregistré reste disponible dans l'onglet Passées" }
   ];
 
   get filteredClasses(): VirtualClass[] {
@@ -342,7 +342,7 @@ export class VirtualClassComponent implements OnInit {
   }
 
   getTabLabel() { return { upcoming: 'à venir', ongoing: 'en cours', past: 'passée' }[this.activeTab] || ''; }
-  getStatusLabel(s: string) { return { SCHEDULED: 'Planifiée', ONGOING: '🔴 En direct', COMPLETED: 'Terminée', CANCELLED: 'Annulée' }[s] || s; }
+  getStatusLabel(s: string) { return { SCHEDULED: 'Planifiée', ONGOING: 'En direct', COMPLETED: 'Terminée', CANCELLED: 'Annulée' }[s] || s; }
   getStatusColor(s: string) { return { SCHEDULED: '#6366f1', ONGOING: '#ef4444', COMPLETED: '#10b981', CANCELLED: '#94a3b8' }[s] || '#6366f1'; }
 
   joinRoom(id: number) { this.router.navigate(['/virtual-class', id, 'room']); }

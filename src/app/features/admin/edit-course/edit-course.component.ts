@@ -20,7 +20,7 @@ const CODE_FILE_EXTENSIONS: Record<string, string> = {
     <div class="fade-in-up">
       <div class="d-flex align-items-center gap-3 mb-4">
         <a routerLink="/teacher/courses" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
-        <h1 class="fw-bold mb-0">✏️ Modifier le cours</h1>
+        <h1 class="fw-bold mb-0"><i class="bi bi-pencil-square me-1"></i>Modifier le cours</h1>
       </div>
 
       <div *ngIf="loading" class="text-center py-5">
@@ -43,26 +43,26 @@ const CODE_FILE_EXTENSIONS: Record<string, string> = {
                 <div class="col-6">
                   <label class="form-label fw-semibold">Catégorie</label>
                   <select class="form-select" formControlName="category">
-                    <option *ngFor="let cat of categories" [value]="cat.key">{{ cat.icon }} {{ cat.label }}</option>
+                    <option *ngFor="let cat of categories" [value]="cat.key">{{ cat.label }}</option>
                   </select>
                 </div>
                 <div class="col-6">
                   <label class="form-label fw-semibold">Niveau</label>
                   <select class="form-select" formControlName="level">
-                    <option value="BEGINNER">🟢 Débutant</option>
-                    <option value="INTERMEDIATE">🟡 Intermédiaire</option>
-                    <option value="ADVANCED">🔴 Avancé</option>
+                    <option value="BEGINNER">Débutant</option>
+                    <option value="INTERMEDIATE">Intermédiaire</option>
+                    <option value="ADVANCED">Avancé</option>
                   </select>
                 </div>
               </div>
               <div class="form-check form-switch mb-4">
                 <input type="checkbox" class="form-check-input" id="pub" formControlName="published" style="width:48px;height:24px">
                 <label class="form-check-label fw-semibold ms-2" for="pub">
-                  {{ courseForm.get('published')?.value ? '✅ Publié' : '⏳ Brouillon' }}
+                  {{ courseForm.get('published')?.value ? 'Publié' : 'Brouillon' }}
                 </label>
               </div>
               <div *ngIf="error" class="alert alert-danger py-2">{{ error }}</div>
-              <div *ngIf="success" class="alert alert-success py-2">✅ Cours mis à jour !</div>
+              <div *ngIf="success" class="alert alert-success py-2"><i class="bi bi-check-circle me-1"></i>Cours mis à jour !</div>
               <button type="submit" class="btn btn-primary-custom" [disabled]="saving">
                 <span *ngIf="saving" class="spinner-border spinner-border-sm me-2"></span>
                 Sauvegarder les modifications
@@ -73,7 +73,7 @@ const CODE_FILE_EXTENSIONS: Record<string, string> = {
           <!-- Lessons / Exercises management -->
           <div class="card border-0 shadow-sm p-4" style="border-radius:16px">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <h5 class="fw-bold mb-0">📋 Programme du cours</h5>
+              <h5 class="fw-bold mb-0"><i class="bi bi-clipboard-check me-1"></i>Programme du cours</h5>
               <button class="btn btn-sm btn-primary-custom" (click)="startAddLesson()">
                 <i class="bi bi-plus-lg me-1"></i>Ajouter un exercice / une leçon
               </button>
@@ -113,7 +113,7 @@ const CODE_FILE_EXTENSIONS: Record<string, string> = {
 
             <!-- Lesson form -->
             <div *ngIf="lessonForm" class="border rounded-3 p-3 mt-3 bg-light">
-              <h6 class="fw-bold mb-3">{{ editingLessonId ? '✏️ Modifier' : '➕ Nouveau' }} : exercice / leçon</h6>
+              <h6 class="fw-bold mb-3">{{ editingLessonId ? 'Modifier' : 'Nouveau' }} : exercice / leçon</h6>
               <form [formGroup]="lessonForm" (ngSubmit)="onSubmitLesson()">
                 <div class="row g-3 mb-3">
                   <div class="col-8">
@@ -123,11 +123,11 @@ const CODE_FILE_EXTENSIONS: Record<string, string> = {
                   <div class="col-4">
                     <label class="form-label fw-semibold">Type</label>
                     <select class="form-select" formControlName="type">
-                      <option value="CODE_EXERCISE">💻 Exercice de code</option>
-                      <option value="EXCEL_EXERCISE">📊 Exercice Excel</option>
-                      <option value="VIDEO">🎬 Vidéo</option>
-                      <option value="PDF">📄 PDF</option>
-                      <option value="QUIZ">❓ Quiz</option>
+                      <option value="CODE_EXERCISE">Exercice de code</option>
+                      <option value="EXCEL_EXERCISE">Exercice Excel</option>
+                      <option value="VIDEO">Vidéo</option>
+                      <option value="PDF">PDF</option>
+                      <option value="QUIZ">Quiz</option>
                     </select>
                   </div>
                 </div>
@@ -136,7 +136,7 @@ const CODE_FILE_EXTENSIONS: Record<string, string> = {
                      *ngIf="lessonForm.get('type')?.value !== 'CODE_EXERCISE' && lessonForm.get('type')?.value !== 'EXCEL_EXERCISE'">
                   <input type="checkbox" class="form-check-input" id="isExercise" formControlName="exercise">
                   <label class="form-check-label fw-semibold" for="isExercise">
-                    🏋️ Afficher dans l'onglet "Pratique" (exercice)
+                    <i class="bi bi-clipboard-data me-1"></i>Afficher dans l'onglet "Pratique" (exercice)
                   </label>
                   <div class="form-text">Cochez si ce contenu est un exercice à faire plutôt qu'un cours à lire.</div>
                 </div>
@@ -159,15 +159,15 @@ const CODE_FILE_EXTENSIONS: Record<string, string> = {
                   <div class="mb-3" style="width:220px">
                     <label class="form-label fw-semibold">Langage de l'IDE</label>
                     <select class="form-select" formControlName="language">
-                      <option value="python">🐍 Python</option>
-                      <option value="javascript">🟨 JavaScript</option>
-                      <option value="java">☕ Java</option>
-                      <option value="sql">🗄️ SQL</option>
+                      <option value="python">Python</option>
+                      <option value="javascript">JavaScript</option>
+                      <option value="java">Java</option>
+                      <option value="sql">SQL</option>
                     </select>
                   </div>
 
                   <div class="mb-3">
-                    <label class="form-label fw-semibold">📄 Énoncé de l'exercice (PDF, optionnel)</label>
+                    <label class="form-label fw-semibold"><i class="bi bi-file-earmark-text me-1"></i>Énoncé de l'exercice (PDF, optionnel)</label>
                     <div class="form-text mb-2">
                       Affiché à gauche de l'IDE, comme une feuille de TP. Si vide, la description ci-dessus est utilisée.
                     </div>

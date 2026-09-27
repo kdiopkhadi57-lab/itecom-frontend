@@ -42,7 +42,7 @@ interface PendingUpload {
           <i class="bi bi-arrow-left"></i>
         </a>
         <div>
-          <h1 class="fw-bold mb-0">✨ Créer un cours</h1>
+          <h1 class="fw-bold mb-0"><i class="bi bi-stars me-1"></i>Créer un cours</h1>
           <p class="text-muted mb-0 small">Remplissez les informations de votre cours</p>
         </div>
       </div>
@@ -52,7 +52,7 @@ interface PendingUpload {
           <!-- Main Info -->
           <div class="col-lg-8">
             <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius:16px">
-              <h5 class="fw-bold mb-4">📝 Informations générales</h5>
+              <h5 class="fw-bold mb-4"><i class="bi bi-journal-text me-1"></i>Informations générales</h5>
 
               <div class="mb-3">
                 <label class="form-label fw-semibold">Titre du cours *</label>
@@ -73,15 +73,15 @@ interface PendingUpload {
                   <label class="form-label fw-semibold">Catégorie *</label>
                   <select class="form-select" formControlName="category">
                     <option value="">Choisir une catégorie</option>
-                    <option *ngFor="let cat of categories" [value]="cat.key">{{ cat.icon }} {{ cat.label }}</option>
+                    <option *ngFor="let cat of categories" [value]="cat.key">{{ cat.label }}</option>
                   </select>
                 </div>
                 <div class="col-md-6">
                   <label class="form-label fw-semibold">Niveau *</label>
                   <select class="form-select" formControlName="level">
-                    <option value="BEGINNER">🟢 Débutant</option>
-                    <option value="INTERMEDIATE">🟡 Intermédiaire</option>
-                    <option value="ADVANCED">🔴 Avancé</option>
+                    <option value="BEGINNER">Débutant</option>
+                    <option value="INTERMEDIATE">Intermédiaire</option>
+                    <option value="ADVANCED">Avancé</option>
                   </select>
                 </div>
               </div>
@@ -89,7 +89,7 @@ interface PendingUpload {
 
             <!-- Upload multiple fichiers / vidéos -->
             <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius:16px">
-              <h5 class="fw-bold mb-2">📤 Importer des fichiers</h5>
+              <h5 class="fw-bold mb-2"><i class="bi bi-upload me-1"></i>Importer des fichiers</h5>
               <p class="text-muted small mb-3">Sélectionnez plusieurs vidéos et/ou documents (PDF, Word) en une seule fois. Une leçon sera créée automatiquement pour chaque fichier.</p>
 
               <div class="upload-dropzone"
@@ -101,7 +101,7 @@ interface PendingUpload {
                 <input #fileInput type="file" multiple hidden
                        accept="video/*,.pdf,.doc,.docx"
                        (change)="onFilesSelected($event)">
-                <div style="font-size:2rem">📁</div>
+                <div style="font-size:2rem"><i class="bi bi-folder"></i></div>
                 <p class="fw-semibold mb-1">Cliquez ou déposez vos fichiers ici</p>
                 <p class="text-muted small mb-0">Vidéos (MP4, WebM...) et documents (PDF, Word) — plusieurs fichiers à la fois</p>
               </div>
@@ -109,14 +109,14 @@ interface PendingUpload {
               <div *ngIf="pendingUploads.length" class="mt-3 d-flex flex-column gap-2">
                 <div *ngFor="let u of pendingUploads; let i = index"
                      class="d-flex align-items-center gap-2 p-2 border rounded-3" style="background:#f8fafc">
-                  <span style="font-size:1.3rem">{{ u.kind === 'VIDEO' ? '🎬' : (u.kind === 'PDF' ? '📄' : '📎') }}</span>
+                  <span style="font-size:1.3rem"><i class="bi" [ngClass]="u.kind === 'VIDEO' ? 'bi-camera-reels' : (u.kind === 'PDF' ? 'bi-file-earmark-text' : 'bi-paperclip')"></i></span>
                   <div class="flex-grow-1" style="min-width:0">
                     <div class="small fw-semibold text-truncate">{{ u.name }}</div>
                     <div class="progress" style="height:5px" *ngIf="u.status==='uploading'">
                       <div class="progress-bar" [style.width.%]="u.progress"></div>
                     </div>
-                    <div class="small text-success" *ngIf="u.status==='done'">✅ Importé — leçon créée</div>
-                    <div class="small text-danger" *ngIf="u.status==='error'">❌ {{ u.error }}</div>
+                    <div class="small text-success" *ngIf="u.status==='done'"><i class="bi bi-check-circle me-1"></i>Importé — leçon créée</div>
+                    <div class="small text-danger" *ngIf="u.status==='error'"><i class="bi bi-x-circle me-1"></i>{{ u.error }}</div>
                   </div>
                   <button type="button" class="btn btn-sm btn-outline-secondary" *ngIf="u.status==='pending'" (click)="removePending(i)">
                     <i class="bi bi-x"></i>
@@ -135,14 +135,14 @@ interface PendingUpload {
             <!-- Lessons -->
             <div class="card border-0 shadow-sm p-4" style="border-radius:16px">
               <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-bold mb-0">📋 Leçons</h5>
+                <h5 class="fw-bold mb-0"><i class="bi bi-clipboard-check me-1"></i>Leçons</h5>
                 <button type="button" class="btn btn-sm btn-primary-custom" (click)="addLesson()">
                   <i class="bi bi-plus-circle me-1"></i>Ajouter une leçon
                 </button>
               </div>
 
               <div *ngIf="lessons.length === 0" class="text-center py-4 text-muted bg-light rounded-3">
-                <div style="font-size:2rem">📭</div>
+                <div style="font-size:2rem"><i class="bi bi-inbox"></i></div>
                 <p class="mb-0 small">Ajoutez des leçons à votre cours, ou importez des fichiers ci-dessus</p>
               </div>
 
@@ -163,11 +163,11 @@ interface PendingUpload {
                     </div>
                     <div class="col-md-4">
                       <select class="form-select form-select-sm" formControlName="type">
-                        <option value="VIDEO">🎬 Vidéo</option>
-                        <option value="PDF">📄 PDF</option>
-                        <option value="CODE_EXERCISE">💻 Exercice code</option>
-                        <option value="EXCEL_EXERCISE">📊 Exercice Excel</option>
-                        <option value="QUIZ">❓ Quiz</option>
+                        <option value="VIDEO">Vidéo</option>
+                        <option value="PDF">PDF</option>
+                        <option value="CODE_EXERCISE">Exercice code</option>
+                        <option value="EXCEL_EXERCISE">Exercice Excel</option>
+                        <option value="QUIZ">Quiz</option>
                       </select>
                     </div>
                   </div>
@@ -192,13 +192,13 @@ interface PendingUpload {
           <!-- Sidebar -->
           <div class="col-lg-4">
             <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius:16px; position:sticky; top: 80px">
-              <h5 class="fw-bold mb-4">⚙️ Paramètres</h5>
+              <h5 class="fw-bold mb-4"><i class="bi bi-gear me-1"></i>Paramètres</h5>
 
               <div class="mb-4">
                 <div class="form-check form-switch">
                   <input type="checkbox" class="form-check-input" id="publishSwitch" formControlName="published" style="width:48px;height:24px">
                   <label class="form-check-label fw-semibold ms-2" for="publishSwitch">
-                    {{ courseForm.get('published')?.value ? '✅ Publié' : '⏳ Brouillon' }}
+                    {{ courseForm.get('published')?.value ? 'Publié' : 'Brouillon' }}
                   </label>
                 </div>
                 <p class="text-muted small mt-1">{{ courseForm.get('published')?.value ? 'Visible par tous les étudiants' : 'Seul vous pouvez le voir' }}</p>
@@ -211,7 +211,7 @@ interface PendingUpload {
               </div>
 
               <div *ngIf="error" class="alert alert-danger py-2 small">{{ error }}</div>
-              <div *ngIf="success" class="alert alert-success py-2 small">✅ Cours créé avec succès !</div>
+              <div *ngIf="success" class="alert alert-success py-2 small"><i class="bi bi-check-circle me-1"></i>Cours créé avec succès !</div>
 
               <button type="submit" class="btn btn-primary-custom w-100" [disabled]="loading || courseForm.invalid">
                 <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>

@@ -14,7 +14,7 @@ import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course
     <div class="fade-in-up">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 class="fw-bold mb-1">📚 Mon Apprentissage</h1>
+          <h1 class="fw-bold mb-1"><i class="bi bi-journal-bookmark me-1"></i>Mon Apprentissage</h1>
           <p class="text-muted">Suivez votre progression sur tous vos cours</p>
         </div>
         <a routerLink="/courses" class="btn btn-primary-custom">
@@ -26,21 +26,21 @@ import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course
       <div class="row g-3 mb-4">
         <div class="col-sm-4">
           <div class="card border-0 shadow-sm p-4 text-center" style="border-radius:16px">
-            <div style="font-size:2rem">📚</div>
+            <div style="font-size:2rem"><i class="bi bi-journal-bookmark"></i></div>
             <div class="fw-bold fs-3 mt-1">{{ courses.length }}</div>
             <div class="text-muted small">Cours inscrits</div>
           </div>
         </div>
         <div class="col-sm-4">
           <div class="card border-0 shadow-sm p-4 text-center" style="border-radius:16px">
-            <div style="font-size:2rem">✅</div>
+            <div style="font-size:2rem"><i class="bi bi-check-circle"></i></div>
             <div class="fw-bold fs-3 mt-1">{{ totalCompleted }}</div>
             <div class="text-muted small">Leçons complétées</div>
           </div>
         </div>
         <div class="col-sm-4">
           <div class="card border-0 shadow-sm p-4 text-center" style="border-radius:16px">
-            <div style="font-size:2rem">🔥</div>
+            <div style="font-size:2rem"><i class="bi bi-fire"></i></div>
             <div class="fw-bold fs-3 mt-1">{{ avgProgress }}%</div>
             <div class="text-muted small">Progression moyenne</div>
           </div>
@@ -54,7 +54,7 @@ import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course
 
       <!-- Empty state -->
       <div *ngIf="!loading && courses.length === 0" class="text-center py-5">
-        <div style="font-size:5rem">📭</div>
+        <div style="font-size:5rem"><i class="bi bi-inbox"></i></div>
         <h3 class="mt-3 fw-bold">Aucun cours en cours</h3>
         <p class="text-muted">Inscrivez-vous à des cours pour démarrer votre apprentissage</p>
         <a routerLink="/courses" class="btn btn-primary-custom mt-3">Découvrir les cours</a>
@@ -66,7 +66,7 @@ import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course
           <div class="card course-card h-100">
             <div class="course-thumbnail-placeholder"
                  [style.background]="getCategoryGradient(course.category)">
-              <span>{{ getCategoryIcon(course.category) }}</span>
+              <span><i class="bi" [ngClass]="getCategoryIcon(course.category)"></i></span>
             </div>
             <div class="card-body d-flex flex-column p-4">
               <span class="badge-category mb-2">{{ getCategoryLabel(course.category) }}</span>
@@ -81,7 +81,7 @@ import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course
                   <div class="progress-bar" [style.width.%]="p.overallPercentage"></div>
                 </div>
                 <div *ngIf="p.overallPercentage === 100" class="mt-2 text-center">
-                  <span class="badge bg-success rounded-pill px-3">🎉 Cours terminé !</span>
+                  <span class="badge bg-success rounded-pill px-3"><i class="bi bi-stars me-1"></i>Cours terminé !</span>
                 </div>
               </div>
 
@@ -124,7 +124,7 @@ export class MyLearningComponent implements OnInit {
   }
 
   getProgress(courseId: number): Progress | null { return this.progressMap[courseId] || null; }
-  getCategoryIcon(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.icon || '📚'; }
+  getCategoryIcon(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.icon || 'bi-journal-bookmark'; }
   getCategoryLabel(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.label || cat; }
   getCategoryGradient(cat: string) {
     let color = COURSE_CATEGORIES.find(c => c.key === cat)?.color || '#6366f1';

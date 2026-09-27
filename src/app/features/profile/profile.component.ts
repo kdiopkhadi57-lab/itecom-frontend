@@ -11,7 +11,7 @@ import { HttpClient } from '@angular/common/http';
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   template: `
     <div class="fade-in-up">
-      <h1 class="fw-bold mb-4">👤 Mon Profil</h1>
+      <h1 class="fw-bold mb-4"><i class="bi bi-person me-1"></i>Mon Profil</h1>
 
       <div class="row g-4">
         <!-- Profile Card -->
@@ -58,7 +58,7 @@ import { HttpClient } from '@angular/common/http';
         <!-- Edit Form -->
         <div class="col-lg-8">
           <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius:20px">
-            <h5 class="fw-bold mb-4">✏️ Modifier mes informations</h5>
+            <h5 class="fw-bold mb-4"><i class="bi bi-pencil-square me-1"></i>Modifier mes informations</h5>
             <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
               <div class="row g-3 mb-3">
                 <div class="col-6">
@@ -83,7 +83,7 @@ import { HttpClient } from '@angular/common/http';
                 <textarea class="form-control" rows="3" formControlName="bio"
                   placeholder="Parlez-nous de vous..."></textarea>
               </div>
-              <div *ngIf="saveSuccess" class="alert alert-success py-2">✅ Profil mis à jour !</div>
+              <div *ngIf="saveSuccess" class="alert alert-success py-2"><i class="bi bi-check-circle me-1"></i>Profil mis à jour !</div>
               <button type="submit" class="btn btn-primary-custom" [disabled]="savingProfile">
                 <span *ngIf="savingProfile" class="spinner-border spinner-border-sm me-2"></span>
                 Sauvegarder
@@ -93,7 +93,7 @@ import { HttpClient } from '@angular/common/http';
 
           <!-- Change Password -->
           <div class="card border-0 shadow-sm p-4" style="border-radius:20px">
-            <h5 class="fw-bold mb-4">🔐 Changer le mot de passe</h5>
+            <h5 class="fw-bold mb-4"><i class="bi bi-shield-lock me-1"></i>Changer le mot de passe</h5>
             <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
               <div class="mb-3">
                 <label class="form-label fw-semibold">Mot de passe actuel</label>
@@ -107,7 +107,7 @@ import { HttpClient } from '@angular/common/http';
                 <label class="form-label fw-semibold">Confirmer le nouveau mot de passe</label>
                 <input type="password" class="form-control" formControlName="confirmPassword">
               </div>
-              <div *ngIf="pwdSuccess" class="alert alert-success py-2">✅ Mot de passe mis à jour !</div>
+              <div *ngIf="pwdSuccess" class="alert alert-success py-2"><i class="bi bi-check-circle me-1"></i>Mot de passe mis à jour !</div>
               <div *ngIf="pwdError" class="alert alert-danger py-2">{{ pwdError }}</div>
               <button type="submit" class="btn btn-outline-danger" [disabled]="changingPwd">
                 Changer le mot de passe
@@ -194,7 +194,7 @@ export class ProfileComponent implements OnInit {
   }
 
   getRoleLabel(role: string | undefined) {
-    return { ROLE_STUDENT: '👨‍🎓 Étudiant', ROLE_TEACHER: '👨‍🏫 Professeur', ROLE_ADMIN: '⚙️ Admin' }[role || ''] || role;
+    return { ROLE_STUDENT: 'Étudiant', ROLE_TEACHER: 'Professeur', ROLE_ADMIN: 'Admin' }[role || ''] || role;
   }
 
   getSpecializationLabel(key: string | undefined) {

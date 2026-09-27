@@ -15,7 +15,7 @@ import { UserScopeService } from '../../../core/services/user-scope.service';
       <!-- Header -->
       <div class="text-center py-5 mb-4 rounded-4"
            style="background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);">
-        <h1 class="fw-bold text-white mb-2">🎓 Nos Cours</h1>
+        <h1 class="fw-bold text-white mb-2"><i class="bi bi-mortarboard me-1"></i>Nos Cours</h1>
         <p class="text-white opacity-75 mb-4">Maîtrisez les technologies les plus demandées</p>
         <div class="d-flex justify-content-center">
           <div class="input-group" style="max-width: 480px;">
@@ -39,7 +39,7 @@ import { UserScopeService } from '../../../core/services/user-scope.service';
           [class.btn-dark]="selectedCategory === cat.key"
           [class.btn-outline-secondary]="selectedCategory !== cat.key"
           (click)="filterByCategory(cat.key)">
-          {{ cat.icon }} {{ cat.label }}
+          <i class="bi me-1" [ngClass]="cat.icon"></i>{{ cat.label }}
         </button>
       </div>
 
@@ -80,7 +80,7 @@ import { UserScopeService } from '../../../core/services/user-scope.service';
         </div>
 
         <div *ngIf="filteredCourses.length === 0" class="text-center py-5">
-          <div style="font-size:4rem">🔍</div>
+          <div style="font-size:4rem"><i class="bi bi-search"></i></div>
           <h4 class="mt-3">Aucun cours trouvé</h4>
           <p class="text-muted">Essayez d'autres filtres ou mots-clés</p>
           <button class="btn btn-primary-custom" (click)="resetFilters()">Réinitialiser</button>
@@ -92,7 +92,7 @@ import { UserScopeService } from '../../../core/services/user-scope.service';
               <!-- Thumbnail -->
               <div class="course-thumbnail-placeholder"
                    [style.background]="getCategoryColor(course.category)">
-                <span>{{ getCategoryIcon(course.category) }}</span>
+                <span><i class="bi" [ngClass]="getCategoryIcon(course.category)"></i></span>
               </div>
 
               <div class="card-body d-flex flex-column p-4">
@@ -142,9 +142,9 @@ export class CourseListComponent implements OnInit {
   categories = COURSE_CATEGORIES;
   userCategoryKeys: string[] | null = null;
   levels = [
-    { key: 'BEGINNER', label: '🟢 Débutant' },
-    { key: 'INTERMEDIATE', label: '🟡 Intermédiaire' },
-    { key: 'ADVANCED', label: '🔴 Avancé' }
+    { key: 'BEGINNER', label: 'Débutant' },
+    { key: 'INTERMEDIATE', label: 'Intermédiaire' },
+    { key: 'ADVANCED', label: 'Avancé' }
   ];
 
   get visibleCategories() {
@@ -205,7 +205,7 @@ export class CourseListComponent implements OnInit {
   }
 
   getCategoryIcon(cat: string): string {
-    return COURSE_CATEGORIES.find(c => c.key === cat)?.icon || '📚';
+    return COURSE_CATEGORIES.find(c => c.key === cat)?.icon || 'bi-journal-bookmark';
   }
 
   getCategoryLabel(cat: string): string {
@@ -218,7 +218,7 @@ export class CourseListComponent implements OnInit {
   }
 
   getLevelLabel(level: string): string {
-    let map: Record<string, string> = { BEGINNER: '🟢 Débutant', INTERMEDIATE: '🟡 Intermédiaire', ADVANCED: '🔴 Avancé' };
+    let map: Record<string, string> = { BEGINNER: 'Débutant', INTERMEDIATE: 'Intermédiaire', ADVANCED: 'Avancé' };
     return map[level] || level;
   }
 

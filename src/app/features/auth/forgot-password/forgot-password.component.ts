@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
          style="background: linear-gradient(135deg, #0f172a, #1e293b);">
       <div class="card border-0 shadow-lg p-4 w-100" style="max-width:420px; border-radius:20px;">
         <div class="text-center mb-4">
-          <div style="font-size:2.5rem">🔑</div>
+          <div style="font-size:2.5rem"><i class="bi bi-key"></i></div>
           <h2 class="fw-bold mt-2">Mot de passe oublié</h2>
           <p class="text-muted small">Entrez votre email pour recevoir un lien de réinitialisation</p>
         </div>
@@ -33,7 +33,7 @@ import { CommonModule } from '@angular/common';
         </ng-container>
         <ng-container *ngIf="sent">
           <div class="text-center py-3">
-            <div style="font-size:3rem">📨</div>
+            <div style="font-size:3rem"><i class="bi bi-envelope-paper"></i></div>
             <p class="mt-3 text-muted">Si cet email existe, vous recevrez un lien de réinitialisation.</p>
           </div>
         </ng-container>

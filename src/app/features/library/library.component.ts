@@ -35,7 +35,7 @@ interface DiscoveredBook {
       <!-- Header -->
       <div class="d-flex justify-content-between align-items-start mb-4">
         <div>
-          <h1 class="fw-bold mb-1">📚 Bibliothèque</h1>
+          <h1 class="fw-bold mb-1"><i class="bi bi-journal-bookmark me-1"></i>Bibliothèque</h1>
           <p class="text-muted small">Explorez notre collection de livres : littérature africaine, informatique, génie logiciel…</p>
         </div>
         <div class="d-flex gap-2">
@@ -127,7 +127,7 @@ interface DiscoveredBook {
             <div class="book-cover position-relative" [style.background]="getCoverColor(book)">
               <img *ngIf="book.coverUrl" [src]="book.coverUrl" class="cover-img" [alt]="book.title">
               <div *ngIf="!book.coverUrl" class="cover-placeholder d-flex flex-column align-items-center justify-content-center p-2">
-                <span class="cover-icon">{{ getCategoryIcon(book.category) }}</span>
+                <span class="cover-icon"><i class="bi" [ngClass]="getCategoryIcon(book.category)"></i></span>
                 <span class="cover-title text-white text-center fw-bold mt-1">{{ book.title }}</span>
               </div>
               <span *ngIf="book.hasFile" class="position-absolute top-0 end-0 m-1 badge bg-success"
@@ -160,7 +160,7 @@ interface DiscoveredBook {
           <!-- Header -->
           <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-              <h5 class="fw-bold mb-0">🔍 Découvrir des livres</h5>
+              <h5 class="fw-bold mb-0"><i class="bi bi-search me-1"></i>Découvrir des livres</h5>
               <p class="text-muted small mb-0">Recherchez dans Google Books et importez en un clic</p>
             </div>
             <button class="btn btn-sm btn-outline-secondary" (click)="showDiscoverModal = false">
@@ -230,7 +230,7 @@ interface DiscoveredBook {
                   <img *ngIf="b.coverUrl" [src]="b.coverUrl" [alt]="b.title" class="w-100 h-100" style="object-fit:cover;border-radius:6px">
                   <div *ngIf="!b.coverUrl" class="no-cover d-flex align-items-center justify-content-center h-100 rounded"
                        [style.background]="getDiscoverColor(b)">
-                    <span style="font-size:1.6rem">{{ getDiscoverIcon(b) }}</span>
+                    <span style="font-size:1.6rem"><i class="bi" [ngClass]="getDiscoverIcon(b)"></i></span>
                   </div>
                 </div>
 
@@ -300,7 +300,7 @@ interface DiscoveredBook {
             <div class="book-detail-cover flex-shrink-0" [style.background]="getCoverColor(selectedBook)">
               <img *ngIf="selectedBook.coverUrl" [src]="selectedBook.coverUrl" class="w-100 h-100" style="object-fit:cover;border-radius:8px" [alt]="selectedBook.title">
               <div *ngIf="!selectedBook.coverUrl" class="d-flex flex-column align-items-center justify-content-center h-100 p-3">
-                <span style="font-size:3rem">{{ getCategoryIcon(selectedBook.category) }}</span>
+                <span style="font-size:3rem"><i class="bi" [ngClass]="getCategoryIcon(selectedBook.category)"></i></span>
                 <span class="text-white text-center fw-bold mt-2 small">{{ selectedBook.title }}</span>
               </div>
             </div>
@@ -407,7 +407,7 @@ interface DiscoveredBook {
       <div *ngIf="showAddModal" class="modal-overlay" (click)="showAddModal = false">
         <div class="modal-box" style="max-width:560px" (click)="$event.stopPropagation()">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0">➕ Ajouter un livre</h5>
+            <h5 class="fw-bold mb-0"><i class="bi bi-plus-circle me-1"></i>Ajouter un livre</h5>
             <button class="btn btn-sm btn-outline-secondary" (click)="showAddModal = false">
               <i class="bi bi-x-lg"></i>
             </button>
@@ -541,18 +541,18 @@ export class LibraryComponent implements OnInit {
     { label: '🇸🇳 Birago Diop', query: 'Birago Diop', lang: 'fr' },
     { label: '🇸🇳 Fatou Diome', query: 'Fatou Diome', lang: 'fr' },
     { label: '🇸🇳 Boubacar Boris Diop', query: 'Boubacar Boris Diop', lang: 'fr' },
-    { label: '🌍 Roman sénégalais', query: 'roman sénégalais Sénégal', lang: 'fr' },
-    { label: '🌍 Littérature africaine', query: 'littérature africaine roman', lang: 'fr' },
-    { label: '🌍 Négritude poésie', query: 'négritude poésie africaine Césaire Senghor', lang: 'fr' },
-    { label: '🌍 Ahmadou Kourouma', query: 'Ahmadou Kourouma', lang: 'fr' },
-    { label: '🌍 Mongo Beti', query: 'Mongo Beti roman', lang: 'fr' },
+    { label: 'Roman sénégalais', query: 'roman sénégalais Sénégal', lang: 'fr' },
+    { label: 'Littérature africaine', query: 'littérature africaine roman', lang: 'fr' },
+    { label: 'Négritude poésie', query: 'négritude poésie africaine Césaire Senghor', lang: 'fr' },
+    { label: 'Ahmadou Kourouma', query: 'Ahmadou Kourouma', lang: 'fr' },
+    { label: 'Mongo Beti', query: 'Mongo Beti roman', lang: 'fr' },
     // Informatique
-    { label: '💻 Algorithmes', query: 'algorithmes structures de données', lang: 'fr' },
-    { label: '🏗️ Génie logiciel', query: 'génie logiciel conception', lang: 'fr' },
-    { label: '🧠 Intelligence artificielle', query: 'intelligence artificielle machine learning', lang: 'fr' },
-    { label: '📐 UML modélisation', query: 'UML modélisation objet', lang: 'fr' },
-    { label: '🔬 Bases de données', query: 'bases de données SQL conception', lang: 'fr' },
-    { label: '🌐 Réseaux informatiques', query: 'réseaux informatiques protocoles', lang: 'fr' },
+    { label: 'Algorithmes', query: 'algorithmes structures de données', lang: 'fr' },
+    { label: 'Génie logiciel', query: 'génie logiciel conception', lang: 'fr' },
+    { label: 'Intelligence artificielle', query: 'intelligence artificielle machine learning', lang: 'fr' },
+    { label: 'UML modélisation', query: 'UML modélisation objet', lang: 'fr' },
+    { label: 'Bases de données', query: 'bases de données SQL conception', lang: 'fr' },
+    { label: 'Réseaux informatiques', query: 'réseaux informatiques protocoles', lang: 'fr' },
   ];
 
   newBook: Partial<Book> = {
@@ -622,14 +622,14 @@ export class LibraryComponent implements OnInit {
 
   getCategoryIcon(category: string): string {
     const icons: Record<string, string> = {
-      'Littérature':    '📖',
-      'Informatique':   '💻',
-      'Histoire':       '🏛️',
-      'Sciences':       '🔬',
-      'Mathématiques':  '📐',
-      'Philosophie':    '🧠',
+      'Littérature':    'bi-book',
+      'Informatique':   'bi-laptop',
+      'Histoire':       'bi-bank2',
+      'Sciences':       'bi-activity',
+      'Mathématiques':  'bi-rulers',
+      'Philosophie':    'bi-cpu',
     };
-    return icons[category] ?? '📚';
+    return icons[category] ?? 'bi-journal-bookmark';
   }
 
   openBook(book: Book) {

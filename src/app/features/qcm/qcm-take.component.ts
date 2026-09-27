@@ -76,7 +76,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
            class="d-flex align-items-center justify-content-center p-4"
            style="position:fixed;inset:0;background:rgba(20,20,30,.96);z-index:3000;pointer-events:all">
         <div class="card border-0 shadow text-center p-5" style="max-width:500px">
-          <div style="font-size:3.5rem">🛑</div>
+          <div style="font-size:3.5rem"><i class="bi bi-sign-stop"></i></div>
           <h3 class="mt-3 text-danger fw-bold">Session interrompue</h3>
           <p class="text-muted mt-2">{{ terminationReason }}</p>
           <p class="text-muted mt-2">Vos réponses ont été automatiquement soumises dans leur état actuel.</p>
@@ -86,7 +86,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
 
       <!-- Résultat bloqué suite à une exclusion (temps estimé pas encore écoulé) -->
       <div *ngIf="status === 'blocked'" class="text-center py-5">
-        <div style="font-size:3.5rem">🔒</div>
+        <div style="font-size:3.5rem"><i class="bi bi-lock"></i></div>
         <h3 class="mt-3 text-danger fw-bold">Résultat non disponible</h3>
         <p class="text-muted mt-2" style="max-width:480px;margin:0 auto">{{ blockedMessage }}</p>
         <a routerLink="/qcm" class="btn btn-outline-secondary mt-3" style="border-radius:12px">← Retour aux devoirs</a>
@@ -96,7 +96,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
       <div *ngIf="status === 'active' && fullscreenWarning"
            class="d-flex flex-column align-items-center justify-content-center text-center p-4"
            style="position:fixed;inset:0;background:rgba(20,20,30,.92);z-index:2000;color:#fff">
-        <div style="font-size:3rem">⛶</div>
+        <div style="font-size:3rem"><i class="bi bi-arrows-fullscreen"></i></div>
         <h4 class="mt-3 fw-bold">Mode plein écran requis</h4>
         <p class="mb-2" style="max-width:480px;color:#e5e7eb">
           Le devoir doit être passé en plein écran. Vous avez quitté ce mode :
@@ -107,7 +107,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
           sinon vos réponses seront automatiquement soumises.
         </p>
         <button class="btn btn-lg" style="background:#6366f1;color:#fff;border-radius:12px" (click)="resumeFullscreen()">
-          ⛶ Revenir en plein écran
+          <i class="bi bi-arrows-fullscreen me-1"></i>Revenir en plein écran
         </button>
       </div>
 
@@ -138,7 +138,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
       <!-- RÉSULTAT après soumission -->
       <div *ngIf="status === 'result' && resultat">
         <div class="text-center mb-4">
-          <div style="font-size:4rem">{{ resultat.mention === 'Excellent' ? '🏆' : resultat.mention === 'Bien' ? '👍' : resultat.mention === 'Passable' ? '😊' : '😔' }}</div>
+          <div style="font-size:4rem"><i class="bi" [ngClass]="resultat.mention === 'Excellent' ? 'bi-trophy' : resultat.mention === 'Bien' ? 'bi-hand-thumbs-up' : resultat.mention === 'Passable' ? 'bi-emoji-smile' : 'bi-emoji-frown'"></i></div>
           <h2 class="fw-bold mt-2">{{ resultat.mention }}</h2>
           <p class="text-muted">{{ resultat.qcmTitle }}</p>
           <div class="d-inline-flex align-items-center gap-4 p-4 rounded-4 mb-3"
@@ -164,7 +164,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
         <div class="card border-0 shadow-sm mb-4" style="border-radius:16px">
           <div class="card-body p-0">
             <div class="p-4 border-bottom">
-              <h5 class="fw-bold mb-0">📋 Correction détaillée</h5>
+              <h5 class="fw-bold mb-0"><i class="bi bi-clipboard-check me-1"></i>Correction détaillée</h5>
             </div>
             <div *ngFor="let d of resultat.detail; let i = index"
                  class="d-flex align-items-start gap-3 p-4"
@@ -172,7 +172,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
               <div style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:700;flex-shrink:0"
                    [style.background]="d.isCorrect ? '#d1fae5' : '#fee2e2'"
                    [style.color]="d.isCorrect ? '#065f46' : '#991b1b'">
-                {{ d.isCorrect ? '✓' : '✗' }}
+                <i class="bi" [ngClass]="d.isCorrect ? 'bi-check-lg' : 'bi-x-lg'"></i>
               </div>
               <div class="flex-grow-1">
                 <div class="fw-semibold mb-1">{{ d.questionText }}
@@ -198,7 +198,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
       <!-- BIENVENUE : règles avant de démarrer -->
       <div *ngIf="status === 'welcome' && acces">
         <div class="card border-0 shadow p-5 text-center" style="border-radius:16px">
-          <div style="font-size:3rem">📝</div>
+          <div style="font-size:3rem"><i class="bi bi-journal-text"></i></div>
           <h3 class="mt-3 fw-bold">{{ acces.title }}</h3>
           <p class="text-muted mb-4" *ngIf="acces.description">{{ acces.description }}</p>
           <div class="identity-box text-start mb-3">
@@ -242,7 +242,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
           </div>
           <div class="alert alert-danger small text-start mb-3">
             <i class="bi bi-shield-exclamation me-1"></i>
-            <strong>⚠️ Règle du mode plein écran :</strong> vous ne pouvez quitter le plein écran qu'une seule fois.
+            <strong><i class="bi bi-exclamation-triangle me-1"></i>Règle du mode plein écran :</strong> vous ne pouvez quitter le plein écran qu'une seule fois.
             À la <strong>2ème sortie, vos réponses seront automatiquement soumises</strong> dans leur état actuel.
           </div>
           <div class="alert alert-info small text-start mb-4">

@@ -45,7 +45,7 @@ interface PendingStudent {
 
       <!-- Vide -->
       <div *ngIf="!loading && students.length === 0" class="text-center py-5">
-        <div style="font-size:4rem">✅</div>
+        <div style="font-size:4rem"><i class="bi bi-check-circle"></i></div>
         <h4 class="mt-3 fw-bold">Aucune inscription en attente</h4>
         <p class="text-muted">Toutes les demandes ont été traitées.</p>
       </div>
@@ -85,7 +85,7 @@ interface PendingStudent {
                   <div class="col-md-4">
                     <div class="p-3 rounded-3" style="background:#fffbeb;border:1px solid #fde68a">
                       <div class="d-flex align-items-center gap-2 mb-2">
-                        <span style="font-size:1.3rem">{{ s.paymentMethod === 'WAVE' ? '🌊' : '🟠' }}</span>
+                        <span style="font-size:1.3rem"><i class="bi" [ngClass]="s.paymentMethod === 'WAVE' ? 'bi-water' : 'bi-circle-fill'"></i></span>
                         <span class="fw-semibold">{{ s.paymentMethod === 'WAVE' ? 'Wave' : 'Orange Money' }}</span>
                       </div>
                       <div class="small">

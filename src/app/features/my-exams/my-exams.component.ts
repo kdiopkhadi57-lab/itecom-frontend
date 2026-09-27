@@ -101,7 +101,7 @@ interface QcmSummary {
           <div class="spinner-border text-primary"></div>
         </div>
         <div *ngIf="!loadingQcm && qcms.length === 0" class="text-center py-5">
-          <div style="font-size:3.5rem">📝</div>
+          <div style="font-size:3.5rem"><i class="bi bi-journal-text"></i></div>
           <h5 class="mt-3 fw-bold">Aucun devoir disponible</h5>
           <p class="text-muted">Vos professeurs n'ont pas encore publié de devoir.</p>
         </div>
@@ -115,7 +115,7 @@ interface QcmSummary {
                 <div class="d-flex align-items-start justify-content-between mb-2">
                   <h6 class="fw-bold mb-0 flex-grow-1 me-2">{{ q.title }}</h6>
                   <span *ngIf="q.alreadyTaken" class="badge rounded-pill" style="background:#d1fae5;color:#065f46">
-                    ✅ Déjà passé
+                    <i class="bi bi-check-circle me-1"></i>Déjà passé
                   </span>
                 </div>
                 <p class="text-muted small mb-3" *ngIf="q.description">{{ q.description }}</p>

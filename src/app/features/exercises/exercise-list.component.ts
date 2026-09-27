@@ -39,7 +39,7 @@ interface ProjectFile {
       <!-- Header -->
       <div class="d-flex justify-content-between align-items-center mb-3 px-4 pt-4" *ngIf="isTeacher">
         <div>
-          <h1 class="fw-bold mb-1">🏋️ Cas pratiques</h1>
+          <h1 class="fw-bold mb-1"><i class="bi bi-clipboard-data me-1"></i>Cas pratiques</h1>
           <p class="text-muted small">Gestion des exercices de code et Excel</p>
         </div>
         <button class="btn btn-primary-custom" (click)="startCreate()">
@@ -58,7 +58,7 @@ interface ProjectFile {
           </div>
           <!-- Create/Edit Form -->
           <div *ngIf="form" class="card border-0 shadow-sm p-3 mb-4" style="border-radius:12px">
-            <h5 class="fw-bold mb-3">{{ editingId ? '✏️ Modifier' : '➕ Nouvel' }} exercice</h5>
+            <h5 class="fw-bold mb-3">{{ editingId ? 'Modifier' : 'Nouvel' }} exercice</h5>
             <form [formGroup]="form" (ngSubmit)="onSubmit()">
               <div class="mb-2">
                 <label class="form-label fw-semibold small">Titre *</label>
@@ -67,17 +67,17 @@ interface ProjectFile {
               <div class="mb-2">
                 <label class="form-label fw-semibold small">Type *</label>
                 <select class="form-select form-select-sm" formControlName="type">
-                  <option value="CODE_EXERCISE">💻 Code / PDF</option>
-                  <option value="EXCEL_EXERCISE">📊 Tableur</option>
+                  <option value="CODE_EXERCISE">Code / PDF</option>
+                  <option value="EXCEL_EXERCISE">Tableur</option>
                 </select>
               </div>
               <div class="mb-2" *ngIf="form.get('type')?.value === 'CODE_EXERCISE'">
                 <label class="form-label fw-semibold small">Langage</label>
                 <select class="form-select form-select-sm" formControlName="language">
-                  <option value="python">🐍 Python</option>
-                  <option value="javascript">🟨 JavaScript</option>
-                  <option value="java">☕ Java (packages/classes)</option>
-                  <option value="sql">🗄️ SQL</option>
+                  <option value="python">Python</option>
+                  <option value="javascript">JavaScript</option>
+                  <option value="java">Java (packages/classes)</option>
+                  <option value="sql">SQL</option>
                 </select>
               </div>
               <div class="mb-2">
@@ -117,10 +117,10 @@ interface ProjectFile {
               </p>
               <div class="d-flex gap-1 small">
                 <span class="badge" [class.badge-success]="ex.completed" [class.badge-light]="!ex.completed">
-                  {{ ex.completed ? '✅ Fait' : '⏳ À faire' }}
+                  {{ ex.completed ? 'Fait' : 'À faire' }}
                 </span>
                 <span class="badge" [ngClass]="ex.type === 'EXCEL_EXERCISE' ? 'badge-info' : 'badge-primary'">
-                  {{ ex.type === 'EXCEL_EXERCISE' ? '📊' : '💻' }}
+                  <i class="bi" [ngClass]="ex.type === 'EXCEL_EXERCISE' ? 'bi-bar-chart' : 'bi-laptop'"></i>
                 </span>
               </div>
               <ng-container *ngIf="isTeacher && selectedExercise?.id === ex.id">
@@ -141,7 +141,7 @@ interface ProjectFile {
         <div class="ide-panel" style="flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden">
           <div *ngIf="!selectedExercise" class="d-flex align-items-center justify-content-center h-100 text-muted">
             <div class="text-center">
-              <div style="font-size:3rem">👈</div>
+              <div style="font-size:3rem"><i class="bi bi-arrow-left-circle"></i></div>
               <p class="mt-2">Sélectionnez un exercice pour commencer</p>
             </div>
           </div>
@@ -162,7 +162,7 @@ interface ProjectFile {
               <button class="btn btn-success btn-sm" (click)="executeCode()" [disabled]="codeLoading">
                 <i class="bi bi-play-fill me-1"></i>{{ codeLoading ? 'Exécution...' : 'Exécuter' }}
               </button>
-              <span *ngIf="isJava" class="text-white-50 small">☕ Projet multi-fichiers</span>
+              <span *ngIf="isJava" class="text-white-50 small"><i class="bi bi-cup-hot me-1"></i>Projet multi-fichiers</span>
             </div>
 
             <!-- Package / class explorer (Java uniquement) -->
@@ -264,7 +264,7 @@ interface ProjectFile {
                 <!-- Bottom actions -->
                 <div class="bg-light p-2 d-flex gap-2 border-top" style="background:#f8f9fa!important">
                   <button class="btn btn-sm btn-outline-secondary" (click)="markComplete()" [disabled]="markingComplete">
-                    <i class="bi bi-check-circle me-1"></i>{{ selectedExercise.completed ? '✅ Complété' : '⏳ Marquer terminé' }}
+                    <i class="bi bi-check-circle me-1"></i>{{ selectedExercise.completed ? 'Complété' : 'Marquer terminé' }}
                   </button>
                   <button class="btn btn-sm btn-outline-danger" (click)="clearCode()">
                     <i class="bi bi-trash me-1"></i>Effacer

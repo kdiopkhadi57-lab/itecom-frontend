@@ -41,7 +41,7 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
       <div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-primary"></div></div>
 
       <div *ngIf="!loading && results.length === 0" class="text-center py-5">
-        <div style="font-size:4rem">📭</div>
+        <div style="font-size:4rem"><i class="bi bi-inbox"></i></div>
         <h5 class="mt-3 fw-bold">Aucun étudiant</h5>
         <p class="text-muted">Aucun étudiant n'est inscrit à ce devoir et personne ne l'a encore passé.</p>
       </div>
@@ -164,7 +164,7 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
                   <thead><tr><th>Ligne</th><th>Attendu</th><th>Réponse de l'étudiant</th><th>Source</th><th class="text-end">Points</th></tr></thead>
                   <tbody>
                     <tr *ngFor="let row of grid.rows" [class.table-success]="row.correct" [class.table-danger]="!row.correct">
-                      <td class="fw-semibold" [title]="row.question || ''">{{ row.correct ? '✓' : '✗' }} {{ row.label }}</td>
+                      <td class="fw-semibold" [title]="row.question || ''"><i class="bi" [ngClass]="row.correct ? 'bi-check-lg' : 'bi-x-lg'"></i> {{ row.label }}</td>
                       <td>{{ row.expectedRaw }}</td>
                       <td>{{ row.studentValue || '(aucune)' }}</td>
                       <td class="small text-muted">{{ row.source || '—' }}</td>
@@ -186,7 +186,7 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
             </div>
 
             <div *ngFor="let rep of detail.reponses" class="answer-row">
-              <div class="answer-icon" [class.ok]="rep.isCorrect">{{ rep.isCorrect ? '✓' : '✗' }}</div>
+              <div class="answer-icon" [class.ok]="rep.isCorrect"><i class="bi" [ngClass]="rep.isCorrect ? 'bi-check-lg' : 'bi-x-lg'"></i></div>
               <div class="flex-grow-1 min-w-0">
                 <div class="fw-semibold small mb-1 question-preview">{{ rep.questionText }}
                   <span class="text-muted">({{ rep.points }} pt{{ rep.points > 1 ? 's' : '' }})</span>

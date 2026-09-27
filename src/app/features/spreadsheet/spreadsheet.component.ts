@@ -30,7 +30,7 @@ type Token = { type: 'num' | 'ref' | 'ident' | 'op' | 'lparen' | 'rparen' | 'com
     <div class="fade-in-up">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-          <h1 class="fw-bold mb-1">📊 Tableur</h1>
+          <h1 class="fw-bold mb-1"><i class="bi bi-bar-chart me-1"></i>Tableur</h1>
           <p class="text-muted small">Pratiquez vos calculs comptables avec un tableur intégré (formules type Excel)</p>
         </div>
         <div class="d-flex gap-2 align-items-center">
@@ -190,7 +190,7 @@ export class SpreadsheetComponent implements OnInit {
 
   templates: Record<string, TemplateDef> = {
     facture: {
-      label: '🧾 Facture',
+      label: 'Facture',
       cells: {
         A1: { raw: 'FACTURE', bold: true },
         A3: { raw: 'Désignation', bold: true },
@@ -206,7 +206,7 @@ export class SpreadsheetComponent implements OnInit {
       }
     },
     balance: {
-      label: '⚖️ Balance de vérification',
+      label: 'Balance de vérification',
       cells: {
         A1: { raw: 'N° Compte', bold: true }, B1: { raw: 'Intitulé du compte', bold: true }, C1: { raw: 'Débit', bold: true }, D1: { raw: 'Crédit', bold: true },
         A2: { raw: '601' }, B2: { raw: 'Achats de marchandises' }, C2: { raw: '150000', format: 'currency' },
@@ -217,7 +217,7 @@ export class SpreadsheetComponent implements OnInit {
       }
     },
     resultat: {
-      label: '📈 Compte de résultat',
+      label: 'Compte de résultat',
       cells: {
         A1: { raw: 'CHARGES', bold: true }, B1: { raw: 'Montant', bold: true }, D1: { raw: 'PRODUITS', bold: true }, E1: { raw: 'Montant', bold: true },
         A2: { raw: 'Achats consommés' }, B2: { raw: '200000', format: 'currency' },
@@ -231,7 +231,7 @@ export class SpreadsheetComponent implements OnInit {
       }
     },
     journal: {
-      label: '📓 Journal comptable',
+      label: 'Journal comptable',
       cells: {
         A1: { raw: 'Date', bold: true }, B1: { raw: 'N° Compte', bold: true }, C1: { raw: 'Libellé', bold: true }, D1: { raw: 'Débit', bold: true }, E1: { raw: 'Crédit', bold: true },
         A2: { raw: '01/01/2026' }, B2: { raw: '512' }, C2: { raw: 'Apport en capital' }, D2: { raw: '1000000', format: 'currency' },

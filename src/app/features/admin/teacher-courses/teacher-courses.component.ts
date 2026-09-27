@@ -12,7 +12,7 @@ import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
     <div class="fade-in-up">
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 class="fw-bold mb-1">📚 Mes Cours</h1>
+          <h1 class="fw-bold mb-1"><i class="bi bi-journal-bookmark me-1"></i>Mes Cours</h1>
           <p class="text-muted">Gérez vos cours et suivez l'engagement de vos étudiants</p>
         </div>
         <a routerLink="/teacher/create-course" class="btn btn-primary-custom">
@@ -47,7 +47,7 @@ import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
       </div>
 
       <div *ngIf="!loading && courses.length === 0" class="text-center py-5">
-        <div style="font-size:5rem">📭</div>
+        <div style="font-size:5rem"><i class="bi bi-inbox"></i></div>
         <h3 class="mt-3">Aucun cours créé</h3>
         <p class="text-muted">Commencez par créer votre premier cours</p>
         <a routerLink="/teacher/create-course" class="btn btn-primary-custom mt-3">Créer un cours</a>
@@ -58,7 +58,7 @@ import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
           <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden">
             <div class="p-3 d-flex align-items-center gap-3"
                  [style.background]="getCategoryGradient(course.category)">
-              <div style="font-size:2.5rem">{{ getCategoryIcon(course.category) }}</div>
+              <div style="font-size:2.5rem"><i class="bi" [ngClass]="getCategoryIcon(course.category)"></i></div>
               <div class="flex-grow-1">
                 <div class="fw-bold text-white">{{ course.title }}</div>
                 <div class="d-flex gap-2 mt-1">
@@ -68,7 +68,7 @@ import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
                   <span class="badge rounded-pill" style="font-size:.7rem"
                         [class.bg-success]="course.published"
                         [class.bg-warning]="!course.published">
-                    {{ course.published ? '✅ Publié' : '⏳ Brouillon' }}
+                    {{ course.published ? 'Publié' : 'Brouillon' }}
                   </span>
                 </div>
               </div>
@@ -129,7 +129,7 @@ export class TeacherCoursesComponent implements OnInit {
     });
   }
 
-  getCategoryIcon(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.icon || '📚'; }
+  getCategoryIcon(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.icon || 'bi-journal-bookmark'; }
   getCategoryLabel(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.label || cat; }
   getCategoryGradient(cat: string) {
     let color = COURSE_CATEGORIES.find(c => c.key === cat)?.color || '#6366f1';

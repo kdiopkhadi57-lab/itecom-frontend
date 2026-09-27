@@ -30,7 +30,7 @@ interface Template {
       <!-- Header -->
       <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-          <h1 class="fw-bold mb-1">📐 Modélisation UML</h1>
+          <h1 class="fw-bold mb-1"><i class="bi bi-rulers me-1"></i>Modélisation UML</h1>
           <p class="text-muted small">Créez tous vos diagrammes UML : classes, séquences, états, cas d'utilisation, activités, composants…</p>
         </div>
         <div class="d-flex gap-2 align-items-center flex-wrap">
@@ -96,7 +96,7 @@ interface Template {
                     [class.btn-outline-secondary]="activeDiagramType !== dt.id"
                     (click)="selectDiagramType(dt.id)"
                     [title]="dt.description">
-              {{ dt.icon }} {{ dt.label }}
+              <i class="bi me-1" [ngClass]="dt.icon"></i>{{ dt.label }}
             </button>
           </div>
 
@@ -241,7 +241,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     {
       id: 'class',
       label: 'Classes',
-      icon: '🏛️',
+      icon: 'bi-bank2',
       description: 'Diagramme de classes UML',
       syntax: `<code>classDiagram</code> — classes, attributs, méthodes, relations<br>
         <code>class NomClasse { +attribut: Type; +methode(): retour }</code><br>
@@ -252,7 +252,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     {
       id: 'sequence',
       label: 'Séquence',
-      icon: '🔁',
+      icon: 'bi-arrow-repeat',
       description: 'Diagramme de séquence UML',
       syntax: `<code>sequenceDiagram</code> — interactions chronologiques entre acteurs<br>
         <code>participant A</code> &nbsp; <code>actor Utilisateur</code><br>
@@ -263,7 +263,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     {
       id: 'usecase',
       label: "Cas d'utilisation",
-      icon: '👤',
+      icon: 'bi-person',
       description: "Diagramme de cas d'utilisation UML",
       syntax: `Simulé avec <code>flowchart LR</code> — acteurs et cas d'utilisation<br>
         Acteurs : <code>A([Acteur])</code> &nbsp; Cas d'utilisation : <code>CU1(Nom du cas)</code><br>
@@ -273,7 +273,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     {
       id: 'activity',
       label: 'Activité',
-      icon: '🔄',
+      icon: 'bi-arrow-repeat',
       description: "Diagramme d'activité UML",
       syntax: `<code>flowchart TD</code> (top-down) ou <code>LR</code> (left-right)<br>
         Début/fin : <code>S([●Début])</code> &nbsp; <code>E([◎Fin])</code><br>
@@ -284,7 +284,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     {
       id: 'state',
       label: 'États',
-      icon: '🔀',
+      icon: 'bi-shuffle',
       description: "Diagramme d'états UML",
       syntax: `<code>stateDiagram-v2</code> — états et transitions<br>
         <code>[*] --> NomEtat</code> (état initial) &nbsp; <code>NomEtat --> [*]</code> (état final)<br>
@@ -296,7 +296,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     {
       id: 'component',
       label: 'Composants',
-      icon: '🧩',
+      icon: 'bi-puzzle',
       description: 'Diagramme de composants UML',
       syntax: `Simulé avec <code>graph TD</code> ou <code>LR</code><br>
         Composant : <code>A[/Composant/]</code> &nbsp; Interface : <code>I((Interface))</code> &nbsp; Base de données : <code>DB[(Base de données)]</code><br>
@@ -306,7 +306,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     {
       id: 'deployment',
       label: 'Déploiement',
-      icon: '🖥️',
+      icon: 'bi-pc-display',
       description: 'Diagramme de déploiement UML',
       syntax: `Simulé avec <code>graph TD</code><br>
         Nœud : <code>N[Nœud Physique]</code> &nbsp; Artefact : <code>A(Artefact)</code> &nbsp; Serveur : <code>S[/Serveur/]</code><br>
@@ -316,7 +316,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     {
       id: 'er',
       label: 'ER / MCD',
-      icon: '🗃️',
+      icon: 'bi-archive',
       description: 'Diagramme Entité-Relation (MCD/MLD)',
       syntax: `<code>erDiagram</code> — entités et associations<br>
         <code>ENTITE { type attribut "description" }</code><br>
@@ -327,7 +327,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     {
       id: 'mindmap',
       label: 'Mind Map',
-      icon: '🧠',
+      icon: 'bi-cpu',
       description: 'Carte mentale / Mind Map',
       syntax: `<code>mindmap</code> — arbre de concepts<br>
         Racine : <code>root((Concept central))</code><br>
@@ -340,7 +340,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   private templates: Record<string, Template[]> = {
     class: [
       {
-        label: '🎓 Système universitaire',
+        label: 'Système universitaire',
         code: `classDiagram
   class Personne {
     +String nom
@@ -383,7 +383,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   Cours "1" --o "N" Note : concerne`
       },
       {
-        label: '🏦 Système bancaire',
+        label: 'Système bancaire',
         code: `classDiagram
   class Client {
     +int id
@@ -434,7 +434,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   Client "1" --o "N" CarteBancaire : détient`
       },
       {
-        label: '🛒 E-commerce',
+        label: 'E-commerce',
         code: `classDiagram
   class Utilisateur {
     +int id
@@ -491,7 +491,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   Commande "1" --> "1" Paiement : génère`
       },
       {
-        label: '📐 Vide (démarrer)',
+        label: 'Vide (démarrer)',
         code: `classDiagram
   class MaClasse {
     +String attributPublic
@@ -510,7 +510,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     ],
     sequence: [
       {
-        label: '🔐 Authentification',
+        label: 'Authentification',
         code: `sequenceDiagram
   actor U as Utilisateur
   participant B as Navigateur
@@ -539,7 +539,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   end`
       },
       {
-        label: '🛒 Processus de commande',
+        label: 'Processus de commande',
         code: `sequenceDiagram
   actor C as Client
   participant Site as Site Web
@@ -574,7 +574,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   end`
       },
       {
-        label: '📱 Application mobile API',
+        label: 'Application mobile API',
         code: `sequenceDiagram
   actor U as Utilisateur
   participant App as App Mobile
@@ -605,7 +605,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   end`
       },
       {
-        label: '📐 Vide (démarrer)',
+        label: 'Vide (démarrer)',
         code: `sequenceDiagram
   actor A as Acteur A
   participant B as Composant B
@@ -623,12 +623,12 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     ],
     usecase: [
       {
-        label: '📚 Gestion scolaire',
+        label: 'Gestion scolaire',
         code: `flowchart LR
   subgraph Acteurs
-    E([👤 Étudiant])
-    P([👨‍🏫 Professeur])
-    A([⚙️ Administrateur])
+    E([Étudiant])
+    P([Professeur])
+    A([Administrateur])
   end
 
   subgraph Système de Gestion Scolaire
@@ -660,12 +660,12 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   CU4 -.->|extend| CU3`
       },
       {
-        label: '🏦 Application bancaire',
+        label: 'Application bancaire',
         code: `flowchart LR
   subgraph Acteurs
-    C([👤 Client])
-    G([👨‍💼 Gestionnaire])
-    SYS([🏦 Système externe])
+    C([Client])
+    G([Gestionnaire])
+    SYS([Système externe])
   end
 
   subgraph Application Bancaire
@@ -695,11 +695,11 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   CU8 -.->|extend| CU9`
       },
       {
-        label: '📐 Vide (démarrer)',
+        label: 'Vide (démarrer)',
         code: `flowchart LR
   subgraph Acteurs
-    A([👤 Acteur Principal])
-    B([👤 Acteur Secondaire])
+    A([Acteur Principal])
+    B([Acteur Secondaire])
   end
 
   subgraph Système
@@ -716,9 +716,9 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     ],
     activity: [
       {
-        label: '🔐 Processus de connexion',
+        label: 'Processus de connexion',
         code: `flowchart TD
-  S([🟢 Début]) --> F1[Afficher formulaire de connexion]
+  S([Début]) --> F1[Afficher formulaire de connexion]
   F1 --> F2[Saisir email et mot de passe]
   F2 --> D1{Champs remplis ?}
   D1 -->|Non| F1
@@ -737,12 +737,12 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   ERR2 --> MSG2[Afficher erreur mot de passe]
   MSG1 --> F2
   MSG2 --> F2
-  A3 --> E([🔴 Fin])`
+  A3 --> E([Fin])`
       },
       {
-        label: '🛒 Traitement commande',
+        label: 'Traitement commande',
         code: `flowchart TD
-  S([🟢 Début]) --> A1[Client ajoute au panier]
+  S([Début]) --> A1[Client ajoute au panier]
   A1 --> A2[Client valide la commande]
   A2 --> D1{Client authentifié ?}
   D1 -->|Non| A3[Connexion / Inscription]
@@ -768,22 +768,22 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   ERR --> D3
   D4 -->|Oui| CONF[Envoyer confirmation email]
   CONF --> LIV[Préparer livraison]
-  LIV --> E([🔴 Fin])`
+  LIV --> E([Fin])`
       },
       {
-        label: '📐 Vide (démarrer)',
+        label: 'Vide (démarrer)',
         code: `flowchart TD
-  S([🟢 Début]) --> A1[Première action]
+  S([Début]) --> A1[Première action]
   A1 --> D1{Condition ?}
   D1 -->|Oui| A2[Action si vrai]
   D1 -->|Non| A3[Action si faux]
-  A2 --> E([🔴 Fin])
+  A2 --> E([Fin])
   A3 --> E`
       }
     ],
     state: [
       {
-        label: '📦 Cycle de vie commande',
+        label: 'Cycle de vie commande',
         code: `stateDiagram-v2
   [*] --> EnAttente : Commande créée
 
@@ -811,7 +811,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   note right of Expédiée : Email + numéro de suivi envoyé`
       },
       {
-        label: '💡 Feu de circulation',
+        label: 'Feu de circulation',
         code: `stateDiagram-v2
   [*] --> Rouge
 
@@ -829,7 +829,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   note right of Rouge : Piétons traversent`
       },
       {
-        label: '📱 Session utilisateur',
+        label: 'Session utilisateur',
         code: `stateDiagram-v2
   [*] --> NonConnecté
 
@@ -850,7 +850,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   Déconnecté --> [*]`
       },
       {
-        label: '📐 Vide (démarrer)',
+        label: 'Vide (démarrer)',
         code: `stateDiagram-v2
   [*] --> EtatInitial
 
@@ -862,15 +862,15 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     ],
     component: [
       {
-        label: '🌐 Architecture Web 3-tiers',
+        label: 'Architecture Web 3-tiers',
         code: `graph TD
   subgraph Client[Tier Présentation]
-    Browser[/🌐 Navigateur Web/]
-    Mobile[/📱 Application Mobile/]
+    Browser[/Navigateur Web/]
+    Mobile[/Application Mobile/]
   end
 
   subgraph Application[Tier Application]
-    LB[⚖️ Load Balancer]
+    LB[Load Balancer]
     API1[API Server 1]
     API2[API Server 2]
     Auth[Service Auth]
@@ -878,10 +878,10 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   end
 
   subgraph Data[Tier Données]
-    DB[(🗄️ PostgreSQL)]
-    Cache[(⚡ Redis Cache)]
-    Files[(📁 Stockage Fichiers)]
-    Queue[(📨 Message Queue)]
+    DB[(PostgreSQL)]
+    Cache[(Redis Cache)]
+    Files[(Stockage Fichiers)]
+    Queue[(Message Queue)]
   end
 
   Browser --> LB
@@ -899,7 +899,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   API1 --> Files`
       },
       {
-        label: '🧩 Microservices',
+        label: 'Microservices',
         code: `graph LR
   subgraph Frontend
     WEB[/Application Web/]
@@ -907,16 +907,16 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   end
 
   subgraph API_Gateway[API Gateway]
-    GW[🔀 Gateway / Routeur]
-    AUTH[🔐 Auth Middleware]
+    GW[Gateway / Routeur]
+    AUTH[Auth Middleware]
   end
 
   subgraph Services[Microservices]
-    US[👤 User Service]
-    PS[📦 Product Service]
-    OS[🛒 Order Service]
-    PAY[💳 Payment Service]
-    NOTIF[🔔 Notification Service]
+    US[User Service]
+    PS[Product Service]
+    OS[Order Service]
+    PAY[Payment Service]
+    NOTIF[Notification Service]
   end
 
   subgraph Databases[Bases de données]
@@ -926,7 +926,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   end
 
   subgraph Broker[Message Broker]
-    MQ[(📨 Kafka / RabbitMQ)]
+    MQ[(Kafka / RabbitMQ)]
   end
 
   WEB --> GW
@@ -943,7 +943,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   OS --> ODB`
       },
       {
-        label: '📐 Vide (démarrer)',
+        label: 'Vide (démarrer)',
         code: `graph TD
   subgraph Couche1[Première couche]
     C1[/Composant 1/]
@@ -962,32 +962,32 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     ],
     deployment: [
       {
-        label: '☁️ Infrastructure Cloud',
+        label: 'Infrastructure Cloud',
         code: `graph TD
-  subgraph Internet[🌐 Internet]
-    USER[👤 Utilisateurs]
-    CDN[🚀 CDN CloudFront]
+  subgraph Internet[Internet]
+    USER[Utilisateurs]
+    CDN[CDN CloudFront]
   end
 
-  subgraph AWS[☁️ AWS Cloud]
+  subgraph AWS[AWS Cloud]
     subgraph DMZ[Zone DMZ]
-      WAF[🛡️ WAF - Pare-feu]
-      LB[⚖️ Load Balancer]
+      WAF[WAF - Pare-feu]
+      LB[Load Balancer]
     end
 
     subgraph AppTier[Zone Application]
       subgraph AZ1[Zone de disponibilité 1]
-        APP1[🖥️ App Server 1\nec2.t3.large]
+        APP1[App Server 1\nec2.t3.large]
       end
       subgraph AZ2[Zone de disponibilité 2]
-        APP2[🖥️ App Server 2\nec2.t3.large]
+        APP2[App Server 2\nec2.t3.large]
       end
     end
 
     subgraph DataTier[Zone Données]
-      RDS[(🗄️ RDS PostgreSQL\nMulti-AZ)]
-      REDIS[(⚡ ElastiCache Redis)]
-      S3[(📁 S3 Bucket)]
+      RDS[(RDS PostgreSQL\nMulti-AZ)]
+      REDIS[(ElastiCache Redis)]
+      S3[(S3 Bucket)]
     end
   end
 
@@ -1002,34 +1002,34 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   APP2 --> S3`
       },
       {
-        label: '🏢 Infrastructure On-Premise',
+        label: 'Infrastructure On-Premise',
         code: `graph TD
-  subgraph Internet[🌐 Internet]
+  subgraph Internet[Internet]
     EXT[Utilisateurs externes]
   end
 
   subgraph DMZ[Zone DMZ]
-    FW[🛡️ Firewall]
-    PROXY[🔀 Reverse Proxy\nNginx]
+    FW[Firewall]
+    PROXY[Reverse Proxy\nNginx]
   end
 
   subgraph LAN[Réseau Local]
     subgraph PROD[Serveurs Production]
-      WEB1[🖥️ Serveur Web 1\nUbuntu 22.04]
-      WEB2[🖥️ Serveur Web 2\nUbuntu 22.04]
-      JAVA[☕ Serveur Java\nSpring Boot :8080]
+      WEB1[Serveur Web 1\nUbuntu 22.04]
+      WEB2[Serveur Web 2\nUbuntu 22.04]
+      JAVA[Serveur Java\nSpring Boot :8080]
     end
 
     subgraph DATA[Serveurs de données]
-      DB_PRIMARY[(🗄️ PostgreSQL\nPrimaire)]
-      DB_REPLICA[(🗄️ PostgreSQL\nReplica)]
-      BACKUP[💾 Serveur de sauvegarde]
+      DB_PRIMARY[(PostgreSQL\nPrimaire)]
+      DB_REPLICA[(PostgreSQL\nReplica)]
+      BACKUP[Serveur de sauvegarde]
     end
 
     subgraph INFRA[Infrastructure]
-      LDAP[🔐 LDAP / AD]
-      MAIL[📧 Serveur Mail]
-      MONITOR[📊 Monitoring\nGrafana]
+      LDAP[LDAP / AD]
+      MAIL[Serveur Mail]
+      MONITOR[Monitoring\nGrafana]
     end
   end
 
@@ -1044,15 +1044,15 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   DB_PRIMARY --> BACKUP`
       },
       {
-        label: '📐 Vide (démarrer)',
+        label: 'Vide (démarrer)',
         code: `graph TD
   subgraph Reseau1[Réseau 1]
-    N1[🖥️ Nœud 1]
-    N2[🖥️ Nœud 2]
+    N1[Nœud 1]
+    N2[Nœud 2]
   end
 
   subgraph Reseau2[Réseau 2]
-    DB[(🗄️ Base de données)]
+    DB[(Base de données)]
   end
 
   N1 -- HTTP --> N2
@@ -1061,7 +1061,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     ],
     er: [
       {
-        label: '🎓 Base de données universitaire',
+        label: 'Base de données universitaire',
         code: `erDiagram
   ETUDIANT {
     int id PK "Identifiant unique"
@@ -1112,7 +1112,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   DEPARTEMENT ||--o{ ENSEIGNANT : "emploie"`
       },
       {
-        label: '🛒 E-commerce',
+        label: 'E-commerce',
         code: `erDiagram
   CLIENT {
     int id PK
@@ -1171,7 +1171,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   FOURNISSEUR ||--o{ PRODUIT : "fournit"`
       },
       {
-        label: '📐 Vide (démarrer)',
+        label: 'Vide (démarrer)',
         code: `erDiagram
   ENTITE_A {
     int id PK "Clé primaire"
@@ -1189,7 +1189,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     ],
     mindmap: [
       {
-        label: '💻 Génie logiciel',
+        label: 'Génie logiciel',
         code: `mindmap
   root((Génie Logiciel))
     Conception
@@ -1235,7 +1235,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
         Kubernetes`
       },
       {
-        label: '📐 Vide (démarrer)',
+        label: 'Vide (démarrer)',
         code: `mindmap
   root((Concept Central))
     Branche A

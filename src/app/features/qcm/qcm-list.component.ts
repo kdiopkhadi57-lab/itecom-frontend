@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DialogService } from '../../core/services/dialog.service';
+import { QcmCreateComponent } from './qcm-create.component';
 
 interface Qcm { id: number; title: string; description: string; status: string; questionCount: number; createdAt: string; }
 
@@ -17,10 +18,10 @@ interface Qcm { id: number; title: string; description: string; status: string; 
           <h1 class="fw-bold mb-0">Mes devoirs</h1>
           <p class="text-muted mb-0">Créez et gérez vos questionnaires à choix multiples</p>
         </div>
-        <a routerLink="/teacher/qcms/create" class="btn fw-semibold px-4"
+        <button type="button" (click)="openQcmEditor()" class="btn fw-semibold px-4"
            style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;border-radius:12px">
           <i class="bi bi-plus-circle me-2"></i>Créer un devoir
-        </a>
+        </button>
       </div>
 
       <div *ngIf="loading" class="text-center py-5">
@@ -31,7 +32,7 @@ interface Qcm { id: number; title: string; description: string; status: string; 
         <div style="font-size:4rem"><i class="bi bi-journal-text"></i></div>
         <h5 class="mt-3 fw-bold">Aucun devoir créé</h5>
         <p class="text-muted">Commencez par créer votre premier questionnaire.</p>
-        <a routerLink="/teacher/qcms/create" class="btn btn-primary px-4 mt-2">Créer un devoir</a>
+        <button type="button" (click)="openQcmEditor()" class="btn btn-primary px-4 mt-2">Créer un devoir</button>
       </div>
 
       <div class="row g-3" *ngIf="!loading && qcms.length > 0">
@@ -55,9 +56,9 @@ interface Qcm { id: number; title: string; description: string; status: string; 
                 <span><i class="bi bi-calendar3 me-1"></i>{{ q.createdAt | date:'dd/MM/yyyy' }}</span>
               </div>
               <div class="d-flex gap-2 flex-wrap">
-                <a [routerLink]="['/teacher/qcms', q.id, 'edit']" class="btn btn-sm btn-outline-secondary">
+                <button type="button" (click)="openQcmEditor(q.id)" class="btn btn-sm btn-outline-secondary">
                   <i class="bi bi-pencil me-1"></i>Modifier
-                </a>
+                </button>
                 <a [routerLink]="['/teacher/qcms', q.id, 'resultats']" class="btn btn-sm btn-outline-info">
                   <i class="bi bi-bar-chart me-1"></i>Résultats
                 </a>
@@ -107,5 +108,13 @@ export class QcmListComponent implements OnInit {
   async delete(q: Qcm) {
     if (!(await this.dialogs.confirmDelete(`le devoir « ${q.title} »`))) return;
     this.http.delete(`/api/teacher/qcms/${q.id}`).subscribe(() => this.qcms = this.qcms.filter(x => x.id !== q.id));
+  }
+
+  /** Création / modification d'un devoir dans une popup, sans quitter la page. */
+  openQcmEditor(id?: number) {
+    this.dialogs.open(QcmCreateComponent, {
+      title: id ? 'Modifier le devoir' : 'Créer un devoir', icon: id ? 'bi-pencil-square' : 'bi-plus-circle',
+      size: 'xl', data: id ? { id } : null
+    }).afterClosed.then(saved => { if (saved) { this.load(); } });
   }
 }

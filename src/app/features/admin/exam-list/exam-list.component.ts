@@ -6,6 +6,7 @@ import { ExamService } from '../../../core/services/exam.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Exam } from '../../../core/models/exam.model';
 import { DialogService } from '../../../core/services/dialog.service';
+import { QcmCreateComponent } from '../../qcm/qcm-create.component';
 
 interface Qcm { id: number; title: string; description: string; status: string; questionCount: number; createdAt: string; }
 
@@ -27,10 +28,10 @@ interface Qcm { id: number; title: string; description: string; status: string; 
              class="btn fw-semibold" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;border-radius:12px">
             <i class="bi bi-plus-circle me-2"></i>Créer un examen
           </a> -->
-          <a *ngIf="tab === 'qcm'" routerLink="/teacher/qcms/create"
+          <button type="button" *ngIf="tab === 'qcm'" (click)="openQcmEditor()"
              class="btn fw-semibold" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;border-radius:12px">
             <i class="bi bi-plus-circle me-2"></i>Créer un devoir
-          </a>
+          </button>
         </div>
       </div>
 
@@ -123,9 +124,9 @@ interface Qcm { id: number; title: string; description: string; status: string; 
           <h5 class="mt-3 fw-bold">Aucun devoir créé</h5>
           <p class="text-muted">Créez un devoir manuellement ou importez un fichier Word.</p>
           <div class="d-flex gap-2 justify-content-center mt-2">
-            <a routerLink="/teacher/qcms/create" class="btn btn-primary">
+            <button type="button" (click)="openQcmEditor()" class="btn btn-primary">
               <i class="bi bi-plus-circle me-2"></i>Créer un devoir
-            </a>
+            </button>
           </div>
         </div>
         <div class="row g-3" *ngIf="!loadingQcm && qcms.length > 0">
@@ -149,9 +150,9 @@ interface Qcm { id: number; title: string; description: string; status: string; 
                   <span><i class="bi bi-calendar3 me-1"></i>{{ q.createdAt | date:'dd/MM/yyyy' }}</span>
                 </div>
                 <div class="d-flex gap-2 flex-wrap">
-                  <a [routerLink]="['/teacher/qcms', q.id, 'edit']" class="btn btn-sm btn-outline-secondary">
+                  <button type="button" (click)="openQcmEditor(q.id)" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-pencil me-1"></i>Modifier
-                  </a>
+                  </button>
                   <a [routerLink]="['/teacher/qcms', q.id, 'resultats']" class="btn btn-sm btn-outline-info">
                     <i class="bi bi-bar-chart me-1"></i>Résultats
                   </a>
@@ -239,4 +240,12 @@ export class ExamListComponent implements OnInit {
 
   getStatusClass(s: string) { return { DRAFT: 'bg-secondary', PUBLISHED: 'bg-success', CLOSED: 'bg-dark' }[s] || 'bg-secondary'; }
   getStatusLabel(s: string) { return { DRAFT: 'Brouillon', PUBLISHED: 'Publié', CLOSED: 'Clôturé' }[s] || s; }
+
+  /** Création / modification d'un devoir dans une popup, sans quitter la page. */
+  openQcmEditor(id?: number) {
+    this.dialogs.open(QcmCreateComponent, {
+      title: id ? 'Modifier le devoir' : 'Créer un devoir', icon: id ? 'bi-pencil-square' : 'bi-plus-circle',
+      size: 'xl', data: id ? { id } : null
+    }).afterClosed.then(saved => { if (saved) { this.qcmsLoaded = false; this.loadQcms(); } });
+  }
 }

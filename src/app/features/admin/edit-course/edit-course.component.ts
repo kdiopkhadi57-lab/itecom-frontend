@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
@@ -6,7 +6,7 @@ import { CourseService } from '../../../core/services/course.service';
 import { UploadService } from '../../../core/services/upload.service';
 import { COURSE_CATEGORIES } from '../../../core/models/course.model';
 import { Course, Lesson } from '../../../core/models/course.model';
-import { DialogService } from '../../../core/services/dialog.service';
+import { DialogService, DialogRef, DIALOG_DATA } from '../../../core/services/dialog.service';
 
 const CODE_FILE_EXTENSIONS: Record<string, string> = {
   py: 'python', js: 'javascript', java: 'java', sql: 'sql', txt: 'python'
@@ -18,7 +18,7 @@ const CODE_FILE_EXTENSIONS: Record<string, string> = {
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="fade-in-up">
-      <div class="d-flex align-items-center gap-3 mb-4">
+      <div *ngIf="!inDialog" class="d-flex align-items-center gap-3 mb-4">
         <a routerLink="/teacher/courses" class="btn btn-sm btn-outline-secondary"><i class="bi bi-arrow-left"></i></a>
         <h1 class="fw-bold mb-0"><i class="bi bi-pencil-square me-1"></i>Modifier le cours</h1>
       </div>
@@ -281,6 +281,12 @@ export class EditCourseComponent implements OnInit {
     EXCEL_EXERCISE: 'Exercice Excel'
   };
 
+
+  /** Ouvert dans une popup (depuis une liste) ou comme page. */
+  private readonly dialogRef = inject(DialogRef, { optional: true });
+  private readonly dialogData = inject<{ id?: number } | null>(DIALOG_DATA, { optional: true });
+  get inDialog(): boolean { return !!this.dialogRef; }
+
   constructor(private dialogs: DialogService, 
     private fb: FormBuilder,
     private courseService: CourseService,
@@ -290,7 +296,7 @@ export class EditCourseComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.courseId = +this.route.snapshot.paramMap.get('id')!;
+    this.courseId = this.dialogData?.id ?? +this.route.snapshot.paramMap.get('id')!;
     this.courseService.getCourseById(this.courseId).subscribe(course => {
       this.course = course;
       this.lessons = (course.lessons || []).slice().sort((a, b) => a.orderIndex - b.orderIndex);
@@ -308,7 +314,11 @@ export class EditCourseComponent implements OnInit {
   onSubmit() {
     this.saving = true;
     this.courseService.updateCourse(this.courseId, this.courseForm.value).subscribe({
-      next: () => { this.saving = false; this.success = true; setTimeout(() => this.router.navigate(['/teacher/courses']), 1500); },
+      next: () => {
+        this.saving = false; this.success = true;
+        if (this.dialogRef) { this.dialogs.toast('Cours mis à jour'); this.dialogRef.close(true); }
+        else setTimeout(() => this.router.navigate(['/teacher/courses']), 1500);
+      },
       error: (err) => { this.error = err.error?.message || 'Erreur'; this.saving = false; }
     });
   }

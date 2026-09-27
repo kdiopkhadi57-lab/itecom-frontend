@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
+import { DialogService } from '../../../core/services/dialog.service';
+import { CreateCourseComponent } from '../create-course/create-course.component';
+import { EditCourseComponent } from '../edit-course/edit-course.component';
 
 @Component({
   selector: 'app-teacher-courses',
@@ -15,9 +18,9 @@ import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
           <h1 class="fw-bold mb-1"><i class="bi bi-journal-bookmark me-1"></i>Mes Cours</h1>
           <p class="text-muted">Gérez vos cours et suivez l'engagement de vos étudiants</p>
         </div>
-        <a routerLink="/teacher/create-course" class="btn btn-primary-custom">
+        <button type="button" (click)="openCourseCreator()" class="btn btn-primary-custom">
           <i class="bi bi-plus-circle me-2"></i>Créer un cours
-        </a>
+        </button>
       </div>
 
       <!-- Stats -->
@@ -50,7 +53,7 @@ import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
         <div style="font-size:5rem"><i class="bi bi-inbox"></i></div>
         <h3 class="mt-3">Aucun cours créé</h3>
         <p class="text-muted">Commencez par créer votre premier cours</p>
-        <a routerLink="/teacher/create-course" class="btn btn-primary-custom mt-3">Créer un cours</a>
+        <button type="button" (click)="openCourseCreator()" class="btn btn-primary-custom mt-3">Créer un cours</button>
       </div>
 
       <div class="row g-4" *ngIf="!loading">
@@ -85,10 +88,10 @@ import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
               </div>
 
               <div class="d-flex gap-2">
-                <a [routerLink]="['/teacher/courses', course.id, 'edit']"
+                <button type="button" (click)="openCourseEditor(course.id)"
                    class="btn btn-outline-primary btn-sm flex-grow-1">
                   <i class="bi bi-pencil me-1"></i>Modifier
-                </a>
+                </button>
                 <a [routerLink]="['/courses', course.id]"
                    class="btn btn-outline-secondary btn-sm">
                   <i class="bi bi-eye"></i>
@@ -114,13 +117,25 @@ export class TeacherCoursesComponent implements OnInit {
   get publishedCount() { return this.courses.filter(c => c.published).length; }
   get draftCount() { return this.courses.filter(c => !c.published).length; }
 
-  constructor(private courseService: CourseService) {}
+  constructor(private courseService: CourseService, private dialogs: DialogService) {}
 
-  ngOnInit() {
+  ngOnInit() { this.load(); }
+
+  load() {
     this.courseService.getTeacherCourses().subscribe({
       next: (courses) => { this.courses = courses; this.loading = false; },
       error: () => { this.loading = false; }
     });
+  }
+
+  openCourseCreator() {
+    this.dialogs.open(CreateCourseComponent, { title: 'Créer un cours', icon: 'bi-plus-circle', size: 'xl' })
+      .afterClosed.then(saved => { if (saved) this.load(); });
+  }
+
+  openCourseEditor(id: number) {
+    this.dialogs.open(EditCourseComponent, { title: 'Modifier le cours', icon: 'bi-pencil-square', size: 'xl', data: { id } })
+      .afterClosed.then(saved => { if (saved) this.load(); });
   }
 
   togglePublish(course: Course) {

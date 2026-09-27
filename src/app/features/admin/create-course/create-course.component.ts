@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { UploadService, UploadedFile } from '../../../core/services/upload.service';
 import { COURSE_CATEGORIES } from '../../../core/models/course.model';
+import { DialogService, DialogRef, DIALOG_DATA } from '../../../core/services/dialog.service';
 
 interface PendingUpload {
   file: File;
@@ -37,7 +38,7 @@ interface PendingUpload {
   `],
   template: `
     <div class="fade-in-up">
-      <div class="d-flex align-items-center gap-3 mb-4">
+      <div *ngIf="!inDialog" class="d-flex align-items-center gap-3 mb-4">
         <a routerLink="/teacher/courses" class="btn btn-sm btn-outline-secondary">
           <i class="bi bi-arrow-left"></i>
         </a>
@@ -218,7 +219,7 @@ interface PendingUpload {
                 <i *ngIf="!loading" class="bi bi-save me-2"></i>
                 {{ loading ? 'Création...' : 'Créer le cours' }}
               </button>
-              <a routerLink="/teacher/courses" class="btn btn-outline-secondary w-100 mt-2">Annuler</a>
+              <button type="button" class="btn btn-outline-secondary w-100 mt-2" (click)="finish(false)">Annuler</button>
             </div>
           </div>
         </div>
@@ -240,11 +241,18 @@ export class CreateCourseComponent {
   isDragOver = false;
   uploadingAll = false;
 
+
+  /** Ouvert dans une popup (depuis une liste) ou comme page. */
+  private readonly dialogRef = inject(DialogRef, { optional: true });
+  private readonly dialogData = inject<{ id?: number } | null>(DIALOG_DATA, { optional: true });
+  get inDialog(): boolean { return !!this.dialogRef; }
+
   constructor(
     private fb: FormBuilder,
     private courseService: CourseService,
     private uploadService: UploadService,
-    private router: Router
+    private router: Router,
+    private dialogs: DialogService
   ) {
     this.courseForm = this.fb.group({
       title: ['', Validators.required],
@@ -349,6 +357,12 @@ export class CreateCourseComponent {
     return dot > 0 ? filename.substring(0, dot) : filename;
   }
 
+  finish(saved: boolean) {
+    if (saved) this.dialogs.toast('Cours créé');
+    if (this.dialogRef) this.dialogRef.close(saved);
+    else this.router.navigate(['/teacher/courses']);
+  }
+
   onSubmit() {
     if (this.courseForm.invalid) return;
     this.loading = true;
@@ -357,7 +371,7 @@ export class CreateCourseComponent {
       next: (course) => {
         this.loading = false;
         this.success = true;
-        setTimeout(() => this.router.navigate(['/teacher/courses']), 1500);
+        setTimeout(() => this.finish(true), this.dialogRef ? 0 : 1500);
       },
       error: (err) => { this.error = err.error?.message || 'Erreur lors de la création'; this.loading = false; }
     });

@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { UserScopeService } from '../../core/services/user-scope.service';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { DialogService } from '../../core/services/dialog.service';
+import { CreateCourseComponent } from '../../features/admin/create-course/create-course.component';
 
 @Component({
   selector: 'app-sidebar',
@@ -59,7 +61,7 @@ import { HttpClient } from '@angular/common/http';
           </li>
           <li><a class="nav-link" routerLink="/teacher/courses" routerLinkActive="active">
             <i class="bi bi-collection"></i>Mes Cours</a></li>
-          <li><a class="nav-link" routerLink="/teacher/create-course" routerLinkActive="active">
+          <li><a class="nav-link" href="#" (click)="$event.preventDefault(); openCourseCreator()">
             <i class="bi bi-plus-circle"></i>Créer un cours</a></li>
           <li><a class="nav-link" routerLink="/teacher/exams" routerLinkActive="active">
             <i class="bi bi-clipboard-check"></i>Examens en ligne</a></li>
@@ -97,7 +99,17 @@ import { HttpClient } from '@angular/common/http';
 export class SidebarComponent implements OnInit {
   pendingCount = 0;
 
-  constructor(public authService: AuthService, public userScope: UserScopeService, private http: HttpClient) {}
+  constructor(public authService: AuthService, public userScope: UserScopeService, private http: HttpClient,
+              private dialogs: DialogService, private router: Router) {}
+
+  /** Création d'un cours dans une popup, puis affichage de « Mes cours ». */
+  openCourseCreator() {
+    this.dialogs.open(CreateCourseComponent, { title: 'Créer un cours', icon: 'bi-plus-circle', size: 'xl' })
+      .afterClosed.then(saved => {
+        if (!saved) return;
+        this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigateByUrl('/teacher/courses'));
+      });
+  }
 
   ngOnInit() {
     if (this.authService.isAdmin) {

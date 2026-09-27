@@ -1,8 +1,9 @@
-import { Component, OnInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit, ElementRef, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { DialogService, DialogRef, DIALOG_DATA } from '../../core/services/dialog.service';
 
 interface Choice   { choiceText: string; isCorrect: boolean; }
 interface Question {
@@ -36,8 +37,8 @@ interface StudentEntry {
   template: `
     <div class="fade-in-up" style="max-width:860px;margin:0 auto">
 
-      <!-- En-tête -->
-      <div class="d-flex align-items-center gap-3 mb-4">
+      <!-- En-tête (le titre est celui de la popup quand l'écran y est ouvert) -->
+      <div *ngIf="!inDialog" class="d-flex align-items-center gap-3 mb-4">
         <a routerLink="/teacher/exams" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
         <div>
           <h1 class="fw-bold mb-0">{{ isEdit ? 'Modifier le devoir' : 'Créer un devoir' }}</h1>
@@ -452,7 +453,7 @@ Bonne réponse: C</code>
             <strong>{{ totalPoints }}</strong> point(s) au total
           </div>
           <div class="d-flex gap-2">
-            <a routerLink="/teacher/exams" class="btn btn-outline-secondary">Annuler</a>
+            <button type="button" class="btn btn-outline-secondary" (click)="finish(false)">Annuler</button>
                 <button class="btn fw-semibold px-4" (click)="save()"
                   [disabled]="loading || !canSave"
                     style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;border-radius:10px">
@@ -492,7 +493,20 @@ export class QcmCreateComponent implements OnInit {
   subjectFile: File | null = null;
   correctionFile: File | null = null;
 
-  constructor(private http: HttpClient, private router: Router, private route: ActivatedRoute) {}
+
+  /** Ouvert dans une popup (depuis une liste) ou comme page. */
+  private readonly dialogRef = inject(DialogRef, { optional: true });
+  private readonly dialogData = inject<{ id?: number } | null>(DIALOG_DATA, { optional: true });
+  get inDialog(): boolean { return !!this.dialogRef; }
+
+  constructor(private http: HttpClient, private router: Router, private route: ActivatedRoute, private dialogs: DialogService) {}
+
+  /** Fin de l'écran : fermeture de la popup (avec rafraîchissement de la liste) ou retour à la liste. */
+  finish(saved: boolean) {
+    if (saved) this.dialogs.toast(this.isEdit ? 'Devoir enregistré' : 'Devoir créé');
+    if (this.dialogRef) this.dialogRef.close(saved);
+    else this.router.navigate(['/teacher/exams']);
+  }
 
   onSubjectFile(event: Event) {
     this.subjectFile = (event.target as HTMLInputElement).files?.[0] || null;
@@ -512,7 +526,7 @@ export class QcmCreateComponent implements OnInit {
   }
 
   ngOnInit() {
-    const id = this.route.snapshot.paramMap.get('id');
+    const id = this.dialogData?.id != null ? String(this.dialogData.id) : this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEdit = true; this.editId = +id;
       this.loadGrids();
@@ -814,7 +828,7 @@ export class QcmCreateComponent implements OnInit {
       next: (saved: any) => {
         const id = this.editId || saved.id;
         if (!this.subjectFile && !this.correctionFile) {
-          this.router.navigate(['/teacher/exams']);
+          this.finish(true);
           return;
         }
         if (!this.subjectFile || !this.correctionFile) {
@@ -826,7 +840,7 @@ export class QcmCreateComponent implements OnInit {
         files.append('subjectFile', this.subjectFile);
         files.append('correctionFile', this.correctionFile);
         this.http.post(`/api/teacher/qcms/${id}/documents`, files).subscribe({
-          next: () => this.router.navigate(['/teacher/exams']),
+          next: () => this.finish(true),
           error: e => { this.error = e.error?.error || 'Erreur lors de l’enregistrement des documents.'; this.loading = false; }
         });
       },

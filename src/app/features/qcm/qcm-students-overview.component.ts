@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { DialogService } from '../../core/services/dialog.service';
+import { QcmCreateComponent } from './qcm-create.component';
 
 interface QcmSummary {
   id: number;
@@ -24,9 +26,9 @@ interface QcmSummary {
           <h1 class="fw-bold mb-1">Étudiants et notes</h1>
           <p class="text-muted mb-0">Consultez les étudiants et corrigez les notes de vos devoirs.</p>
         </div>
-        <a routerLink="/teacher/qcms/create" class="btn btn-primary">
+        <button type="button" (click)="openQcmEditor()" class="btn btn-primary">
           <i class="bi bi-plus-circle me-2"></i>Nouveau devoir
-        </a>
+        </button>
       </div>
 
       <div *ngIf="loading" class="text-center py-5">
@@ -72,9 +74,11 @@ export class QcmStudentsOverviewComponent implements OnInit {
   loading = true;
   error = '';
 
-  constructor(private http: HttpClient) {}
+  constructor(private dialogs: DialogService, private http: HttpClient) {}
 
-  ngOnInit() {
+  ngOnInit() { this.load(); }
+
+  load() {
     this.http.get<QcmSummary[]>('/api/teacher/qcms').subscribe({
       next: qcms => {
         this.qcms = qcms;
@@ -85,5 +89,13 @@ export class QcmStudentsOverviewComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  /** Création / modification d'un devoir dans une popup, sans quitter la page. */
+  openQcmEditor(id?: number) {
+    this.dialogs.open(QcmCreateComponent, {
+      title: id ? 'Modifier le devoir' : 'Créer un devoir', icon: id ? 'bi-pencil-square' : 'bi-plus-circle',
+      size: 'xl', data: id ? { id } : null
+    }).afterClosed.then(saved => { if (saved) { this.load(); } });
   }
 }

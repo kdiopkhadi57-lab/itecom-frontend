@@ -262,7 +262,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                         </tr>
                       </tbody>
                     </table>
-                    <p *ngIf="!block.table" class="mb-2" [class.case-heading]="block.heading">{{ block.text }}</p>
+                    <div *ngIf="!block.table" class="case-line" [class.case-heading]="block.heading">{{ block.text }}</div>
                   </ng-container>
                 </div>
               </div>
@@ -315,7 +315,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                           </tr>
                         </tbody>
                       </table>
-                      <p *ngIf="!block.table" class="mb-2" [class.case-heading]="block.heading">{{ block.text }}</p>
+                      <div *ngIf="!block.table" class="case-line" [class.case-heading]="block.heading">{{ block.text }}</div>
                     </ng-container>
                   </div>
                 </div>
@@ -461,10 +461,10 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
       font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
       color: #4338ca; margin-bottom: 10px;
     }
-    .case-text { font-size: .98rem; line-height: 1.7; color: #1f2937; white-space: pre-wrap; word-break: break-word; }
-    .case-text p:last-child { margin-bottom: 0 !important; }
-    .case-heading { font-weight: 700; color: #312e81; margin-top: 6px; }
-    .case-table { background: #fff; font-size: .9rem; white-space: normal; }
+    .case-text { font-size: .98rem; line-height: 1.7; color: #1f2937; word-break: break-word; }
+    .case-line { white-space: pre-wrap; min-height: 1.7em; }
+    .case-heading { font-weight: 700; color: #312e81; }
+    .case-table { background: #fff; font-size: .9rem; white-space: normal; margin: 6px 0; }
     .case-table td { padding: 6px 10px; }
     .case-answer { padding: 16px 18px; border-radius: 12px; background: #fff; border: 2px solid #10b981; }
     .case-textarea { min-height: 280px; font-size: .98rem; line-height: 1.6; resize: vertical; border-radius: 10px; }
@@ -673,8 +673,8 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   private caseBlocksCache = new Map<string, { text?: string; heading?: boolean; table?: string[][] }[]>();
 
   /**
-   * Découpe l'énoncé en paragraphes et tableaux : les lignes contenant des tabulations
-   * (tableaux extraits du document Word) ou des « | » sont rendues sous forme de tableau.
+   * Restitue le texte du professeur ligne par ligne, avec ses retours à la ligne et ses lignes vides.
+   * Les lignes à tabulations (tableaux du document Word) ou à « | » sont affichées en tableau.
    */
   caseBlocks(text: string | null | undefined): { text?: string; heading?: boolean; table?: string[][] }[] {
     const source = (text || '').replace(/\r\n?/g, '\n');
@@ -683,53 +683,43 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
 
     const blocks: { text?: string; heading?: boolean; table?: string[][] }[] = [];
     let table: string[][] | null = null;
-    let paragraph: string[] = [];
-    const flushParagraph = () => {
-      if (paragraph.length) {
-        const joined = paragraph.join('\n').trim();
-        if (joined) blocks.push({ text: joined, heading: this.isHeadingLine(joined) });
-      }
-      paragraph = [];
-    };
     const flushTable = () => {
-      if (table && table.length) blocks.push({ table });
+      if (table && table.length) {
+        const width = Math.max(...table.map(row => row.length));
+        table.forEach(row => { while (row.length < width) row.push(''); });
+        blocks.push({ table });
+      }
       table = null;
     };
     for (const rawLine of source.split('\n')) {
-      const line = rawLine.trimEnd();
-      const cells = line.includes('\t') ? line.split('\t')
-        : (line.split('|').length > 2 ? line.split('|') : null);
-      if (cells) {
-        flushParagraph();
-        const cleaned = cells.map(c => c.trim());
-        while (cleaned.length && !cleaned[0]) cleaned.shift();
-        while (cleaned.length && !cleaned[cleaned.length - 1]) cleaned.pop();
-        if (cleaned.length) (table ??= []).push(cleaned);
-      } else if (!line.trim()) {
-        flushTable();
-        flushParagraph();
+      const line = rawLine.replace(/\s+$/, '');
+      const isPipeRow = /^\s*\|.*\|\s*$/.test(line) || line.split('|').length > 2;
+      if (line.includes('\t') || isPipeRow) {
+        let cells = line.includes('\t') ? rawLine.split('\t') : line.split('|');
+        if (isPipeRow && !line.includes('\t')) {
+          if (!cells[0].trim()) cells = cells.slice(1);
+          if (cells.length && !cells[cells.length - 1].trim()) cells = cells.slice(0, -1);
+          // Ligne de séparation Markdown « |---|---| »
+          if (cells.every(c => /^\s*:?-{2,}:?\s*$/.test(c))) continue;
+        }
+        (table ??= []).push(cells.map(c => c.trim()));
       } else {
         flushTable();
-        if (this.isHeadingLine(line)) {
-          flushParagraph();
-          blocks.push({ text: line.trim(), heading: true });
-        } else {
-          paragraph.push(line);
-        }
+        blocks.push({ text: line, heading: this.isHeadingLine(line) });
       }
     }
     flushTable();
-    flushParagraph();
+    // Pas de lignes vides superflues en début et fin de texte
+    while (blocks.length && !blocks[0].table && !blocks[0].text?.trim()) blocks.shift();
+    while (blocks.length && !blocks[blocks.length - 1].table && !blocks[blocks.length - 1].text?.trim()) blocks.pop();
     this.caseBlocksCache.set(source, blocks);
     return blocks;
   }
 
   private isHeadingLine(line: string): boolean {
     const t = line.trim();
-    if (t.length > 90 || t.includes('\n')) return false;
-    return /^(exercice|question|partie|travail à faire|annexe|dossier|cas|document)\b/i.test(t)
-      || /^[IVX]+[.)-]\s/.test(t)
-      || (t === t.toUpperCase() && /[A-ZÀ-Ý]{4,}/.test(t));
+    if (!t || t.length > 90) return false;
+    return /^(exercice|partie|travail à faire|annexe|dossier|cas pratique)\b/i.test(t) || /^[IVX]+[.)-]\s/.test(t);
   }
 
   onPaperCorrectionSelected(event: Event) {

@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CourseService } from '../../core/services/course.service';
 import { ProgressService } from '../../core/services/progress.service';
 import { Lesson } from '../../core/models/course.model';
+import { DialogService } from '../../core/services/dialog.service';
 
 type CellFormat = 'none' | 'number' | 'currency' | 'percent';
 
@@ -241,7 +242,7 @@ export class SpreadsheetComponent implements OnInit {
   };
   templateKeys = Object.keys(this.templates);
 
-  constructor(
+  constructor(private dialogs: DialogService, 
     private courseService: CourseService,
     private progressService: ProgressService,
     private route: ActivatedRoute
@@ -355,8 +356,8 @@ export class SpreadsheetComponent implements OnInit {
     this.recompute();
   }
 
-  resetGridConfirm() {
-    if (!confirm('Effacer toute la feuille ?')) return;
+  async resetGridConfirm() {
+    if (!(await this.dialogs.confirm({ title: 'Effacer toute la feuille ?', message: 'Toutes les cellules seront vidées.', icon: 'bi-eraser', tone: 'danger', confirmText: 'Effacer' }))) return;
     this.selectedTemplate = '';
     this.resetGrid();
   }
@@ -410,11 +411,11 @@ export class SpreadsheetComponent implements OnInit {
   }
 
   exportJSON() {
-    prompt('Copiez ce JSON dans le champ "Code/Données de départ" de la leçon pour le réutiliser :', this.exportGridToJSON());
+    this.dialogs.prompt({ title: 'Exporter la feuille', message: 'Copiez ce JSON dans le champ « Code/Données de départ » de la leçon pour le réutiliser.', icon: 'bi-box-arrow-up', value: this.exportGridToJSON(), readonly: true });
   }
 
-  importJSON() {
-    const json = prompt('Collez le JSON exporté précédemment :', '');
+  async importJSON() {
+    const json = await this.dialogs.prompt({ title: 'Importer une feuille', message: 'Collez le JSON exporté précédemment.', icon: 'bi-box-arrow-in-down', multiline: true, confirmText: 'Importer' });
     if (json) this.loadGridFromData(json);
   }
 

@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { DialogService } from '../../core/services/dialog.service';
 
 interface Qcm { id: number; title: string; description: string; status: string; questionCount: number; createdAt: string; }
 
@@ -83,7 +84,7 @@ export class QcmListComponent implements OnInit {
   qcms: Qcm[] = [];
   loading = true;
 
-  constructor(private http: HttpClient) {}
+  constructor(private dialogs: DialogService, private http: HttpClient) {}
 
   ngOnInit() { this.load(); }
 
@@ -103,8 +104,8 @@ export class QcmListComponent implements OnInit {
     this.http.post(`/api/teacher/qcms/${q.id}/unpublish`, {}).subscribe(() => q.status = 'DRAFT');
   }
 
-  delete(q: Qcm) {
-    if (!confirm(`Supprimer "${q.title}" ?`)) return;
+  async delete(q: Qcm) {
+    if (!(await this.dialogs.confirmDelete(`le devoir « ${q.title} »`))) return;
     this.http.delete(`/api/teacher/qcms/${q.id}`).subscribe(() => this.qcms = this.qcms.filter(x => x.id !== q.id));
   }
 }

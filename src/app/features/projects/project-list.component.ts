@@ -3,6 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { ProjectService, Project } from '../../core/services/project.service';
+import { DialogService } from '../../core/services/dialog.service';
 
 @Component({
   selector: 'app-project-list',
@@ -143,7 +144,7 @@ export class ProjectListComponent implements OnInit {
     return this.authService.isTeacher || this.authService.isAdmin;
   }
 
-  constructor(
+  constructor(private dialogs: DialogService, 
     private fb: FormBuilder,
     private authService: AuthService,
     private projectService: ProjectService
@@ -225,8 +226,8 @@ export class ProjectListComponent implements OnInit {
     });
   }
 
-  deleteProject(p: Project) {
-    if (!confirm(`Supprimer "${p.title}" ?`)) return;
+  async deleteProject(p: Project) {
+    if (!(await this.dialogs.confirmDelete(`« ${p.title} »`))) return;
     this.deletingId = p.id;
     this.projectService.deleteProject(p.id).subscribe({
       next: () => {
@@ -260,7 +261,7 @@ export class ProjectListComponent implements OnInit {
         window.URL.revokeObjectURL(url);
         this.downloadingId = null;
       },
-      error: () => { this.downloadingId = null; alert('Erreur lors du téléchargement du projet.'); }
+      error: () => { this.downloadingId = null; this.dialogs.toast('Erreur lors du téléchargement du projet.', 'danger'); }
     });
   }
 }

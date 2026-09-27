@@ -6,6 +6,7 @@ import { CourseService } from '../../../core/services/course.service';
 import { UploadService } from '../../../core/services/upload.service';
 import { COURSE_CATEGORIES } from '../../../core/models/course.model';
 import { Course, Lesson } from '../../../core/models/course.model';
+import { DialogService } from '../../../core/services/dialog.service';
 
 const CODE_FILE_EXTENSIONS: Record<string, string> = {
   py: 'python', js: 'javascript', java: 'java', sql: 'sql', txt: 'python'
@@ -280,7 +281,7 @@ export class EditCourseComponent implements OnInit {
     EXCEL_EXERCISE: 'Exercice Excel'
   };
 
-  constructor(
+  constructor(private dialogs: DialogService, 
     private fb: FormBuilder,
     private courseService: CourseService,
     private uploadService: UploadService,
@@ -418,8 +419,8 @@ export class EditCourseComponent implements OnInit {
     input.value = '';
   }
 
-  deleteLesson(lesson: Lesson) {
-    if (!confirm(`Supprimer "${lesson.title}" ?`)) return;
+  async deleteLesson(lesson: Lesson) {
+    if (!(await this.dialogs.confirmDelete(`la leçon « ${lesson.title} »`))) return;
     this.deletingId = lesson.id;
     this.courseService.deleteLesson(lesson.id).subscribe({
       next: () => {

@@ -7,6 +7,7 @@ import { IdeService } from '../../core/services/ide.service';
 import { CourseService } from '../../core/services/course.service';
 import { ProgressService } from '../../core/services/progress.service';
 import { Lesson } from '../../core/models/course.model';
+import { DialogService } from '../../core/services/dialog.service';
 
 interface EditorTab {
   id: string;
@@ -237,7 +238,7 @@ export class IdeComponent implements OnInit {
     return Array.from({ length: Math.max(count, 20) }, (_, i) => i + 1);
   }
 
-  constructor(
+  constructor(private dialogs: DialogService, 
     private ideService: IdeService,
     private courseService: CourseService,
     private progressService: ProgressService,
@@ -279,7 +280,7 @@ export class IdeComponent implements OnInit {
   onPaste(event: ClipboardEvent) {
     event.preventDefault();
     // Show brief notification
-    alert('⚠️ Copier-coller désactivé ! Écrivez le code vous-même pour mieux apprendre.');
+    this.dialogs.toast('Copier-coller désactivé : écrivez le code vous-même pour mieux apprendre.', 'warning');
   }
 
   onContextMenu(event: MouseEvent) { event.preventDefault(); }

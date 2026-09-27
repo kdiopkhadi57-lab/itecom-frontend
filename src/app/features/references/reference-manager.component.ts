@@ -5,6 +5,7 @@ import { RouterLink } from '@angular/router';
 import { ReferenceService } from '../../core/services/reference.service';
 import { Reference, CitationStyle } from '../../core/models/reference.model';
 import { MarkdownItalicPipe } from '../../shared/directives/markdown-italic.pipe';
+import { DialogService } from '../../core/services/dialog.service';
 
 type View = 'list' | 'form' | 'citation';
 
@@ -596,7 +597,7 @@ export class ReferenceManagerComponent implements OnInit {
     { type: 'conference' as const, label: 'Conférence',  icon: '🎤' },
   ];
 
-  constructor(private refService: ReferenceService) {}
+  constructor(private dialogs: DialogService, private refService: ReferenceService) {}
 
   ngOnInit() { this.loadRefs(); }
 
@@ -693,8 +694,8 @@ export class ReferenceManagerComponent implements OnInit {
     });
   }
 
-  deleteRef(ref: Reference) {
-    if (!confirm(`Supprimer « ${ref.title} » ?`)) return;
+  async deleteRef(ref: Reference) {
+    if (!(await this.dialogs.confirmDelete(`« ${ref.title} »`))) return;
     this.refService.delete(ref.id!).subscribe(() => {
       this.refs = this.refs.filter(r => r.id !== ref.id);
       this.filterRefs();
@@ -717,11 +718,11 @@ export class ReferenceManagerComponent implements OnInit {
 
   copyCitation() {
     const plain = this.citationText.replace(/\*/g, '');
-    navigator.clipboard.writeText(plain).then(() => alert('Citation copiée !'));
+    navigator.clipboard.writeText(plain).then(() => this.dialogs.toast('Citation copiée'));
   }
 
   copyBibTeX() {
-    navigator.clipboard.writeText(this.bibtexText).then(() => alert('BibTeX copié !'));
+    navigator.clipboard.writeText(this.bibtexText).then(() => this.dialogs.toast('BibTeX copié'));
   }
 
   // ── Export ──────────────────────────────────────────────────────────────────

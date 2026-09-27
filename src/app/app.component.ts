@@ -6,11 +6,12 @@ import { SidebarComponent } from './shared/components/sidebar.component';
 import { AuthService } from './core/services/auth.service';
 import { UiChromeService } from './core/services/ui-chrome.service';
 import { CommonModule } from '@angular/common';
+import { DialogHostComponent } from './shared/components/dialog-host.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent, SidebarComponent, CommonModule],
+  imports: [RouterOutlet, NavbarComponent, SidebarComponent, CommonModule, DialogHostComponent],
   template: `
     <!-- Les pages /auth (connexion…) s'affichent toujours sans le menu du tableau de bord -->
     <ng-container *ngIf="authService.isAuthenticated && !(isAuthPage$ | async); else publicLayout">
@@ -25,6 +26,7 @@ import { CommonModule } from '@angular/common';
     <ng-template #publicLayout>
       <router-outlet></router-outlet>
     </ng-template>
+    <app-dialog-host></app-dialog-host>
   `
 })
 export class AppComponent {

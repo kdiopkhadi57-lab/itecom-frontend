@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CourseService } from '../../core/services/course.service';
 import { ProgressService } from '../../core/services/progress.service';
 import { Lesson } from '../../core/models/course.model';
+import { DialogService } from '../../core/services/dialog.service';
 
 interface DiagramType {
   id: string;
@@ -1270,7 +1271,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     return labels[this.activeDiagramType] ?? 'mermaid';
   }
 
-  constructor(
+  constructor(private dialogs: DialogService, 
     private cdr: ChangeDetectorRef,
     private courseService: CourseService,
     private progressService: ProgressService,
@@ -1345,8 +1346,8 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
     }
   }
 
-  clearConfirm() {
-    if (!confirm('Effacer le diagramme en cours ?')) return;
+  async clearConfirm() {
+    if (!(await this.dialogs.confirm({ title: 'Effacer le diagramme en cours ?', message: 'Le code du diagramme sera perdu.', icon: 'bi-eraser', tone: 'danger', confirmText: 'Effacer' }))) return;
     this.code = '';
     this.svgContent = '';
     this.error = '';
@@ -1354,7 +1355,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   }
 
   exportSVG() {
-    if (!this.svgContent) { alert('Aucun diagramme à exporter.'); return; }
+    if (!this.svgContent) { this.dialogs.toast('Aucun diagramme à exporter.', 'warning'); return; }
     const blob = new Blob([this.svgContent], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1365,7 +1366,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
   }
 
   exportPNG() {
-    if (!this.svgContent) { alert('Aucun diagramme à exporter.'); return; }
+    if (!this.svgContent) { this.dialogs.toast('Aucun diagramme à exporter.', 'warning'); return; }
     const canvas = document.createElement('canvas');
     const img = new Image();
     const svgBlob = new Blob([this.svgContent], { type: 'image/svg+xml;charset=utf-8' });
@@ -1389,11 +1390,11 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
 
   exportCode() {
     const data = JSON.stringify({ type: this.activeDiagramType, code: this.code });
-    prompt('Copiez ce JSON pour sauvegarder votre diagramme :', data);
+    this.dialogs.prompt({ title: 'Exporter le diagramme', message: 'Copiez ce JSON pour sauvegarder votre diagramme.', icon: 'bi-box-arrow-up', value: data, readonly: true });
   }
 
-  importCode() {
-    const json = prompt('Collez le JSON exporté précédemment :', '');
+  async importCode() {
+    const json = await this.dialogs.prompt({ title: 'Importer un diagramme', message: 'Collez le JSON exporté précédemment.', icon: 'bi-box-arrow-in-down', multiline: true, confirmText: 'Importer' });
     if (!json) return;
     try {
       const parsed = JSON.parse(json);
@@ -1403,7 +1404,7 @@ export class UmlModelerComponent implements OnInit, OnDestroy {
         this.renderDiagram();
       }
     } catch {
-      alert('JSON invalide.');
+      this.dialogs.toast('JSON invalide.', 'danger');
     }
   }
 

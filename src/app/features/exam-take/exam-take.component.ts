@@ -6,6 +6,7 @@ import { ExamService } from '../../core/services/exam.service';
 import { ExamTakeResponse, ExamQuestion, StudentAnswer } from '../../core/models/exam.model';
 import { UiChromeService } from '../../core/services/ui-chrome.service';
 import { AuthService } from '../../core/services/auth.service';
+import { DialogService } from '../../core/services/dialog.service';
 
 type PageStatus = 'loading' | 'welcome' | 'active' | 'submitted' | 'error' | 'already-submitted' | 'terminated' | 'blocked';
 
@@ -343,7 +344,7 @@ export class ExamTakeComponent implements OnInit, OnDestroy {
     this.attachStreamToVideo();
   }
 
-  constructor(
+  constructor(private dialogs: DialogService, 
     private route: ActivatedRoute,
     private examService: ExamService,
     private uiChrome: UiChromeService,
@@ -737,9 +738,9 @@ export class ExamTakeComponent implements OnInit, OnDestroy {
     }));
   }
 
-  submitExam() {
+  async submitExam() {
     if (!this.exam) return;
-    if (!confirm('Êtes-vous sûr de vouloir soumettre l’examen ? Si oui, vos réponses seront enregistrées et vous serez déconnecté(e) de la plateforme.')) return;
+    if (!(await this.dialogs.confirm({ title: 'Soumettre l’examen ?', message: 'Vos réponses seront enregistrées et vous serez déconnecté(e) de la plateforme.', icon: 'bi-send-check', confirmText: 'Soumettre' }))) return;
 
     this.submitting = true;
     this.examService.submitExam(this.token, { answers: this.buildAnswers() }).subscribe({
@@ -750,7 +751,7 @@ export class ExamTakeComponent implements OnInit, OnDestroy {
         this.authService.logout();
       },
       error: e => {
-        alert(e?.error?.message || 'Erreur lors de la soumission. Veuillez réessayer.');
+        this.dialogs.alert({ title: 'Soumission impossible', message: e?.error?.message || 'Erreur lors de la soumission. Veuillez réessayer.', tone: 'danger' });
         this.submitting = false;
       }
     });

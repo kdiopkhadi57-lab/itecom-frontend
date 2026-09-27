@@ -9,6 +9,7 @@ import { ProgressService } from '../../core/services/progress.service';
 import { IdeService } from '../../core/services/ide.service';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Lesson } from '../../core/models/course.model';
+import { DialogService } from '../../core/services/dialog.service';
 
 const CODE_FILE_EXTENSIONS: Record<string, string> = {
   py: 'python', js: 'javascript', java: 'java', sql: 'sql', txt: 'python'
@@ -370,7 +371,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     return this.projectFiles.filter(f => f.packageName === pkg);
   }
 
-  constructor(
+  constructor(private dialogs: DialogService, 
     private fb: FormBuilder,
     private authService: AuthService,
     private exerciseService: ExerciseService,
@@ -565,17 +566,17 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     let pkg = this.newFilePackage === '__new__' ? this.newPackageName.trim() : this.newFilePackage.trim();
 
     if (pkg && !this.packageNamePattern.test(pkg)) {
-      alert('Nom de package invalide. Utilisez des points pour séparer les segments, ex: com.example.util');
+      this.dialogs.alert({ title: 'Nom de package invalide', message: 'Utilisez des points pour séparer les segments, ex : com.example.util', tone: 'warning' });
       return;
     }
     const className = this.newFileName.trim();
     if (!className) return;
     if (!this.classNamePattern.test(className)) {
-      alert('Nom de classe invalide. Utilisez des lettres, chiffres et underscores, sans espace.');
+      this.dialogs.alert({ title: 'Nom de classe invalide', message: 'Utilisez des lettres, chiffres et underscores, sans espace.', tone: 'warning' });
       return;
     }
     if (this.projectFiles.some(f => f.packageName === pkg && f.className === className)) {
-      alert('Ce nom existe déjà dans ce package.');
+      this.dialogs.alert({ title: 'Ce nom existe déjà dans ce package.', tone: 'warning' });
       return;
     }
     if (pkg && !this.packages.includes(pkg)) this.packages.push(pkg);
@@ -608,7 +609,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     }
 
     if (fields.length === 0) {
-      alert('Aucun champ détecté. Déclarez vos champs avant de générer, ex: private String nom;');
+      this.dialogs.alert({ title: 'Aucun champ détecté', message: 'Déclarez vos champs avant de générer, ex : private String nom;', tone: 'warning' });
       return;
     }
 
@@ -643,7 +644,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     });
 
     if (generated.length === 0) {
-      alert('Le constructeur, les getters et les setters existent déjà pour ces champs.');
+      this.dialogs.toast('Le constructeur, les getters et les setters existent déjà pour ces champs.', 'info');
       return;
     }
 
@@ -825,8 +826,8 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
     });
   }
 
-  deleteExercise(ex: Lesson) {
-    if (!confirm(`Supprimer "${ex.title}" ?`)) return;
+  async deleteExercise(ex: Lesson) {
+    if (!(await this.dialogs.confirmDelete(`« ${ex.title} »`))) return;
     this.deletingId = ex.id;
     this.exerciseService.deleteExercise(ex.id).subscribe({
       next: () => {

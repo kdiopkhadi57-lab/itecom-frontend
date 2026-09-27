@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { BookService } from '../../core/services/book.service';
 import { Book } from '../../core/models/book.model';
 import { AuthService } from '../../core/services/auth.service';
+import { DialogService } from '../../core/services/dialog.service';
 
 interface DiscoveredBook {
   googleId: string;
@@ -568,7 +569,7 @@ export class LibraryComponent implements OnInit {
     'Autre':          '#475569',
   };
 
-  constructor(
+  constructor(private dialogs: DialogService, 
     private bookService: BookService,
     public authService: AuthService,
     private http: HttpClient
@@ -828,8 +829,8 @@ export class LibraryComponent implements OnInit {
     });
   }
 
-  deleteBook(id: number) {
-    if (!confirm('Supprimer ce livre de la bibliothèque ?')) return;
+  async deleteBook(id: number) {
+    if (!(await this.dialogs.confirmDelete('ce livre de la bibliothèque'))) return;
     this.bookService.deleteBook(id).subscribe({
       next: () => {
         this.allBooks = this.allBooks.filter(b => b.id !== id);

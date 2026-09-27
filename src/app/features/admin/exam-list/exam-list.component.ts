@@ -5,6 +5,7 @@ import { HttpClient } from '@angular/common/http';
 import { ExamService } from '../../../core/services/exam.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Exam } from '../../../core/models/exam.model';
+import { DialogService } from '../../../core/services/dialog.service';
 
 interface Qcm { id: number; title: string; description: string; status: string; questionCount: number; createdAt: string; }
 
@@ -183,7 +184,7 @@ export class ExamListComponent implements OnInit {
   loadingQcm = false;
   qcmsLoaded = false;
 
-  constructor(
+  constructor(private dialogs: DialogService, 
     private examService: ExamService,
     public authService: AuthService,
     private http: HttpClient
@@ -207,16 +208,16 @@ export class ExamListComponent implements OnInit {
   }
 
   // ── Actions examens ──────────────────────────────────────────────────────
-  publishExam(exam: Exam) {
-    if (!confirm(`Publier "${exam.title}" ?`)) return;
+  async publishExam(exam: Exam) {
+    if (!(await this.dialogs.confirm({ title: `Publier « ${exam.title} » ?`, message: 'Les étudiants recevront leur invitation.', icon: 'bi-send', confirmText: 'Publier' }))) return;
     this.examService.publishExam(exam.id).subscribe({ next: r => { const i = this.exams.findIndex(e => e.id === exam.id); if (i >= 0) this.exams[i] = r.data; } });
   }
-  closeExam(exam: Exam) {
-    if (!confirm(`Clôturer "${exam.title}" ?`)) return;
+  async closeExam(exam: Exam) {
+    if (!(await this.dialogs.confirm({ title: `Clôturer « ${exam.title} » ?`, message: 'Plus aucune copie ne pourra être rendue.', icon: 'bi-lock', tone: 'warning', confirmText: 'Clôturer' }))) return;
     this.examService.closeExam(exam.id).subscribe({ next: r => { const i = this.exams.findIndex(e => e.id === exam.id); if (i >= 0) this.exams[i] = r.data; } });
   }
-  deleteExam(exam: Exam) {
-    if (!confirm(`Supprimer "${exam.title}" ?`)) return;
+  async deleteExam(exam: Exam) {
+    if (!(await this.dialogs.confirmDelete(`l'examen « ${exam.title} »`))) return;
     this.examService.deleteExam(exam.id).subscribe({ next: () => this.exams = this.exams.filter(e => e.id !== exam.id) });
   }
   downloadReport(exam: Exam) {
@@ -231,8 +232,8 @@ export class ExamListComponent implements OnInit {
   unpublishQcm(q: Qcm) {
     this.http.post(`/api/teacher/qcms/${q.id}/unpublish`, {}).subscribe(() => q.status = 'DRAFT');
   }
-  deleteQcm(q: Qcm) {
-    if (!confirm(`Supprimer "${q.title}" ?`)) return;
+  async deleteQcm(q: Qcm) {
+    if (!(await this.dialogs.confirmDelete(`le devoir « ${q.title} »`))) return;
     this.http.delete(`/api/teacher/qcms/${q.id}`).subscribe(() => this.qcms = this.qcms.filter(x => x.id !== q.id));
   }
 

@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { safeReturnUrl } from '../../../core/guards/auth.guard';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -218,8 +219,9 @@ export class LoginComponent {
     this.error = '';
     this.authService.login(this.form.value).subscribe({
       next: (resp) => {
-        const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-        this.router.navigateByUrl(returnUrl || '/dashboard');
+        const returnUrl = safeReturnUrl(this.route.snapshot.queryParamMap.get('returnUrl'));
+        // Si la page demandée est refusée (rôle différent), on retombe sur le tableau de bord
+        this.router.navigateByUrl(returnUrl).then(ok => { if (!ok) this.router.navigateByUrl('/dashboard'); });
       },
       error: (err) => {
         this.error = err.error?.message || 'Email ou mot de passe incorrect';

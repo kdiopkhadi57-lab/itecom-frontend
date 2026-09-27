@@ -12,10 +12,24 @@ export const authGuard: CanActivateFn = (route, state) => {
 
 export const studentGuard: CanActivateFn = (route, state) => {
   let authService = inject(AuthService);
-  return authService.isAuthenticated && (authService.isStudent || authService.isAdmin);
+  if (authService.isAuthenticated && (authService.isStudent || authService.isAdmin)) return true;
+  return inject(Router).createUrlTree([authService.isAuthenticated ? '/dashboard' : '/auth/login']);
 };
 
 export const teacherGuard: CanActivateFn = (route, state) => {
   let authService = inject(AuthService);
-  return authService.isAuthenticated && (authService.isTeacher || authService.isAdmin);
+  if (authService.isAuthenticated && (authService.isTeacher || authService.isAdmin)) return true;
+  return inject(Router).createUrlTree([authService.isAuthenticated ? '/dashboard' : '/auth/login']);
 };
+
+/** Pages de connexion : un utilisateur déjà connecté est renvoyé vers son tableau de bord. */
+export const guestGuard: CanActivateFn = () => {
+  let authService = inject(AuthService);
+  return authService.isAuthenticated ? inject(Router).createUrlTree(['/dashboard']) : true;
+};
+
+/** Adresse de retour après connexion : uniquement une page interne, jamais une page /auth. */
+export function safeReturnUrl(url: string | null): string {
+  if (!url || !url.startsWith('/') || url.startsWith('//') || url.startsWith('/auth')) return '/dashboard';
+  return url;
+}

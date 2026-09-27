@@ -11,11 +11,12 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="landing">
-      <!-- Image plein écran : les 5 matières en panorama, une mise en avant toutes les 5 secondes -->
+      <!-- Image plein écran : une matière toutes les 3 secondes -->
       <div class="bg" aria-hidden="true">
-        <div *ngFor="let s of slides; let i = index" class="panel" [class.active]="i === current">
-          <img [src]="s.image" alt="">
-        </div>
+        <picture *ngFor="let s of slides; let i = index" class="slide" [class.active]="i === current">
+          <source media="(max-aspect-ratio: 4/5)" [attr.srcset]="s.mobile">
+          <img [src]="s.image" alt="" [attr.loading]="i === 0 ? 'eager' : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null">
+        </picture>
       </div>
       <div class="shade" aria-hidden="true"></div>
 
@@ -118,22 +119,18 @@ import { CommonModule } from '@angular/common';
     }
 
     /* Image plein écran */
-    .bg { position: absolute; inset: 0; display: flex; }
-    .panel { position: relative; flex: 1 1 0; overflow: hidden; transition: flex-grow .9s cubic-bezier(.2, .8, .2, 1); }
-    .panel + .panel { border-left: 1px solid rgba(255, 255, 255, .1); }
-    .panel.active { flex-grow: 1.45; }
-    .panel img {
-      width: 100%; height: 100%; object-fit: cover; object-position: center 28%;
-      filter: brightness(.5) saturate(.8); transform: scale(1.02);
-      transition: filter .9s ease, transform 5s ease-out;
-    }
-    .panel.active img { filter: brightness(1) saturate(1.05); transform: scale(1.06); }
+    .bg { position: absolute; inset: 0; overflow: hidden; }
+    .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; }
+    .slide.active { opacity: 1; }
+    .slide img { width: 100%; height: 100%; object-fit: cover; object-position: center 30%; transform: scale(1.08); }
+    /* Léger zoom arrière pendant les 3 secondes d'affichage */
+    .slide.active img { animation: kenburns 4s ease-out forwards; }
     /* Voile : texte lisible à gauche et en bas, image visible au centre */
     .shade {
       position: absolute; inset: 0;
       background:
-        linear-gradient(90deg, rgba(6, 22, 61, .88) 0%, rgba(6, 22, 61, .55) 34%, rgba(6, 22, 61, .05) 58%, rgba(6, 22, 61, .35) 100%),
-        linear-gradient(180deg, rgba(6, 22, 61, .6) 0%, rgba(6, 22, 61, 0) 18%, rgba(6, 22, 61, 0) 55%, rgba(6, 22, 61, .9) 100%);
+        linear-gradient(90deg, rgba(6, 22, 61, .86) 0%, rgba(6, 22, 61, .5) 36%, rgba(6, 22, 61, .12) 60%, rgba(6, 22, 61, .4) 100%),
+        linear-gradient(180deg, rgba(6, 22, 61, .55) 0%, rgba(6, 22, 61, 0) 18%, rgba(6, 22, 61, 0) 55%, rgba(6, 22, 61, .9) 100%);
     }
 
     .content { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
@@ -153,7 +150,7 @@ import { CommonModule } from '@angular/common';
     .bar { flex: 1; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .3); overflow: hidden; position: relative; }
     .bar::after { content: ''; position: absolute; inset: 0; width: 0; background: #fff; }
     .bar.done::after, .bar.full::after { width: 100%; }
-    .bar.running::after { animation: fill 5s linear forwards; }
+    .bar.running::after { animation: fill 3s linear forwards; }
 
     /* Bannière */
     .hero {
@@ -229,6 +226,7 @@ import { CommonModule } from '@angular/common';
     .footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-bottom: 16px; color: rgba(203, 213, 225, .75); font-size: .78rem; }
 
     @keyframes fill { from { width: 0; } to { width: 100%; } }
+    @keyframes kenburns { from { transform: scale(1.08); } to { transform: scale(1); } }
     @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 
     @media (max-width: 1199.98px) {
@@ -238,27 +236,25 @@ import { CommonModule } from '@angular/common';
     @media (max-width: 991.98px) {
       .hero { grid-template-columns: 1fr; gap: 28px; }
       .shade { background: linear-gradient(180deg, rgba(6, 22, 61, .55) 0%, rgba(6, 22, 61, .72) 45%, rgba(6, 22, 61, .92) 100%); }
-      /* Écran étroit : une seule matière à la fois, en plein écran */
-      .panel { display: none; }
-      .panel.active { display: block; flex-grow: 1; }
-      .panel.active img { object-position: center 18%; transform: none; }
+      .slide img { object-position: center 18%; }
     }
     @media (max-width: 575.98px) {
       .features { grid-template-columns: 1fr; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .panel, .panel img { transition: none; transform: none; }
+      .slide { transition: none; }
+      .slide img, .slide.active img { animation: none; transform: none; }
       .login-card, .feature { animation: none; }
     }
   `]
 })
 export class LoginComponent implements OnInit, OnDestroy {
   readonly slides = [
-    { name: 'Comptabilité analytique', image: '/assets/images/matieres/comptabilite.jpg', icon: 'bi-calculator', color: '#1d6ff2' },
-    { name: 'Droit', image: '/assets/images/matieres/droit.jpg', icon: 'bi-bank', color: '#4f46e5' },
-    { name: 'Réseaux', image: '/assets/images/matieres/reseaux.jpg', icon: 'bi-diagram-3', color: '#0d9488' },
-    { name: 'Programmation', image: '/assets/images/matieres/programmation.jpg', icon: 'bi-code-slash', color: '#ea580c' },
-    { name: 'Mathématiques', image: '/assets/images/matieres/mathematiques.jpg', icon: 'bi-plus-slash-minus', color: '#e11d48' }
+    { name: 'Comptabilité analytique', image: '/assets/images/matieres/comptabilite.jpg', mobile: '/assets/images/matieres/comptabilite-mobile.jpg', icon: 'bi-calculator', color: '#1d6ff2' },
+    { name: 'Droit', image: '/assets/images/matieres/droit.jpg', mobile: '/assets/images/matieres/droit-mobile.jpg', icon: 'bi-bank', color: '#4f46e5' },
+    { name: 'Réseaux', image: '/assets/images/matieres/reseaux.jpg', mobile: '/assets/images/matieres/reseaux-mobile.jpg', icon: 'bi-diagram-3', color: '#0d9488' },
+    { name: 'Programmation', image: '/assets/images/matieres/programmation.jpg', mobile: '/assets/images/matieres/programmation-mobile.jpg', icon: 'bi-code-slash', color: '#ea580c' },
+    { name: 'Mathématiques', image: '/assets/images/matieres/mathematiques.jpg', mobile: '/assets/images/matieres/mathematiques-mobile.jpg', icon: 'bi-plus-slash-minus', color: '#e11d48' }
   ];
   readonly features = [
     { icon: 'bi-book', title: 'Cours en ligne', text: 'Leçons, supports et exercices accessibles à tout moment.' },
@@ -290,11 +286,11 @@ export class LoginComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    // Une matière toutes les 5 secondes, comme dans l'animation d'origine
+    // Une matière en plein écran toutes les 3 secondes
     if (!this.reducedMotion) {
       this.timer = setInterval(() => {
         if (!this.paused) this.current = (this.current + 1) % this.slides.length;
-      }, 5000);
+      }, 3000);
     }
   }
 

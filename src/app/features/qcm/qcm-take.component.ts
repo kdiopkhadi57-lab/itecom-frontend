@@ -17,6 +17,7 @@ interface Question {
   expectedAnswer?: string;
   valueLabels: string[];
   choices: Choice[];
+  gridRows?: { id: string; label: string; question?: string }[];
 }
 interface QcmTake  {
   id: number;
@@ -353,10 +354,37 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                   </div>
                 </div>
 
+                <div *ngIf="q.gridRows?.length" class="case-grid">
+                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                    <div class="fw-semibold"><i class="bi bi-table me-1"></i>Vos résultats</div>
+                    <span class="small text-muted">Un résultat final par ligne — c'est cette valeur qui est comparée à la correction.</span>
+                  </div>
+                  <div *ngIf="scanReadNotice[q.id]" class="alert alert-info small py-2">
+                    <i class="bi bi-magic me-1"></i>Valeurs lues sur votre copie : vérifiez-les et corrigez si nécessaire.
+                  </div>
+                  <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0 grid-table">
+                      <thead><tr><th style="width:70px">Ligne</th><th>Question</th><th style="width:220px">Votre résultat</th></tr></thead>
+                      <tbody>
+                        <tr *ngFor="let row of q.gridRows">
+                          <td class="fw-semibold">{{ row.label }}</td>
+                          <td class="small text-muted">{{ row.question || '—' }}</td>
+                          <td>
+                            <input class="form-control form-control-sm" [attr.aria-label]="'Résultat ' + row.label"
+                                   placeholder="Ex. 5 280 000"
+                                   [ngModel]="getPracticalAnswer(q.id, row.id)"
+                                   (ngModelChange)="setPracticalAnswer(q.id, row.id, $event)">
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
                 <div class="case-answer">
                   <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                     <label class="fw-semibold mb-0" [for]="'case-answer-' + q.id">
-                      <i class="bi bi-pencil-square me-1"></i>Votre réponse
+                      <i class="bi bi-pencil-square me-1"></i>{{ q.gridRows?.length ? 'Justification et calculs' : 'Votre réponse' }}
                     </label>
                     <span class="small text-muted">{{ wordCount(textAnswers[q.id]) }} mot(s)</span>
                   </div>
@@ -508,6 +536,8 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
     .case-table td { padding: 6px 10px; }
     .case-answer { padding: 16px 18px; border-radius: 12px; background: #fff; border: 2px solid #10b981; }
     .case-textarea { min-height: 280px; font-size: .98rem; line-height: 1.6; resize: vertical; border-radius: 10px; }
+    .case-grid { padding: 16px 18px; border-radius: 12px; background: #fff; border: 2px solid #1d6ff2; }
+    .grid-table thead th { font-size: .75rem; text-transform: uppercase; color: #64748b; background: #f8fafc; }
     .case-paper { padding: 14px 16px; border-radius: 12px; background: #fff8e1; border: 1px solid #f5d06f; }
 
     .proctor-widget {
@@ -570,6 +600,7 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   starting = false;
   startError = '';
   submitError = '';
+  scanReadNotice: Record<number, boolean> = {};
   draftSavedLabel = '';
   private lastDraftSnapshot = '';
   private draftInterval: ReturnType<typeof setInterval> | null = null;
@@ -709,7 +740,8 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
     if (!this.qcm) return false;
     if (this.qcm.paperCorrectionRequired === true) return true;
     // La copie papier n'est requise que si un cas pratique n'a pas de réponse saisie
-    return this.qcm.questions.some(q => this.isCaseQuestion(q) && !this.textAnswers[q.id]?.trim());
+    return this.qcm.questions.some(q => this.isCaseQuestion(q) && !this.textAnswers[q.id]?.trim()
+      && !Object.values(this.practicalAnswers[q.id] || {}).some(v => v?.trim()));
   }
 
   /** Le sujet documentaire est déjà affiché dans la question « cas pratique » : inutile de le répéter. */
@@ -783,13 +815,25 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
     this.paperCorrectionError = '';
     const form = new FormData();
     form.append('file', file);
-    this.http.post<{ url: string; filename: string }>(
+    this.http.post<{ url: string; filename: string; readValues?: Record<string, Record<string, string>> }>(
       `/api/qcm/${this.qcmId}/passage/${this.qcm.passageId}/paper-correction`, form
     ).subscribe({
       next: response => {
         this.paperCorrectionUrl = response.url;
         this.paperCorrectionFilename = response.filename;
         this.paperCorrectionUploading = false;
+        // Valeurs lues sur la copie : pré-remplissage des lignes encore vides, à vérifier par l'étudiant
+        Object.entries(response.readValues || {}).forEach(([questionId, values]) => {
+          const qid = Number(questionId);
+          let filled = false;
+          Object.entries(values).forEach(([rowId, value]) => {
+            if (!this.getPracticalAnswer(qid, rowId).trim() && value) {
+              this.setPracticalAnswer(qid, rowId, value);
+              filled = true;
+            }
+          });
+          if (filled) this.scanReadNotice[qid] = true;
+        });
       },
       error: error => {
         this.paperCorrectionError = error.error?.message || 'Impossible de joindre la copie papier.';
@@ -799,9 +843,11 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   }
 
   get answered() {
-    return Object.keys(this.answers).length + Object.values(this.practicalAnswers)
-      .filter(values => Object.values(values).some(value => value.trim())).length +
-      Object.values(this.textAnswers).filter(value => value.trim()).length;
+    if (!this.qcm) return 0;
+    return this.qcm.questions.filter(q =>
+      !!this.answers[q.id]
+      || !!this.textAnswers[q.id]?.trim()
+      || Object.values(this.practicalAnswers[q.id] || {}).some(value => value?.trim())).length;
   }
 
   get pctColor() {
@@ -913,9 +959,10 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
       };
 
       if (this.isCaseQuestion(q) || q.questionType?.toUpperCase() === 'LONG_TEXT') {
+        // Rédaction + un résultat par ligne de la grille de correction
         return {
           ...base,
-          values: { answer: this.textAnswers[q.id] || '' }
+          values: { ...(this.practicalAnswers[q.id] || {}), answer: this.textAnswers[q.id] || '' }
         };
       }
 
@@ -984,7 +1031,9 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
         if (!question) continue;
         if (r.choiceId) this.answers[r.questionId] = r.choiceId;
         if (this.isCaseQuestion(question) || question.questionType?.toUpperCase() === 'LONG_TEXT') {
-          if (r.values?.['answer']) this.textAnswers[r.questionId] = r.values['answer'];
+          const { answer, ...rowValues } = r.values || {};
+          if (answer) this.textAnswers[r.questionId] = answer;
+          if (Object.keys(rowValues).length) this.practicalAnswers[r.questionId] = rowValues;
         } else if (r.values && Object.keys(r.values).length) {
           this.practicalAnswers[r.questionId] = { ...r.values };
         }

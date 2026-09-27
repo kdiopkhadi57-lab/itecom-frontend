@@ -5,7 +5,9 @@ import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 
 interface ReponseDetail { questionText: string; points: number; choiceSelected: string; isCorrect: boolean; correctChoice: string; questionType?: string; textAnswer?: string; }
-interface PassageResult  { passageId?: number; studentName: string; studentEmail: string; studentLevel?: string; lastName?: string; firstName?: string; birthDate?: string; score?: number; maxScore?: number; manualScore?: number; manualCorrectionNote?: string; ocrScore?: number; ocrCorrectionNote?: string; percentage?: string; submittedAt?: string; status: string; paperCorrectionUrl?: string; paperCorrectionFilename?: string; documentAnswer?: string; correctionText?: string; reponses: ReponseDetail[]; }
+interface GridRowResult { id: string; label: string; question?: string; expectedRaw: string; studentValue?: string | null; source?: string | null; correct: boolean; points: number; maxPoints: number; }
+interface CorrectionDetail { questionId: number; earned: number; total: number; rows: GridRowResult[]; }
+interface PassageResult  { passageId?: number; studentName: string; studentEmail: string; studentLevel?: string; lastName?: string; firstName?: string; birthDate?: string; score?: number; maxScore?: number; manualScore?: number; manualCorrectionNote?: string; ocrScore?: number; ocrCorrectionNote?: string; percentage?: string; submittedAt?: string; status: string; paperCorrectionUrl?: string; paperCorrectionFilename?: string; documentAnswer?: string; correctionText?: string; correctionDetail?: CorrectionDetail[] | null; reponses: ReponseDetail[]; }
 
 @Component({
   selector: 'app-qcm-resultats',
@@ -152,7 +154,28 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
               <i class="bi bi-file-earmark-image me-1"></i>Voir la copie scannée
             </a>
 
-            <div *ngIf="detail.ocrCorrectionNote" class="section-box mb-3" style="background:#eff6ff">
+            <div *ngFor="let grid of detail.correctionDetail || []" class="mb-3">
+              <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="fw-bold mb-0"><i class="bi bi-table me-1"></i>Correction ligne par ligne</h6>
+                <span class="badge" style="background:#e0ebff;color:#1d4ed8">{{ grid.earned }} / {{ grid.total }} pt(s) de la grille</span>
+              </div>
+              <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0 grid-result">
+                  <thead><tr><th>Ligne</th><th>Attendu</th><th>Réponse de l'étudiant</th><th>Source</th><th class="text-end">Points</th></tr></thead>
+                  <tbody>
+                    <tr *ngFor="let row of grid.rows" [class.table-success]="row.correct" [class.table-danger]="!row.correct">
+                      <td class="fw-semibold" [title]="row.question || ''">{{ row.correct ? '✓' : '✗' }} {{ row.label }}</td>
+                      <td>{{ row.expectedRaw }}</td>
+                      <td>{{ row.studentValue || '(aucune)' }}</td>
+                      <td class="small text-muted">{{ row.source || '—' }}</td>
+                      <td class="text-end">{{ row.points }} / {{ row.maxPoints }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div *ngIf="detail.ocrCorrectionNote && !detail.correctionDetail?.length" class="section-box mb-3" style="background:#eff6ff">
               <div class="fw-semibold small mb-1"><i class="bi bi-calculator me-1"></i>Correction automatique</div>
               <div class="small" style="white-space:pre-wrap">{{ detail.ocrCorrectionNote }}</div>
             </div>
@@ -231,6 +254,7 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
     .info-cell { background: #f8fafc; border-radius: 10px; padding: 10px 12px; font-weight: 600; font-size: .9rem; }
     .info-cell span { display: block; font-size: .72rem; font-weight: 500; color: #64748b; }
     .grade-banner { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 14px; border-left: 5px solid; background: #f8fafc; }
+    .grid-result thead th { font-size: .72rem; text-transform: uppercase; color: #64748b; background: #f8fafc; }
     .section-box { padding: 12px 14px; border-radius: 12px; }
     .answer-row { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #f1f5f9; }
     .answer-icon { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .8rem; background: #fee2e2; color: #991b1b; }

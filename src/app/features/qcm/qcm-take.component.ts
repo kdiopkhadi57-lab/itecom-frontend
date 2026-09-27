@@ -38,7 +38,6 @@ interface QcmAcces {
   description: string;
   estimatedDurationMinutes: number;
   questionCount: number;
-  passwordRequired: boolean;
   studentName: string;
   studentLevel?: string | null;
 }
@@ -216,18 +215,9 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
             <i class="bi bi-shield-lock me-1"></i>
             Le devoir démarre en plein écran. Le copier/coller et le clic droit sont désactivés pendant l'épreuve.
           </div>
-          <div *ngIf="acces.passwordRequired" class="text-start mb-4 mx-auto" style="max-width:360px">
-            <label class="form-label fw-semibold" for="qcmPassword">
-              <i class="bi bi-key me-1"></i>Mot de passe du devoir
-            </label>
-            <input id="qcmPassword" type="password" class="form-control form-control-lg" autocomplete="off"
-                   [(ngModel)]="password" [class.is-invalid]="!!startError"
-                   (keydown.enter)="startQcm()" placeholder="Mot de passe communiqué par votre professeur">
-            <div class="invalid-feedback">{{ startError }}</div>
-          </div>
-          <div *ngIf="startError && !acces.passwordRequired" class="alert alert-danger small">{{ startError }}</div>
+          <div *ngIf="startError" class="alert alert-danger small">{{ startError }}</div>
           <button class="btn btn-lg fw-semibold" style="background:#6366f1;color:#fff;border-radius:12px" (click)="startQcm()"
-                  [disabled]="starting || (acces.passwordRequired && !password.trim())">
+                  [disabled]="starting">
             <span *ngIf="starting" class="spinner-border spinner-border-sm me-2"></span>
             ▶ Commencer le devoir
           </button>
@@ -537,7 +527,6 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   status: PageStatus = 'loading';
   qcm: QcmTake | null = null;
   acces: QcmAcces | null = null;
-  password = '';
   starting = false;
   startError = '';
   resultat: Resultat | null = null;
@@ -779,12 +768,11 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
 
   startQcm() {
     if (this.starting || !this.acces) return;
-    if (this.acces.passwordRequired && !this.password.trim()) return;
     // Le navigateur n'autorise le plein écran que pendant le geste utilisateur
     this.enterFullscreen();
     this.starting = true;
     this.startError = '';
-    this.http.post<QcmTake>(`/api/qcm/${this.qcmId}/commencer`, { password: this.password.trim() }).subscribe({
+    this.http.post<QcmTake>(`/api/qcm/${this.qcmId}/commencer`, {}).subscribe({
       next: (q) => {
         this.starting = false;
         this.loadQcm(q);

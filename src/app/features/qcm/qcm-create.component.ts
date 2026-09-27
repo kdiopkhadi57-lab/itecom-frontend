@@ -289,6 +289,7 @@ Bonne réponse: C</code>
                 Si vide → QCM visible par <strong>tous</strong> les étudiants approuvés.<br>
                 Sinon → seulement les étudiants de la liste pourront le passer.<br>
                 Colonnes : Nom · Prénom · Niveau · Email · Mot de passe (unique par étudiant, généré s'il est absent)<br>
+                L'email et le mot de passe servent à l'étudiant pour se connecter à la plateforme (compte créé ou mis à jour à l'enregistrement).<br>
                 Formats : Excel (.xlsx) · CSV · Word · PDF
               </p>
             </div>
@@ -335,7 +336,7 @@ Bonne réponse: C</code>
                 <thead class="table-light sticky-top">
                   <tr>
                     <th style="width:32px">#</th><th>Nom</th><th>Prénom</th><th style="width:90px">Niveau</th>
-                    <th>Email</th><th style="width:170px">Mot de passe</th><th style="width:40px"></th>
+                    <th>Email</th><th style="width:170px">Mot de passe de connexion</th><th style="width:40px"></th>
                   </tr>
                 </thead>
                 <tbody>

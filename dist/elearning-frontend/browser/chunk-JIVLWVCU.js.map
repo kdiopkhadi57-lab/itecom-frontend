@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/courses/courses.routes.ts"],
+  "sourcesContent": ["import { Routes } from '@angular/router';\nimport { authGuard } from '../../core/guards/auth.guard';\n\nexport const coursesRoutes: Routes = [\n  {\n    path: '',\n    loadComponent: () => import('./course-list/course-list.component').then(m => m.CourseListComponent)\n  },\n  {\n    path: 'my-learning',\n    canActivate: [authGuard],\n    loadComponent: () => import('./my-learning/my-learning.component').then(m => m.MyLearningComponent)\n  },\n  {\n    path: ':id',\n    loadComponent: () => import('./course-detail/course-detail.component').then(m => m.CourseDetailComponent)\n  },\n  {\n    path: ':id/learn',\n    canActivate: [authGuard],\n    loadComponent: () => import('./course-player/course-player.component').then(m => m.CoursePlayerComponent)\n  }\n];\n"],
+  "mappings": ";;;;;;;;AAGO,IAAM,gBAAwB;EACnC;IACE,MAAM;IACN,eAAe,MAAM,OAAO,qBAAqC,EAAE,KAAK,OAAK,EAAE,mBAAmB;;EAEpG;IACE,MAAM;IACN,aAAa,CAAC,SAAS;IACvB,eAAe,MAAM,OAAO,qBAAqC,EAAE,KAAK,OAAK,EAAE,mBAAmB;;EAEpG;IACE,MAAM;IACN,eAAe,MAAM,OAAO,qBAAyC,EAAE,KAAK,OAAK,EAAE,qBAAqB;;EAE1G;IACE,MAAM;IACN,aAAa,CAAC,SAAS;IACvB,eAAe,MAAM,OAAO,qBAAyC,EAAE,KAAK,OAAK,EAAE,qBAAqB;;;",
+  "names": []
+}

@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/core/guards/auth.guard.ts"],
+  "sourcesContent": ["import { inject } from '@angular/core';\nimport { CanActivateFn, Router } from '@angular/router';\nimport { AuthService } from '../services/auth.service';\n\nexport const authGuard: CanActivateFn = (route, state) => {\n  let authService = inject(AuthService);\n  let router = inject(Router);\n  if (authService.isAuthenticated) return true;\n  router.navigate(['/auth/login'], { queryParams: { returnUrl: state.url } });\n  return false;\n};\n\nexport const studentGuard: CanActivateFn = (route, state) => {\n  let authService = inject(AuthService);\n  return authService.isAuthenticated && (authService.isStudent || authService.isAdmin);\n};\n\nexport const teacherGuard: CanActivateFn = (route, state) => {\n  let authService = inject(AuthService);\n  return authService.isAuthenticated && (authService.isTeacher || authService.isAdmin);\n};\n"],
+  "mappings": ";;;;;;;;;AAIO,IAAM,YAA2B,CAAC,OAAO,UAAS;AACvD,MAAI,cAAc,OAAO,WAAW;AACpC,MAAI,SAAS,OAAO,MAAM;AAC1B,MAAI,YAAY;AAAiB,WAAO;AACxC,SAAO,SAAS,CAAC,aAAa,GAAG,EAAE,aAAa,EAAE,WAAW,MAAM,IAAG,EAAE,CAAE;AAC1E,SAAO;AACT;AAOO,IAAM,eAA8B,CAAC,OAAO,UAAS;AAC1D,MAAI,cAAc,OAAO,WAAW;AACpC,SAAO,YAAY,oBAAoB,YAAY,aAAa,YAAY;AAC9E;",
+  "names": []
+}

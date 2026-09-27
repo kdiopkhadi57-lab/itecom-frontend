@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/core/services/ui-chrome.service.ts"],
+  "sourcesContent": ["import { Injectable } from '@angular/core';\nimport { BehaviorSubject } from 'rxjs';\n\n/**\n * Lets a full-screen feature (e.g. taking a QCM) hide the app shell\n * (navbar/sidebar) so only its own content is visible.\n */\n@Injectable({ providedIn: 'root' })\nexport class UiChromeService {\n  private hiddenSubject = new BehaviorSubject<boolean>(false);\n  hidden$ = this.hiddenSubject.asObservable();\n\n  hide() { this.hiddenSubject.next(true); }\n  show() { this.hiddenSubject.next(false); }\n}\n"],
+  "mappings": ";;;;;;AAQM,IAAO,kBAAP,MAAO,iBAAe;EAD5B,cAAA;AAEU,SAAA,gBAAgB,IAAI,gBAAyB,KAAK;AAC1D,SAAA,UAAU,KAAK,cAAc,aAAY;;EAEzC,OAAI;AAAK,SAAK,cAAc,KAAK,IAAI;EAAG;EACxC,OAAI;AAAK,SAAK,cAAc,KAAK,KAAK;EAAG;;;uBAL9B,kBAAe;IAAA;EAAA;;4EAAf,kBAAe,SAAf,iBAAe,WAAA,YADF,OAAM,CAAA;EAAA;;",
+  "names": []
+}

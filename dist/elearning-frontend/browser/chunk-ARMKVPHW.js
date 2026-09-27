@@ -1,0 +1,34 @@
+// src/app/core/models/course.model.ts
+var COURSE_CATEGORIES = [
+  { key: "algorithms", label: "Algorithms", icon: "\u{1F522}", color: "#6366f1" },
+  { key: "java", label: "Java", icon: "\u2615", color: "#f59e0b" },
+  { key: "python", label: "Python", icon: "\u{1F40D}", color: "#10b981" },
+  { key: "javascript", label: "JavaScript", icon: "\u{1F7E8}", color: "#eab308" },
+  { key: "angular", label: "Angular", icon: "\u{1F170}\uFE0F", color: "#ef4444" },
+  { key: "springboot", label: "Spring Boot", icon: "\u{1F343}", color: "#10b981" },
+  { key: "sql", label: "SQL", icon: "\u{1F5C4}\uFE0F", color: "#06b6d4" },
+  { key: "django", label: "Django", icon: "\u{1F42C}", color: "#0f172a" },
+  { key: "fastapi", label: "FastAPI", icon: "\u26A1", color: "#22c55e" },
+  { key: "comptabilite", label: "Comptabilit\xE9 & Gestion", icon: "\u{1F4CA}", color: "#0ea5e9" },
+  { key: "sage-femme", label: "Sage-Femme d'\xC9tat", icon: "\u{1F930}", color: "#ec4899" },
+  { key: "marketing-digital", label: "Marketing Digital", icon: "\u{1F4E3}", color: "#f97316" },
+  { key: "developpement-personnel", label: "D\xE9veloppement Personnel", icon: "\u{1F331}", color: "#14b8a6" },
+  { key: "virtual", label: "Classes Virtuelles", icon: "\u{1F3A5}", color: "#8b5cf6" }
+];
+var NON_PROGRAMMING_CATEGORIES = ["comptabilite", "sage-femme", "marketing-digital", "developpement-personnel", "virtual"];
+var PROGRAMMING_CATEGORIES = COURSE_CATEGORIES.map((c) => c.key).filter((key) => !NON_PROGRAMMING_CATEGORIES.includes(key));
+var SPECIALIZATION_CATEGORIES = {
+  "genie-logiciel": ["algorithms", "java", "python", "javascript", "angular", "springboot", "sql", "django", "fastapi"],
+  "reseau": ["algorithms", "java", "python", "sql", "javascript", "springboot"],
+  "comptabilite": ["comptabilite"],
+  "sante": ["sage-femme"],
+  "marketing-digital": ["marketing-digital"],
+  "developpement-personnel": ["developpement-personnel"]
+};
+
+export {
+  COURSE_CATEGORIES,
+  PROGRAMMING_CATEGORIES,
+  SPECIALIZATION_CATEGORIES
+};
+//# sourceMappingURL=chunk-ARMKVPHW.js.map

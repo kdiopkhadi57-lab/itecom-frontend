@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/core/services/upload.service.ts"],
+  "sourcesContent": ["import { Injectable } from '@angular/core';\nimport { HttpClient, HttpEventType } from '@angular/common/http';\nimport { Observable } from 'rxjs';\nimport { ApiResponse } from '../models/api-response.model';\n\nexport interface UploadedFile {\n  url: string;\n  originalName: string;\n  type: 'VIDEO' | 'PDF';\n  size: number;\n}\n\n@Injectable({ providedIn: 'root' })\nexport class UploadService {\n  constructor(private http: HttpClient) {}\n\n  uploadOne(file: File): Observable<ApiResponse<UploadedFile>> {\n    const fd = new FormData();\n    fd.append('file', file);\n    return this.http.post<ApiResponse<UploadedFile>>('/api/teacher/courses/upload', fd);\n  }\n\n  uploadBatch(files: File[]): Observable<ApiResponse<UploadedFile[]>> {\n    const fd = new FormData();\n    files.forEach(f => fd.append('files', f));\n    return this.http.post<ApiResponse<UploadedFile[]>>('/api/teacher/courses/upload-batch', fd);\n  }\n}\n"],
+  "mappings": ";;;;;;;AAaM,IAAO,gBAAP,MAAO,eAAa;EACxB,YAAoB,MAAgB;AAAhB,SAAA,OAAA;EAAmB;EAEvC,UAAU,MAAU;AAClB,UAAM,KAAK,IAAI,SAAQ;AACvB,OAAG,OAAO,QAAQ,IAAI;AACtB,WAAO,KAAK,KAAK,KAAgC,+BAA+B,EAAE;EACpF;EAEA,YAAY,OAAa;AACvB,UAAM,KAAK,IAAI,SAAQ;AACvB,UAAM,QAAQ,OAAK,GAAG,OAAO,SAAS,CAAC,CAAC;AACxC,WAAO,KAAK,KAAK,KAAkC,qCAAqC,EAAE;EAC5F;;;uBAbW,gBAAa,mBAAA,UAAA,CAAA;IAAA;EAAA;;4EAAb,gBAAa,SAAb,eAAa,WAAA,YADA,OAAM,CAAA;EAAA;;",
+  "names": []
+}

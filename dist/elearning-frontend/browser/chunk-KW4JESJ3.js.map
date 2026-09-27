@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["src/app/features/auth/auth.routes.ts"],
+  "sourcesContent": ["import { Routes } from '@angular/router';\n\nexport const authRoutes: Routes = [\n  { path: 'login', loadComponent: () => import('./login/login.component').then(m => m.LoginComponent) },\n  { path: 'register', loadComponent: () => import('./register/register.component').then(m => m.RegisterComponent) },\n  { path: 'verify-email', loadComponent: () => import('./verify-email/verify-email.component').then(m => m.VerifyEmailComponent) },\n  { path: 'payment', loadComponent: () => import('./payment/payment.component').then(m => m.PaymentComponent) },\n  { path: 'forgot-password', loadComponent: () => import('./forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent) },\n  { path: '', redirectTo: 'login', pathMatch: 'full' }\n];\n"],
+  "mappings": ";;;AAEO,IAAM,aAAqB;EAChC,EAAE,MAAM,SAAS,eAAe,MAAM,OAAO,qBAAyB,EAAE,KAAK,OAAK,EAAE,cAAc,EAAC;EACnG,EAAE,MAAM,YAAY,eAAe,MAAM,OAAO,qBAA+B,EAAE,KAAK,OAAK,EAAE,iBAAiB,EAAC;EAC/G,EAAE,MAAM,gBAAgB,eAAe,MAAM,OAAO,qBAAuC,EAAE,KAAK,OAAK,EAAE,oBAAoB,EAAC;EAC9H,EAAE,MAAM,WAAW,eAAe,MAAM,OAAO,qBAA6B,EAAE,KAAK,OAAK,EAAE,gBAAgB,EAAC;EAC3G,EAAE,MAAM,mBAAmB,eAAe,MAAM,OAAO,qBAA6C,EAAE,KAAK,OAAK,EAAE,uBAAuB,EAAC;EAC1I,EAAE,MAAM,IAAI,YAAY,SAAS,WAAW,OAAM;;",
+  "names": []
+}

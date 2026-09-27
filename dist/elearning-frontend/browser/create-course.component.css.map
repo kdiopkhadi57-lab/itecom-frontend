@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["angular:styles/component:css;abb67f2d88fe798aceeb69756d47433ada24237d9d7d58a4e55cd20e65626318;/Users/mac/Desktop/elearning-platform/frontend/src/app/features/admin/create-course/create-course.component.ts"],
+  "sourcesContent": ["\n    .upload-dropzone {\n      border: 2px dashed #cbd5e1;\n      border-radius: 14px;\n      padding: 2rem 1rem;\n      text-align: center;\n      cursor: pointer;\n      transition: all .2s;\n      background: #f8fafc;\n    }\n    .upload-dropzone:hover, .upload-dropzone.dragover {\n      border-color: #6366f1;\n      background: #eef2ff;\n    }\n  "],
+  "mappings": ";AACI,CAAC;AACC,UAAQ,IAAI,OAAO;AACnB,iBAAe;AACf,WAAS,KAAK;AACd,cAAY;AACZ,UAAQ;AACR,cAAY,IAAI;AAChB,cAAY;AACd;AACA,CATC,eASe;AAAQ,CATvB,eASuC,CAAC;AACvC,gBAAc;AACd,cAAY;AACd;",
+  "names": []
+}

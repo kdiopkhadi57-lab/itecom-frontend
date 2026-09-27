@@ -1,8 +1,10 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { safeReturnUrl } from '../../../core/guards/auth.guard';
+import { DialogService } from '../../../core/services/dialog.service';
+import { ForgotPasswordDialogComponent } from './forgot-password-dialog.component';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -11,12 +13,10 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="landing">
-      <!-- Image plein écran : une matière toutes les 3 secondes -->
+      <!-- Fond dessiné (sans image) -->
       <div class="bg" aria-hidden="true">
-        <picture *ngFor="let s of slides; let i = index" class="slide" [class.active]="i === current">
-          <source media="(max-aspect-ratio: 4/5)" [attr.srcset]="s.mobile">
-          <img [src]="s.image" alt="" [attr.loading]="i === 0 ? 'eager' : 'lazy'" [attr.fetchpriority]="i === 0 ? 'high' : null">
-        </picture>
+        <span class="glow glow-1"></span><span class="glow glow-2"></span><span class="glow glow-3"></span>
+        <span class="grid"></span>
       </div>
       <div class="shade" aria-hidden="true"></div>
 
@@ -27,11 +27,10 @@ import { CommonModule } from '@angular/common';
             <span class="brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
             <span class="brand-name"><span class="ite">ITE</span><span class="com">COM</span></span>
           </a>
-          <div class="progress-row d-none d-md-flex" aria-hidden="true">
-            <span *ngFor="let s of slides; let i = index" class="bar"
-                  [class.done]="i < current" [class.running]="i === current && !paused && !reducedMotion"
-                  [class.full]="i === current && (paused || reducedMotion)"></span>
-          </div>
+          <nav class="d-none d-md-flex topnav" aria-label="Liens">
+            <button type="button" class="link-btn" (click)="openAbout()"><i class="bi bi-info-circle me-1"></i>À propos</button>
+            <button type="button" class="link-btn" (click)="openForgot()"><i class="bi bi-key me-1"></i>Mot de passe oublié</button>
+          </nav>
         </header>
 
         <main class="hero container-xl">
@@ -42,11 +41,8 @@ import { CommonModule } from '@angular/common';
               Cours en ligne, cas pratiques et examens corrigés automatiquement, avec le suivi de vos résultats
               et l'accompagnement de vos enseignants.
             </p>
-            <div class="subject-list" role="tablist" aria-label="Matières enseignées"
-                 (mouseenter)="paused = true" (mouseleave)="paused = false">
-              <button *ngFor="let s of slides; let i = index" type="button" role="tab" class="subject"
-                      [attr.aria-selected]="i === current" [class.active]="i === current"
-                      [style.--c]="s.color" (click)="select(i)">
+            <div class="subject-list" aria-label="Matières enseignées">
+              <button *ngFor="let s of subjects" type="button" class="subject" [style.--c]="s.color" (click)="openSubject(s)">
                 <i class="bi" [ngClass]="s.icon"></i><span>{{ s.name }}</span>
               </button>
             </div>
@@ -85,7 +81,7 @@ import { CommonModule } from '@angular/common';
                 <i *ngIf="!loading" class="bi bi-arrow-right ms-2"></i>
               </button>
               <div class="login-foot">
-                <a routerLink="/auth/forgot-password">Mot de passe oublié ?</a>
+                <button type="button" class="link-inline" (click)="openForgot()">Mot de passe oublié ?</button>
                 <span>Comptes créés par l'administration</span>
               </div>
             </form>
@@ -94,13 +90,14 @@ import { CommonModule } from '@angular/common';
 
         <!-- Les quatre atouts, posés sur la bannière -->
         <section class="features container-xl" aria-label="La plateforme">
-          <div class="feature" *ngFor="let f of features">
+          <button type="button" class="feature" *ngFor="let f of features" (click)="openFeature(f)">
             <span class="feature-icon"><i class="bi" [ngClass]="f.icon"></i></span>
             <div>
               <h3>{{ f.title }}</h3>
               <p>{{ f.text }}</p>
             </div>
-          </div>
+            <i class="bi bi-arrow-up-right feature-go"></i>
+          </button>
         </section>
 
         <footer class="footer container-xl">
@@ -118,21 +115,17 @@ import { CommonModule } from '@angular/common';
       background: #06163d; font-family: 'Inter', sans-serif;
     }
 
-    /* Image plein écran */
-    .bg { position: absolute; inset: 0; overflow: hidden; }
-    .slide { position: absolute; inset: 0; opacity: 0; transition: opacity 1s ease; }
-    .slide.active { opacity: 1; }
-    .slide img { width: 100%; height: 100%; object-fit: cover; object-position: center center; transform: scale(1.04); }
-    /* Léger zoom arrière pendant les 3 secondes d'affichage */
-    .slide.active img { animation: kenburns 4s ease-out forwards; }
-    /* Voile : texte lisible à gauche et en bas, image visible au centre */
-    .shade {
-      position: absolute; inset: 0;
-      background:
-        linear-gradient(90deg, rgba(6, 22, 61, .75) 0%, rgba(6, 22, 61, .35) 30%, rgba(6, 22, 61, 0) 44%, rgba(6, 22, 61, 0) 68%, rgba(6, 22, 61, .3) 100%),
-        linear-gradient(180deg, rgba(6, 22, 61, .45) 0%, rgba(6, 22, 61, 0) 16%, rgba(6, 22, 61, 0) 62%, rgba(6, 22, 61, .85) 100%);
-    }
-
+    /* Fond dessiné : dégradé, halos lumineux et trame légère */
+    .bg { position: absolute; inset: 0; overflow: hidden;
+      background: radial-gradient(120% 90% at 80% 0%, #123a8c 0%, #0b2a6f 42%, #06163d 100%); }
+    .glow { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .55; animation: drift 18s ease-in-out infinite alternate; }
+    .glow-1 { width: 520px; height: 520px; background: #1d6ff2; top: -140px; right: 8%; }
+    .glow-2 { width: 420px; height: 420px; background: #06b6d4; bottom: -160px; left: 18%; opacity: .35; animation-delay: -6s; }
+    .glow-3 { width: 360px; height: 360px; background: #6366f1; top: 35%; left: -120px; opacity: .35; animation-delay: -12s; }
+    .grid { position: absolute; inset: 0; opacity: .12;
+      background-image: linear-gradient(rgba(255,255,255,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.35) 1px, transparent 1px);
+      background-size: 56px 56px; mask-image: radial-gradient(ellipse at 60% 40%, #000 20%, transparent 75%); }
+    .shade { display: none; }
     .content { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
 
     /* Barre du haut */
@@ -146,11 +139,11 @@ import { CommonModule } from '@angular/common';
     .brand-name { font-size: 1.5rem; font-weight: 800; letter-spacing: .02em; }
     .brand-name .ite { color: #fff; }
     .brand-name .com { color: #60a5fa; }
-    .progress-row { gap: 6px; width: 260px; }
-    .bar { flex: 1; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .3); overflow: hidden; position: relative; }
-    .bar::after { content: ''; position: absolute; inset: 0; width: 0; background: #fff; }
-    .bar.done::after, .bar.full::after { width: 100%; }
-    .bar.running::after { animation: fill 3s linear forwards; }
+    .topnav { gap: 8px; }
+    .link-btn { border: 0; background: transparent; color: rgba(255, 255, 255, .82); font-weight: 500; font-size: .9rem; padding: 6px 10px; border-radius: 10px; }
+    .link-btn:hover { color: #fff; background: rgba(255, 255, 255, .1); }
+    .link-inline { border: 0; background: none; padding: 0; color: var(--blue); font-weight: 600; font-size: .78rem; }
+    .link-inline:hover { text-decoration: underline; }
 
     /* Bannière */
     .hero {
@@ -175,7 +168,8 @@ import { CommonModule } from '@angular/common';
       backdrop-filter: blur(8px); transition: background .25s, border-color .25s, transform .15s;
     }
     .subject:hover { background: rgba(255, 255, 255, .18); transform: translateY(-1px); }
-    .subject.active { background: var(--c); border-color: var(--c); box-shadow: 0 8px 20px rgba(0, 0, 0, .3); }
+    .subject:hover { border-color: var(--c); }
+    .subject i { color: var(--c); filter: brightness(1.5); }
 
     /* Connexion flottante (verre dépoli) */
     .login-card {
@@ -212,6 +206,8 @@ import { CommonModule } from '@angular/common';
     /* Les quatre atouts sur la bannière */
     .features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; padding-bottom: 14px; }
     .feature {
+      position: relative; text-align: left; color: #fff; width: 100%; cursor: pointer;
+      transition: transform .15s, background .2s;
       display: flex; gap: 12px; align-items: flex-start; padding: 16px; border-radius: 16px;
       background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .22);
       backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
@@ -221,12 +217,13 @@ import { CommonModule } from '@angular/common';
       width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
       background: rgba(255, 255, 255, .92); color: var(--blue); font-size: 1.15rem;
     }
+    .feature:hover { transform: translateY(-2px); background: rgba(255, 255, 255, .18); }
+    .feature-go { position: absolute; top: 12px; right: 12px; font-size: .8rem; opacity: .6; }
     .feature h3 { font-size: .95rem; font-weight: 700; margin: 0 0 3px; }
     .feature p { color: rgba(226, 232, 240, .88); font-size: .8rem; margin: 0; line-height: 1.45; }
     .footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-bottom: 16px; color: rgba(203, 213, 225, .75); font-size: .78rem; }
 
-    @keyframes fill { from { width: 0; } to { width: 100%; } }
-    @keyframes kenburns { from { transform: scale(1.04); } to { transform: scale(1); } }
+    @keyframes drift { from { transform: translate(0, 0) scale(1); } to { transform: translate(40px, 30px) scale(1.1); } }
     @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 
     @media (max-width: 1199.98px) {
@@ -235,37 +232,39 @@ import { CommonModule } from '@angular/common';
     /* Tablette et mobile : tout s'empile sur l'image */
     @media (max-width: 991.98px) {
       .hero { grid-template-columns: 1fr; gap: 28px; }
-      .shade { background: linear-gradient(180deg, rgba(6, 22, 61, .55) 0%, rgba(6, 22, 61, .72) 45%, rgba(6, 22, 61, .92) 100%); }
-      .slide img { object-position: center 18%; }
     }
     @media (max-width: 575.98px) {
       .features { grid-template-columns: 1fr; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .slide { transition: none; }
-      .slide img, .slide.active img { animation: none; transform: none; }
+      .glow { animation: none; }
       .login-card, .feature { animation: none; }
     }
   `]
 })
-export class LoginComponent implements OnInit, OnDestroy {
-  readonly slides = [
-    { name: 'Comptabilité analytique', image: '/assets/images/matieres/comptabilite.jpg', mobile: '/assets/images/matieres/comptabilite-mobile.jpg', icon: 'bi-calculator', color: '#1d6ff2' },
-    { name: 'Droit', image: '/assets/images/matieres/droit.jpg', mobile: '/assets/images/matieres/droit-mobile.jpg', icon: 'bi-bank', color: '#4f46e5' },
-    { name: 'Réseaux', image: '/assets/images/matieres/reseaux.jpg', mobile: '/assets/images/matieres/reseaux-mobile.jpg', icon: 'bi-diagram-3', color: '#0d9488' },
-    { name: 'Programmation', image: '/assets/images/matieres/programmation.jpg', mobile: '/assets/images/matieres/programmation-mobile.jpg', icon: 'bi-code-slash', color: '#ea580c' },
-    { name: 'Mathématiques', image: '/assets/images/matieres/mathematiques.jpg', mobile: '/assets/images/matieres/mathematiques-mobile.jpg', icon: 'bi-plus-slash-minus', color: '#e11d48' }
+export class LoginComponent {
+  readonly subjects = [
+    { name: 'Comptabilité analytique', icon: 'bi-calculator', color: '#60a5fa',
+      text: 'Coûts complets et partiels, coût de revient, seuil de rentabilité et analyse des écarts, avec des cas pratiques corrigés ligne par ligne.' },
+    { name: 'Droit', icon: 'bi-bank', color: '#a5b4fc',
+      text: 'Droit des affaires et des sociétés : formes juridiques, contrats et obligations, illustrés par des cas concrets.' },
+    { name: 'Réseaux', icon: 'bi-diagram-3', color: '#5eead4',
+      text: 'Architecture des réseaux, protocoles TCP/IP, DNS, DHCP, adressage et sécurité, avec des travaux pratiques.' },
+    { name: 'Programmation', icon: 'bi-code-slash', color: '#fdba74',
+      text: 'Algorithmique et programmation orientée objet en Java, avec un environnement de développement intégré à la plateforme.' },
+    { name: 'Mathématiques', icon: 'bi-plus-slash-minus', color: '#fda4af',
+      text: 'Analyse, algèbre et mathématiques financières : dérivées, équations, suites et applications à la gestion.' }
   ];
   readonly features = [
-    { icon: 'bi-book', title: 'Cours en ligne', text: 'Leçons, supports et exercices accessibles à tout moment.' },
-    { icon: 'bi-clipboard-check', title: 'Examens et évaluations', text: 'QCM, cas pratiques et devoirs corrigés ligne par ligne.' },
-    { icon: 'bi-bar-chart-line', title: 'Suivi des résultats', text: 'Notes, corrections détaillées et progression en temps réel.' },
-    { icon: 'bi-people', title: 'Interactivité', text: 'Classes virtuelles et échanges avec vos enseignants.' }
+    { icon: 'bi-book', title: 'Cours en ligne', text: 'Leçons, supports et exercices accessibles à tout moment.',
+      details: 'Chaque cours regroupe des leçons, des supports à télécharger et des exercices pratiques (tableur, IDE Java, UML). Vous avancez à votre rythme et reprenez là où vous vous êtes arrêté.' },
+    { icon: 'bi-clipboard-check', title: 'Examens et évaluations', text: 'QCM, cas pratiques et devoirs corrigés ligne par ligne.',
+      details: 'Devoirs et examens en ligne, surveillés et chronométrés. Les QCM sont corrigés instantanément ; les cas pratiques sont comparés ligne par ligne à la correction du professeur, que vous répondiez en ligne ou en déposant votre copie (PDF ou photo).' },
+    { icon: 'bi-bar-chart-line', title: 'Suivi des résultats', text: 'Notes, corrections détaillées et progression en temps réel.',
+      details: 'Consultez vos notes, le détail de la correction de chaque copie et votre progression dans chaque cours. Les enseignants suivent les résultats de toute la classe et peuvent ajuster une note.' },
+    { icon: 'bi-people', title: 'Interactivité', text: 'Classes virtuelles et échanges avec vos enseignants.',
+      details: 'Participez aux classes virtuelles en visioconférence, retrouvez les enregistrements des séances et échangez avec vos enseignants.' }
   ];
-  current = 0;
-  paused = false;
-  readonly reducedMotion = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  private timer: ReturnType<typeof setInterval> | null = null;
 
   form: FormGroup;
   loading = false;
@@ -277,7 +276,8 @@ export class LoginComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
+    private route: ActivatedRoute,
+    private dialogs: DialogService
   ) {
     this.form = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
@@ -285,21 +285,25 @@ export class LoginComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit() {
-    // Une matière en plein écran toutes les 3 secondes
-    if (!this.reducedMotion) {
-      this.timer = setInterval(() => {
-        if (!this.paused) this.current = (this.current + 1) % this.slides.length;
-      }, 3000);
-    }
+
+  openForgot() {
+    this.dialogs.open(ForgotPasswordDialogComponent, { title: 'Mot de passe oublié', icon: 'bi-key', size: 'sm' });
   }
 
-  ngOnDestroy() {
-    if (this.timer) clearInterval(this.timer);
+  openSubject(subject: { name: string; icon: string; text: string }) {
+    this.dialogs.alert({ title: subject.name, message: subject.text, icon: subject.icon, tone: 'primary', confirmText: 'Fermer' });
   }
 
-  select(index: number) {
-    this.current = index;
+  openFeature(feature: { title: string; icon: string; details: string }) {
+    this.dialogs.alert({ title: feature.title, message: feature.details, icon: feature.icon, tone: 'primary', confirmText: 'Fermer' });
+  }
+
+  openAbout() {
+    this.dialogs.alert({
+      title: 'ITECOM',
+      message: 'Plateforme d\'apprentissage en ligne : cours, cas pratiques, devoirs et examens corrigés automatiquement, suivi des résultats et classes virtuelles. Les comptes étudiants et enseignants sont créés par l\'administration de l\'établissement.',
+      icon: 'bi-mortarboard', tone: 'primary', confirmText: 'Fermer'
+    });
   }
 
   onSubmit() {

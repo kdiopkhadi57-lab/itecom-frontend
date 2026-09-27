@@ -11,28 +11,29 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, ReactiveFormsModule, RouterLink],
   template: `
     <div class="landing">
-      <!-- Barre du haut -->
-      <header class="topbar">
-        <div class="container-xl d-flex align-items-center justify-content-between">
+      <!-- Image plein écran : les 5 matières en panorama, une mise en avant toutes les 5 secondes -->
+      <div class="bg" aria-hidden="true">
+        <div *ngFor="let s of slides; let i = index" class="panel" [class.active]="i === current">
+          <img [src]="s.image" alt="">
+        </div>
+      </div>
+      <div class="shade" aria-hidden="true"></div>
+
+      <div class="content">
+        <!-- Barre du haut -->
+        <header class="topbar container-xl">
           <a class="brand" href="/" aria-label="ITECOM, accueil">
             <span class="brand-mark"><i class="bi bi-mortarboard-fill"></i></span>
             <span class="brand-name"><span class="ite">ITE</span><span class="com">COM</span></span>
           </a>
-          <nav class="topnav d-none d-md-flex" aria-label="Navigation principale">
-            <a href="#matieres">Matières</a>
-            <a href="#plateforme">La plateforme</a>
-            <a href="#connexion" class="btn btn-sm btn-light fw-semibold px-3">Se connecter</a>
-          </nav>
-        </div>
-      </header>
+          <div class="progress-row d-none d-md-flex" aria-hidden="true">
+            <span *ngFor="let s of slides; let i = index" class="bar"
+                  [class.done]="i < current" [class.running]="i === current && !paused && !reducedMotion"
+                  [class.full]="i === current && (paused || reducedMotion)"></span>
+          </div>
+        </header>
 
-      <!-- Bannière -->
-      <section class="hero">
-        <div class="hero-backdrop" aria-hidden="true">
-          <img *ngFor="let s of slides; let i = index" [src]="s.image" alt="" [class.active]="i === current">
-        </div>
-
-        <div class="container-xl hero-inner">
+        <main class="hero container-xl">
           <div class="hero-copy">
             <span class="eyebrow"><i class="bi bi-stars me-1"></i>Plateforme d'apprentissage en ligne</span>
             <h1>Apprenez, pratiquez <span class="accent">et réussissez</span> avec ITECOM.</h1>
@@ -40,66 +41,8 @@ import { CommonModule } from '@angular/common';
               Cours en ligne, cas pratiques et examens corrigés automatiquement, avec le suivi de vos résultats
               et l'accompagnement de vos enseignants.
             </p>
-
-            <!-- Formulaire de connexion compact -->
-            <div id="connexion" class="login-card">
-              <div class="login-head">
-                <h2>Connexion</h2>
-                <span><i class="bi bi-shield-lock me-1"></i>Espace sécurisé</span>
-              </div>
-              <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
-                <div class="row g-2">
-                  <div class="col-12">
-                    <label class="visually-hidden" for="loginEmail">Adresse email</label>
-                    <div class="field" [class.invalid]="form.get('email')?.invalid && form.get('email')?.touched">
-                      <i class="bi bi-envelope"></i>
-                      <input id="loginEmail" type="email" formControlName="email" placeholder="Adresse email" autocomplete="username">
-                    </div>
-                  </div>
-                  <div class="col-12">
-                    <label class="visually-hidden" for="loginPassword">Mot de passe</label>
-                    <div class="field" [class.invalid]="form.get('password')?.invalid && form.get('password')?.touched">
-                      <i class="bi bi-lock"></i>
-                      <input id="loginPassword" [type]="showPassword ? 'text' : 'password'" formControlName="password"
-                             placeholder="Mot de passe" autocomplete="current-password">
-                      <button type="button" class="eye" (click)="showPassword = !showPassword"
-                              [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
-                        <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 small mt-2 mb-0" *ngIf="error" role="alert">
-                  <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
-                </div>
-
-                <button type="submit" class="btn btn-login w-100 mt-3" [disabled]="loading">
-                  <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
-                  {{ loading ? 'Connexion…' : 'Se connecter' }}
-                  <i *ngIf="!loading" class="bi bi-arrow-right ms-2"></i>
-                </button>
-                <div class="login-foot">
-                  <a routerLink="/auth/forgot-password">Mot de passe oublié ?</a>
-                  <span>Comptes créés par l'administration</span>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          <!-- Diaporama des matières -->
-          <div class="hero-visual" id="matieres">
-            <div class="showcase" (mouseenter)="paused = true" (mouseleave)="paused = false">
-              <div class="progress-row" aria-hidden="true">
-                <span *ngFor="let s of slides; let i = index" class="bar"
-                      [class.done]="i < current" [class.running]="i === current && !paused && !reducedMotion"
-                      [class.full]="i === current && (paused || reducedMotion)"></span>
-              </div>
-              <img *ngFor="let s of slides; let i = index" [src]="s.image" [alt]="'Cours de ' + s.name + ' à ITECOM'"
-                   class="slide" [class.active]="i === current" [attr.aria-hidden]="i !== current">
-            </div>
-
-            <div class="subject-list" role="tablist" aria-label="Matières enseignées">
+            <div class="subject-list" role="tablist" aria-label="Matières enseignées"
+                 (mouseenter)="paused = true" (mouseleave)="paused = false">
               <button *ngFor="let s of slides; let i = index" type="button" role="tab" class="subject"
                       [attr.aria-selected]="i === current" [class.active]="i === current"
                       [style.--c]="s.color" (click)="select(i)">
@@ -107,91 +50,145 @@ import { CommonModule } from '@angular/common';
               </button>
             </div>
           </div>
-        </div>
-      </section>
 
-      <!-- Fonctionnalités -->
-      <section class="features" id="plateforme">
-        <div class="container-xl">
-          <div class="row g-3 g-lg-4">
-            <div class="col-6 col-lg-3" *ngFor="let f of features">
-              <div class="feature">
-                <span class="feature-icon"><i class="bi" [ngClass]="f.icon"></i></span>
-                <h3>{{ f.title }}</h3>
-                <p>{{ f.text }}</p>
+          <!-- Formulaire de connexion flottant -->
+          <div id="connexion" class="login-card">
+            <div class="login-head">
+              <h2>Connexion</h2>
+              <span><i class="bi bi-shield-lock me-1"></i>Espace sécurisé</span>
+            </div>
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+              <label class="visually-hidden" for="loginEmail">Adresse email</label>
+              <div class="field" [class.invalid]="form.get('email')?.invalid && form.get('email')?.touched">
+                <i class="bi bi-envelope"></i>
+                <input id="loginEmail" type="email" formControlName="email" placeholder="Adresse email" autocomplete="username">
               </div>
+              <label class="visually-hidden" for="loginPassword">Mot de passe</label>
+              <div class="field mt-2" [class.invalid]="form.get('password')?.invalid && form.get('password')?.touched">
+                <i class="bi bi-lock"></i>
+                <input id="loginPassword" [type]="showPassword ? 'text' : 'password'" formControlName="password"
+                       placeholder="Mot de passe" autocomplete="current-password">
+                <button type="button" class="eye" (click)="showPassword = !showPassword"
+                        [attr.aria-label]="showPassword ? 'Masquer le mot de passe' : 'Afficher le mot de passe'">
+                  <i class="bi" [class.bi-eye]="!showPassword" [class.bi-eye-slash]="showPassword"></i>
+                </button>
+              </div>
+
+              <div class="alert alert-danger d-flex align-items-center gap-2 py-2 px-3 small mt-2 mb-0" *ngIf="error" role="alert">
+                <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+              </div>
+
+              <button type="submit" class="btn btn-login w-100 mt-3" [disabled]="loading">
+                <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
+                {{ loading ? 'Connexion…' : 'Se connecter' }}
+                <i *ngIf="!loading" class="bi bi-arrow-right ms-2"></i>
+              </button>
+              <div class="login-foot">
+                <a routerLink="/auth/forgot-password">Mot de passe oublié ?</a>
+                <span>Comptes créés par l'administration</span>
+              </div>
+            </form>
+          </div>
+        </main>
+
+        <!-- Les quatre atouts, posés sur la bannière -->
+        <section class="features container-xl" aria-label="La plateforme">
+          <div class="feature" *ngFor="let f of features">
+            <span class="feature-icon"><i class="bi" [ngClass]="f.icon"></i></span>
+            <div>
+              <h3>{{ f.title }}</h3>
+              <p>{{ f.text }}</p>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <footer class="footer">
-        <div class="container-xl d-flex flex-wrap justify-content-between gap-2">
+        <footer class="footer container-xl">
           <span>© {{ year }} ITECOM — Plateforme d'apprentissage en ligne</span>
           <span><i class="bi bi-shield-lock me-1"></i>Connexion sécurisée</span>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   `,
   styles: [`
     :host { display: block; }
     .landing {
-      --navy: #0b2a6f; --navy-deep: #06163d; --blue: #1d6ff2;
-      font-family: 'Inter', sans-serif; background: #f5f7fb; color: #0f172a; min-height: 100vh;
+      --navy: #0b2a6f; --blue: #1d6ff2;
+      position: relative; min-height: 100vh; overflow: hidden; color: #fff;
+      background: #06163d; font-family: 'Inter', sans-serif;
     }
 
+    /* Image plein écran */
+    .bg { position: absolute; inset: 0; display: flex; }
+    .panel { position: relative; flex: 1 1 0; overflow: hidden; transition: flex-grow .9s cubic-bezier(.2, .8, .2, 1); }
+    .panel + .panel { border-left: 1px solid rgba(255, 255, 255, .1); }
+    .panel.active { flex-grow: 1.45; }
+    .panel img {
+      width: 100%; height: 100%; object-fit: cover; object-position: center 28%;
+      filter: brightness(.5) saturate(.8); transform: scale(1.02);
+      transition: filter .9s ease, transform 5s ease-out;
+    }
+    .panel.active img { filter: brightness(1) saturate(1.05); transform: scale(1.06); }
+    /* Voile : texte lisible à gauche et en bas, image visible au centre */
+    .shade {
+      position: absolute; inset: 0;
+      background:
+        linear-gradient(90deg, rgba(6, 22, 61, .88) 0%, rgba(6, 22, 61, .55) 34%, rgba(6, 22, 61, .05) 58%, rgba(6, 22, 61, .35) 100%),
+        linear-gradient(180deg, rgba(6, 22, 61, .6) 0%, rgba(6, 22, 61, 0) 18%, rgba(6, 22, 61, 0) 55%, rgba(6, 22, 61, .9) 100%);
+    }
+
+    .content { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
+
     /* Barre du haut */
-    .topbar { position: absolute; top: 0; left: 0; right: 0; z-index: 3; padding: 18px 0; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding-top: 20px; padding-bottom: 12px; }
     .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
     .brand-mark {
-      width: 38px; height: 38px; border-radius: 11px; display: inline-flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #3b82f6, var(--blue)); color: #fff; font-size: 1.15rem;
+      width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #3b82f6, var(--blue)); color: #fff; font-size: 1.2rem;
       box-shadow: 0 6px 16px rgba(29, 111, 242, .45);
     }
-    .brand-name { font-size: 1.4rem; font-weight: 800; letter-spacing: .02em; }
+    .brand-name { font-size: 1.5rem; font-weight: 800; letter-spacing: .02em; }
     .brand-name .ite { color: #fff; }
     .brand-name .com { color: #60a5fa; }
-    .topnav { gap: 26px; align-items: center; }
-    .topnav a { color: rgba(255, 255, 255, .82); text-decoration: none; font-weight: 500; font-size: .92rem; }
-    .topnav a:hover { color: #fff; }
-    .topnav a.btn { color: var(--navy); border-radius: 10px; }
+    .progress-row { gap: 6px; width: 260px; }
+    .bar { flex: 1; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .3); overflow: hidden; position: relative; }
+    .bar::after { content: ''; position: absolute; inset: 0; width: 0; background: #fff; }
+    .bar.done::after, .bar.full::after { width: 100%; }
+    .bar.running::after { animation: fill 5s linear forwards; }
 
     /* Bannière */
     .hero {
-      position: relative; overflow: hidden; color: #fff;
-      background: radial-gradient(120% 90% at 85% 10%, #123a8c 0%, var(--navy) 45%, var(--navy-deep) 100%);
-      padding: 104px 0 72px; min-height: min(100vh, 860px); display: flex; align-items: center;
-    }
-    .hero-backdrop { position: absolute; inset: 0; }
-    .hero-backdrop img {
-      position: absolute; inset: -40px; width: calc(100% + 80px); height: calc(100% + 80px); object-fit: cover;
-      filter: blur(38px) saturate(130%); opacity: 0; transition: opacity 1.2s ease;
-    }
-    .hero-backdrop img.active { opacity: .28; }
-    .hero-backdrop::after {
-      content: ''; position: absolute; inset: 0;
-      background: linear-gradient(90deg, rgba(6, 22, 61, .92) 0%, rgba(6, 22, 61, .7) 45%, rgba(6, 22, 61, .35) 100%);
-    }
-    .hero-inner {
-      position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr);
-      gap: 56px; align-items: center; width: 100%;
+      flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 48px; align-items: center;
+      padding-top: 24px; padding-bottom: 24px;
     }
     .eyebrow {
       display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px; font-size: .8rem; font-weight: 600;
-      background: rgba(96, 165, 250, .16); color: #bfdbfe; border: 1px solid rgba(147, 197, 253, .3);
+      background: rgba(96, 165, 250, .18); color: #dbeafe; border: 1px solid rgba(147, 197, 253, .35);
+      backdrop-filter: blur(6px);
     }
-    .hero h1 { font-size: clamp(2rem, 3.6vw, 3.15rem); font-weight: 800; line-height: 1.12; margin: 18px 0 14px; letter-spacing: -.01em; }
+    .hero h1 {
+      font-size: clamp(2rem, 3.8vw, 3.3rem); font-weight: 800; line-height: 1.1; margin: 18px 0 14px;
+      letter-spacing: -.01em; max-width: 640px; text-shadow: 0 2px 18px rgba(0, 0, 0, .35);
+    }
     .hero h1 .accent { background: linear-gradient(90deg, #60a5fa, #a5f3fc); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .lead-text { color: rgba(226, 232, 240, .86); font-size: 1.05rem; line-height: 1.6; max-width: 540px; margin-bottom: 28px; }
+    .lead-text { color: rgba(241, 245, 249, .9); font-size: 1.05rem; line-height: 1.6; max-width: 520px; margin-bottom: 22px; text-shadow: 0 1px 10px rgba(0, 0, 0, .3); }
+    .subject-list { display: flex; flex-wrap: wrap; gap: 8px; max-width: 600px; }
+    .subject {
+      display: inline-flex; align-items: center; gap: 7px; padding: 7px 13px; border-radius: 999px; font-size: .82rem; font-weight: 600;
+      color: #fff; background: rgba(15, 23, 42, .35); border: 1px solid rgba(255, 255, 255, .25);
+      backdrop-filter: blur(8px); transition: background .25s, border-color .25s, transform .15s;
+    }
+    .subject:hover { background: rgba(255, 255, 255, .18); transform: translateY(-1px); }
+    .subject.active { background: var(--c); border-color: var(--c); box-shadow: 0 8px 20px rgba(0, 0, 0, .3); }
 
-    /* Connexion compacte */
+    /* Connexion flottante (verre dépoli) */
     .login-card {
-      max-width: 400px; padding: 20px 22px 16px; border-radius: 18px; color: #0f172a;
-      background: rgba(255, 255, 255, .97); box-shadow: 0 24px 50px rgba(2, 8, 30, .45);
+      padding: 22px 22px 16px; border-radius: 20px; color: #0f172a;
+      background: rgba(255, 255, 255, .88); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%);
+      border: 1px solid rgba(255, 255, 255, .7); box-shadow: 0 30px 60px rgba(2, 8, 30, .45);
       animation: rise .6s .1s cubic-bezier(.2, .8, .2, 1) both;
     }
-    .login-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; }
-    .login-head h2 { font-size: 1.15rem; font-weight: 800; margin: 0; }
+    .login-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 14px; }
+    .login-head h2 { font-size: 1.2rem; font-weight: 800; margin: 0; }
     .login-head span { font-size: .75rem; color: #64748b; }
     .field {
       display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 12px; border-radius: 12px;
@@ -213,61 +210,45 @@ import { CommonModule } from '@angular/common';
     .login-foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 10px; font-size: .78rem; }
     .login-foot a { color: var(--blue); font-weight: 600; text-decoration: none; }
     .login-foot a:hover { text-decoration: underline; }
-    .login-foot span { color: #94a3b8; }
+    .login-foot span { color: #64748b; }
 
-    /* Diaporama */
-    .hero-visual { display: flex; flex-direction: column; align-items: center; gap: 18px; }
-    .showcase {
-      position: relative; width: min(340px, 100%); aspect-ratio: 318 / 620; border-radius: 26px; overflow: hidden;
-      background: #0b1d45; box-shadow: 0 40px 80px rgba(2, 8, 30, .6), 0 0 0 1px rgba(255, 255, 255, .12);
-      animation: rise .7s .2s cubic-bezier(.2, .8, .2, 1) both;
+    /* Les quatre atouts sur la bannière */
+    .features { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; padding-bottom: 14px; }
+    .feature {
+      display: flex; gap: 12px; align-items: flex-start; padding: 16px; border-radius: 16px;
+      background: rgba(255, 255, 255, .12); border: 1px solid rgba(255, 255, 255, .22);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      animation: rise .6s .25s cubic-bezier(.2, .8, .2, 1) both;
     }
-    .slide {
-      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
-      opacity: 0; transform: scale(1.04); transition: opacity .9s ease, transform 5s ease-out;
-    }
-    .slide.active { opacity: 1; transform: scale(1); }
-    .progress-row { position: absolute; top: 10px; left: 12px; right: 12px; z-index: 2; display: flex; gap: 5px; }
-    .bar { flex: 1; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, .35); overflow: hidden; position: relative; }
-    .bar::after { content: ''; position: absolute; inset: 0; width: 0; background: #fff; }
-    .bar.done::after, .bar.full::after { width: 100%; }
-    .bar.running::after { animation: fill 5s linear forwards; }
-    .subject-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 520px; }
-    .subject {
-      display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px; border-radius: 999px; font-size: .82rem; font-weight: 600;
-      color: rgba(255, 255, 255, .8); background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .16);
-      transition: background .25s, color .25s, border-color .25s;
-    }
-    .subject:hover { color: #fff; background: rgba(255, 255, 255, .14); }
-    .subject.active { color: #fff; background: var(--c); border-color: var(--c); box-shadow: 0 8px 20px rgba(0, 0, 0, .25); }
-
-    /* Fonctionnalités */
-    .features { padding: 56px 0 40px; }
-    .feature { height: 100%; background: #fff; border-radius: 16px; padding: 22px; box-shadow: 0 1px 3px rgba(15, 23, 42, .06); border: 1px solid #e8edf5; }
     .feature-icon {
-      width: 44px; height: 44px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
-      background: #e0ebff; color: var(--blue); font-size: 1.25rem; margin-bottom: 14px;
+      width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
+      background: rgba(255, 255, 255, .92); color: var(--blue); font-size: 1.15rem;
     }
-    .feature h3 { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
-    .feature p { color: #64748b; font-size: .88rem; margin: 0; line-height: 1.5; }
-    .footer { border-top: 1px solid #e2e8f0; padding: 20px 0; color: #64748b; font-size: .82rem; }
+    .feature h3 { font-size: .95rem; font-weight: 700; margin: 0 0 3px; }
+    .feature p { color: rgba(226, 232, 240, .88); font-size: .8rem; margin: 0; line-height: 1.45; }
+    .footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; padding-bottom: 16px; color: rgba(203, 213, 225, .75); font-size: .78rem; }
 
     @keyframes fill { from { width: 0; } to { width: 100%; } }
-    @keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+    @keyframes rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
 
-    /* Tablette et mobile : texte et connexion d'abord, diaporama ensuite */
+    @media (max-width: 1199.98px) {
+      .features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    /* Tablette et mobile : tout s'empile sur l'image */
     @media (max-width: 991.98px) {
-      .hero { padding: 88px 0 48px; min-height: 0; }
-      .hero-inner { grid-template-columns: 1fr; gap: 36px; }
-      .login-card { max-width: none; }
-      .showcase { width: min(300px, 80vw); }
+      .hero { grid-template-columns: 1fr; gap: 28px; }
+      .shade { background: linear-gradient(180deg, rgba(6, 22, 61, .55) 0%, rgba(6, 22, 61, .72) 45%, rgba(6, 22, 61, .92) 100%); }
+      /* Écran étroit : une seule matière à la fois, en plein écran */
+      .panel { display: none; }
+      .panel.active { display: block; flex-grow: 1; }
+      .panel.active img { object-position: center 18%; transform: none; }
     }
     @media (max-width: 575.98px) {
-      .features .col-6 { width: 100%; }
+      .features { grid-template-columns: 1fr; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .slide, .hero-backdrop img { transition: none; }
-      .login-card, .showcase { animation: none; }
+      .panel, .panel img { transition: none; transform: none; }
+      .login-card, .feature { animation: none; }
     }
   `]
 })

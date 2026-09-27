@@ -3,8 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 
-interface ReponseDetail { questionText: string; points: number; choiceSelected: string; isCorrect: boolean; correctChoice: string; }
-interface PassageResult  { passageId?: number; studentName: string; studentEmail: string; score?: number; maxScore?: number; manualScore?: number; manualCorrectionNote?: string; ocrScore?: number; ocrCorrectionNote?: string; percentage?: string; submittedAt?: string; status: string; paperCorrectionUrl?: string; paperCorrectionFilename?: string; documentAnswer?: string; correctionText?: string; reponses: ReponseDetail[]; _editing?: boolean; }
+interface ReponseDetail { questionText: string; points: number; choiceSelected: string; isCorrect: boolean; correctChoice: string; questionType?: string; textAnswer?: string; }
+interface PassageResult  { passageId?: number; studentName: string; studentEmail: string; studentLevel?: string; score?: number; maxScore?: number; manualScore?: number; manualCorrectionNote?: string; ocrScore?: number; ocrCorrectionNote?: string; percentage?: string; submittedAt?: string; status: string; paperCorrectionUrl?: string; paperCorrectionFilename?: string; documentAnswer?: string; correctionText?: string; reponses: ReponseDetail[]; _editing?: boolean; }
 
 @Component({
   selector: 'app-qcm-resultats',
@@ -46,7 +46,7 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
             </div>
             <div>
               <div class="fw-bold">{{ r.studentName }}</div>
-              <div class="text-muted small">{{ r.studentEmail }}</div>
+              <div class="text-muted small">{{ r.studentEmail }}<span *ngIf="r.studentLevel"> · Niveau {{ r.studentLevel }}</span></div>
             </div>
           </div>
           <div class="d-flex align-items-center gap-3">
@@ -136,10 +136,12 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
                 <span class="me-3">
                   Réponse : <strong [style.color]="rep.isCorrect ? '#10b981' : '#ef4444'">{{ rep.choiceSelected }}</strong>
                 </span>
-                <span *ngIf="!rep.isCorrect" style="color:#6b7280">
+                <span *ngIf="!rep.isCorrect && !rep.textAnswer" style="color:#6b7280">
                   ✓ Attendu : <strong style="color:#10b981">{{ rep.correctChoice }}</strong>
                 </span>
               </div>
+              <pre *ngIf="rep.textAnswer" class="p-3 mt-2 mb-0 small"
+                   style="white-space:pre-wrap;background:#f8f9fa;border:1px solid #e5e7eb;border-radius:8px;max-height:360px;overflow:auto">{{ rep.textAnswer }}</pre>
             </div>
           </div>
         </div>

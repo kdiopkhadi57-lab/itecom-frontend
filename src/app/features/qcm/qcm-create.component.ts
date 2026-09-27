@@ -14,7 +14,14 @@ interface Question {
   expectedAnswer: string;
   choices: Choice[];
 }
-interface StudentEntry { name: string; email: string; }
+interface StudentEntry {
+  name: string;
+  email: string;
+  lastName: string;
+  firstName: string;
+  level: string;
+  password: string;
+}
 
 @Component({
   selector: 'app-qcm-create',
@@ -281,7 +288,8 @@ Bonne réponse: C</code>
               <p class="text-muted mb-0 small">
                 Si vide → QCM visible par <strong>tous</strong> les étudiants approuvés.<br>
                 Sinon → seulement les étudiants de la liste pourront le passer.<br>
-                Formats : Excel (.xlsx) col. A = Nom / col. B = Email · PDF · Word
+                Colonnes : Nom · Prénom · Niveau · Email · Mot de passe (unique par étudiant, généré s'il est absent)<br>
+                Formats : Excel (.xlsx) · CSV · Word · PDF
               </p>
             </div>
             <div class="d-flex gap-2 flex-shrink-0">
@@ -295,7 +303,7 @@ Bonne réponse: C</code>
                 <i *ngIf="!studentParsing" class="bi bi-upload me-1"></i>
                 {{ studentParsing ? 'Lecture...' : 'Importer un fichier' }}
               </button>
-              <input #studentInput type="file" accept=".xlsx,.xls,.pdf,.docx,.doc"
+              <input #studentInput type="file" accept=".xlsx,.xls,.csv,.pdf,.docx,.doc"
                      style="display:none" (change)="onStudentFile($event)">
             </div>
           </div>
@@ -313,24 +321,41 @@ Bonne réponse: C</code>
                 <button class="btn btn-sm btn-outline-secondary" (click)="students = []; studentError = ''">
                   <i class="bi bi-x me-1"></i>Effacer tout
                 </button>
-                <button class="btn btn-sm btn-outline-primary" (click)="students.push({name:'',email:''})">
+                <button class="btn btn-sm btn-outline-primary" (click)="addStudent()">
                   <i class="bi bi-plus me-1"></i>Ajouter manuellement
                 </button>
               </div>
             </div>
-            <div style="max-height:220px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px">
-              <table class="table table-sm table-hover mb-0">
+            <div *ngIf="duplicatePasswords.size" class="alert alert-warning py-2 small mb-2">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              Certains mots de passe sont utilisés par plusieurs étudiants. Chaque étudiant doit avoir un mot de passe unique.
+            </div>
+            <div style="max-height:320px;overflow:auto;border:1px solid #e5e7eb;border-radius:10px">
+              <table class="table table-sm table-hover mb-0 align-middle" style="min-width:760px">
                 <thead class="table-light sticky-top">
-                  <tr><th style="width:32px">#</th><th>Nom</th><th>Email</th><th style="width:40px"></th></tr>
+                  <tr>
+                    <th style="width:32px">#</th><th>Nom</th><th>Prénom</th><th style="width:90px">Niveau</th>
+                    <th>Email</th><th style="width:170px">Mot de passe</th><th style="width:40px"></th>
+                  </tr>
                 </thead>
                 <tbody>
                   <tr *ngFor="let s of students; let i = index">
-                    <td class="text-muted small align-middle">{{ i+1 }}</td>
-                    <td><input class="form-control form-control-sm border-0 bg-transparent p-0"
-                               [(ngModel)]="s.name" placeholder="Nom complet"></td>
-                    <td><input class="form-control form-control-sm border-0 bg-transparent p-0 text-muted"
-                               [(ngModel)]="s.email" placeholder="email@example.com"></td>
-                    <td class="align-middle">
+                    <td class="text-muted small">{{ i+1 }}</td>
+                    <td><input class="form-control form-control-sm" [(ngModel)]="s.lastName" placeholder="Nom"></td>
+                    <td><input class="form-control form-control-sm" [(ngModel)]="s.firstName" placeholder="Prénom"></td>
+                    <td><input class="form-control form-control-sm" [(ngModel)]="s.level" placeholder="L3"></td>
+                    <td><input class="form-control form-control-sm text-muted" [(ngModel)]="s.email" placeholder="email@example.com"></td>
+                    <td>
+                      <div class="input-group input-group-sm">
+                        <input class="form-control font-monospace" [(ngModel)]="s.password" placeholder="Mot de passe"
+                               [class.is-invalid]="!s.password.trim() || duplicatePasswords.has(s.password.trim())">
+                        <button class="btn btn-outline-secondary" type="button" title="Générer un nouveau mot de passe"
+                                (click)="s.password = generatePassword()">
+                          <i class="bi bi-arrow-repeat"></i>
+                        </button>
+                      </div>
+                    </td>
+                    <td>
                       <button class="btn btn-link btn-sm text-danger p-0" (click)="students.splice(i,1)">
                         <i class="bi bi-x-circle"></i>
                       </button>
@@ -434,7 +459,10 @@ export class QcmCreateComponent implements OnInit {
           expectedAnswer: q.expectedAnswer || '',
           choices: (q.choices || []).map((c: any) => ({ choiceText: c.choiceText, isCorrect: c.isCorrect }))
         }));
-        this.students = (qcm.students || []).map((s: any) => ({ name: s.studentName, email: s.studentEmail }));
+        this.students = (qcm.students || []).map((s: any) => this.toStudentEntry({
+          name: s.studentName, email: s.studentEmail, firstName: s.firstName,
+          lastName: s.lastName, level: s.level, password: s.password
+        }));
         if (!this.questions.length) this.addQuestion();
       });
     } else {
@@ -569,7 +597,7 @@ export class QcmCreateComponent implements OnInit {
     this.http.post<any>('/api/teacher/qcms/parse-students', fd).subscribe({
       next: res => {
         this.studentParsing = false;
-        this.students = res.students || [];
+        this.students = (res.students || []).map((s: any) => this.toStudentEntry(s));
         if (!this.students.length) this.studentError = 'Aucun étudiant détecté dans ce fichier.';
       },
       error: err => {
@@ -579,7 +607,55 @@ export class QcmCreateComponent implements OnInit {
     });
   }
 
+  private toStudentEntry(s: any): StudentEntry {
+    let firstName = (s.firstName || '').trim();
+    let lastName = (s.lastName || '').trim();
+    const name = (s.name || '').trim();
+    if (!firstName && !lastName && name) {
+      // « Prénom(s) Nom » : le dernier mot est le nom de famille
+      const lastSpace = name.lastIndexOf(' ');
+      firstName = lastSpace > 0 ? name.substring(0, lastSpace) : '';
+      lastName = lastSpace > 0 ? name.substring(lastSpace + 1) : name;
+    }
+    return {
+      name, email: s.email || '', firstName, lastName,
+      level: s.level || '', password: s.password || this.generatePassword()
+    };
+  }
+
+  addStudent() {
+    this.students.push({ name: '', email: '', firstName: '', lastName: '', level: '', password: this.generatePassword() });
+  }
+
+  generatePassword(): string {
+    // Sans caractères ambigus (0/O, 1/l/I) pour faciliter la saisie
+    const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    const used = new Set(this.students.map(s => s.password.trim()));
+    let password = '';
+    do {
+      const bytes = crypto.getRandomValues(new Uint32Array(8));
+      password = Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
+    } while (used.has(password));
+    return password;
+  }
+
+  get duplicatePasswords(): Set<string> {
+    const seen = new Set<string>();
+    const duplicates = new Set<string>();
+    for (const s of this.students) {
+      const password = s.password.trim();
+      if (!password) continue;
+      if (seen.has(password)) duplicates.add(password);
+      seen.add(password);
+    }
+    return duplicates;
+  }
+
   save() {
+    if (this.duplicatePasswords.size) {
+      this.error = 'Chaque étudiant doit avoir un mot de passe unique : corrigez les doublons dans la liste des étudiants.';
+      return;
+    }
     if (!this.canSave) {
       this.error = 'Saisissez un titre et fournissez soit des questions valides, soit le sujet et la correction.';
       return;
@@ -591,7 +667,10 @@ export class QcmCreateComponent implements OnInit {
       estimatedDurationMinutes: this.estimatedDurationMinutes,
       paperCorrectionRequired: this.paperCorrectionRequired,
       questions: this.questions,
-      students: this.students.filter(s => s.email.trim())
+      students: this.students.filter(s => s.email.trim()).map(s => ({
+        ...s,
+        name: `${s.firstName.trim()} ${s.lastName.trim()}`.trim() || s.name
+      }))
     };
     const req = this.isEdit
       ? this.http.put(`/api/teacher/qcms/${this.editId}`, body)

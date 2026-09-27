@@ -32,6 +32,16 @@ interface QcmTake  {
   startedAt?: string | null;
   questions: Question[];
 }
+interface QcmAcces {
+  id: number;
+  title: string;
+  description: string;
+  estimatedDurationMinutes: number;
+  questionCount: number;
+  passwordRequired: boolean;
+  studentName: string;
+  studentLevel?: string | null;
+}
 interface Resultat { qcmTitle: string; score: number; maxScore: number; percentage: string; mention: string;
   detail: { questionText: string; points: number; choiceSelected: string; isCorrect: boolean; correctChoice: string; }[]; }
 
@@ -181,18 +191,20 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
       </div>
 
       <!-- BIENVENUE : règles avant de démarrer -->
-      <div *ngIf="status === 'welcome' && qcm">
+      <div *ngIf="status === 'welcome' && acces">
         <div class="card border-0 shadow p-5 text-center" style="border-radius:16px">
           <div style="font-size:3rem">📝</div>
-          <h3 class="mt-3 fw-bold">{{ qcm.title }}</h3>
-          <p class="text-muted mb-4" *ngIf="qcm.description">{{ qcm.description }}</p>
+          <h3 class="mt-3 fw-bold">{{ acces.title }}</h3>
+          <p class="text-muted mb-4" *ngIf="acces.description">{{ acces.description }}</p>
           <div class="alert alert-light border text-start mb-3">
-            <i class="bi bi-question-circle me-1"></i>
-            <strong>{{ qcm.questions.length }}</strong> question(s) à répondre.
+            <div><i class="bi bi-person me-1"></i><strong>Étudiant :</strong> {{ acces.studentName }}</div>
+            <div *ngIf="acces.studentLevel"><i class="bi bi-mortarboard me-1"></i><strong>Niveau :</strong> {{ acces.studentLevel }}</div>
+            <div><i class="bi bi-question-circle me-1"></i>
+              <strong>{{ acces.questionCount }}</strong> question(s) à répondre.</div>
           </div>
           <div class="alert alert-primary small text-start mb-3">
             <i class="bi bi-clock-history me-1"></i>
-            Durée maximale : <strong>{{ qcm.estimatedDurationMinutes ?? 30 }} minute(s)</strong>.
+            Durée maximale : <strong>{{ acces.estimatedDurationMinutes ?? 30 }} minute(s)</strong>.
             Le compte à rebours démarre dès le lancement du devoir.
           </div>
           <div class="alert alert-danger small text-start mb-3">
@@ -204,7 +216,19 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
             <i class="bi bi-shield-lock me-1"></i>
             Le devoir démarre en plein écran. Le copier/coller et le clic droit sont désactivés pendant l'épreuve.
           </div>
-          <button class="btn btn-lg fw-semibold" style="background:#6366f1;color:#fff;border-radius:12px" (click)="startQcm()">
+          <div *ngIf="acces.passwordRequired" class="text-start mb-4 mx-auto" style="max-width:360px">
+            <label class="form-label fw-semibold" for="qcmPassword">
+              <i class="bi bi-key me-1"></i>Mot de passe du devoir
+            </label>
+            <input id="qcmPassword" type="password" class="form-control form-control-lg" autocomplete="off"
+                   [(ngModel)]="password" [class.is-invalid]="!!startError"
+                   (keydown.enter)="startQcm()" placeholder="Mot de passe communiqué par votre professeur">
+            <div class="invalid-feedback">{{ startError }}</div>
+          </div>
+          <div *ngIf="startError && !acces.passwordRequired" class="alert alert-danger small">{{ startError }}</div>
+          <button class="btn btn-lg fw-semibold" style="background:#6366f1;color:#fff;border-radius:12px" (click)="startQcm()"
+                  [disabled]="starting || (acces.passwordRequired && !password.trim())">
+            <span *ngIf="starting" class="spinner-border spinner-border-sm me-2"></span>
             ▶ Commencer le devoir
           </button>
         </div>
@@ -235,11 +259,22 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                  [style.width.%]="(answered / qcm.questions.length) * 100"></div>
           </div>
 
-          <div *ngIf="qcm.subjectText || qcm.subjectFileUrl" class="card border-0 shadow-sm mb-4" style="border-radius:16px">
+          <div *ngIf="(qcm.subjectText && !subjectShownInCase) || qcm.subjectFileUrl" class="card border-0 shadow-sm mb-4" style="border-radius:16px">
             <div class="card-body p-4">
-              <div *ngIf="qcm.subjectText" class="subject-text mb-4">
-                <div class="fw-semibold mb-2">Sujet du devoir / cas pratique</div>
-                <pre class="p-3 mb-0" style="white-space:pre-wrap;background:#f8f9fa;border:1px solid #dee2e6;border-radius:8px;max-height:520px;overflow:auto">{{ qcm.subjectText }}</pre>
+              <div *ngIf="qcm.subjectText && !subjectShownInCase" class="subject-text mb-4">
+                <div class="case-section-title mb-2"><i class="bi bi-file-earmark-text me-1"></i>Sujet du devoir / cas pratique</div>
+                <div class="case-section case-text" style="max-height:520px;overflow:auto">
+                  <ng-container *ngFor="let block of caseBlocks(qcm.subjectText)">
+                    <table *ngIf="block.table" class="table table-sm table-bordered case-table mb-3">
+                      <tbody>
+                        <tr *ngFor="let row of block.table; let ri = index" [class.table-light]="ri === 0">
+                          <td *ngFor="let cell of row" [class.fw-semibold]="ri === 0">{{ cell }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                    <p *ngIf="!block.table" class="mb-2" [class.case-heading]="block.heading">{{ block.text }}</p>
+                  </ng-container>
+                </div>
               </div>
               <div *ngIf="qcm.subjectFileUrl" class="ratio ratio-4x3 mb-4">
                 <iframe [src]="safeSubjectUrl" title="Sujet du devoir"
@@ -265,24 +300,55 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
               </div>
               <p *ngIf="!isCaseQuestion(q)" class="fw-semibold mb-3">{{ q.questionText }}</p>
 
-              <div *ngIf="isCaseQuestion(q)" class="mb-3">
-                <div class="alert alert-info small mb-3">
-                  <i class="bi bi-briefcase me-1"></i>
-                  <strong>Exercice du cas pratique</strong> : analysez les données puis répondez à la question.
-                </div>
-                <div class="p-3 rounded-3 mb-3" style="background:#eef2ff;border:1px solid #c7d2fe">
-                  <div class="small text-uppercase fw-bold mb-2" style="color:#4338ca;letter-spacing:.04em">
-                    Énoncé de l’exercice
+              <div *ngIf="isCaseQuestion(q)" class="case-block mb-3">
+                <div class="case-banner">
+                  <i class="bi bi-briefcase-fill"></i>
+                  <div>
+                    <div class="fw-bold">Cas pratique</div>
+                    <div class="small opacity-75">Lisez attentivement les données, puis rédigez votre réponse dans la zone prévue en dessous.</div>
                   </div>
-                  <div class="fw-semibold" style="white-space:pre-wrap">{{ q.questionText }}</div>
                 </div>
-                <div *ngIf="q.caseScenario" class="p-3 rounded-3 mb-3" style="background:#f8fafc;border:1px solid #e2e8f0;white-space:pre-wrap">
-                  <div class="small text-uppercase fw-bold mb-2" style="color:#475569;letter-spacing:.04em">Données du cas</div>
-                  {{ q.caseScenario }}
+
+                <div *ngIf="q.caseScenario && q.caseScenario.trim() !== q.questionText.trim()" class="case-section">
+                  <div class="case-section-title"><i class="bi bi-clipboard-data me-1"></i>Données du cas</div>
+                  <div class="case-text">{{ q.caseScenario }}</div>
                 </div>
-                <div class="p-3 rounded-3" style="background:#fff8e1;border:1px solid #f5d06f">
-                  <div class="fw-semibold mb-1"><i class="bi bi-upload me-2"></i>Déposer votre correction papier</div>
-                  <div class="small text-muted mb-2">Après avoir traité le cas sur papier, joignez une photo ou un PDF avant de soumettre.</div>
+
+                <div class="case-section case-section-statement">
+                  <div class="case-section-title"><i class="bi bi-list-check me-1"></i>Énoncé / travail à faire</div>
+                  <div class="case-text">
+                    <ng-container *ngFor="let block of caseBlocks(q.questionText)">
+                      <table *ngIf="block.table" class="table table-sm table-bordered case-table mb-3">
+                        <tbody>
+                          <tr *ngFor="let row of block.table; let ri = index" [class.table-light]="ri === 0">
+                            <td *ngFor="let cell of row" [class.fw-semibold]="ri === 0">{{ cell }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <p *ngIf="!block.table" class="mb-2" [class.case-heading]="block.heading">{{ block.text }}</p>
+                    </ng-container>
+                  </div>
+                </div>
+
+                <div class="case-answer">
+                  <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                    <label class="fw-semibold mb-0" [for]="'case-answer-' + q.id">
+                      <i class="bi bi-pencil-square me-1"></i>Votre réponse
+                    </label>
+                    <span class="small text-muted">{{ wordCount(textAnswers[q.id]) }} mot(s)</span>
+                  </div>
+                  <textarea class="form-control case-textarea" [id]="'case-answer-' + q.id" rows="14"
+                            [(ngModel)]="textAnswers[q.id]" spellcheck="true"
+                            placeholder="Rédigez ici votre résolution : raisonnement, calculs, tableaux (une ligne par ligne du tableau, colonnes séparées par | ), conclusion..."></textarea>
+                  <div class="small text-muted mt-1">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Si vous rédigez votre réponse ici, la copie papier devient facultative{{ qcm.paperCorrectionRequired ? ' (sauf si le professeur l’exige)' : '' }}.
+                  </div>
+                </div>
+
+                <div class="case-paper">
+                  <div class="fw-semibold mb-1"><i class="bi bi-upload me-2"></i>Copie papier{{ qcm.paperCorrectionRequired ? '' : ' (facultatif)' }}</div>
+                  <div class="small text-muted mb-2">Si vous avez traité tout ou partie du cas sur papier, joignez une photo ou un PDF avant de soumettre.</div>
                   <div class="d-flex align-items-center gap-2 flex-wrap">
                     <input type="file" class="form-control form-control-sm" accept="image/*,.pdf" style="max-width:420px"
                            (change)="onPaperCorrectionSelected($event)" [disabled]="paperCorrectionUploading">
@@ -393,6 +459,27 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
     </div>
   `,
   styles: [`
+    .case-block { display: flex; flex-direction: column; gap: 14px; }
+    .case-banner {
+      display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px;
+      background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff;
+    }
+    .case-banner > i { font-size: 1.5rem; }
+    .case-section { padding: 16px 18px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
+    .case-section-statement { background: #eef2ff; border-color: #c7d2fe; }
+    .case-section-title {
+      font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+      color: #4338ca; margin-bottom: 10px;
+    }
+    .case-text { font-size: .98rem; line-height: 1.7; color: #1f2937; white-space: pre-wrap; word-break: break-word; }
+    .case-text p:last-child { margin-bottom: 0 !important; }
+    .case-heading { font-weight: 700; color: #312e81; margin-top: 6px; }
+    .case-table { background: #fff; font-size: .9rem; white-space: normal; }
+    .case-table td { padding: 6px 10px; }
+    .case-answer { padding: 16px 18px; border-radius: 12px; background: #fff; border: 2px solid #10b981; }
+    .case-textarea { min-height: 280px; font-size: .98rem; line-height: 1.6; resize: vertical; border-radius: 10px; }
+    .case-paper { padding: 14px 16px; border-radius: 12px; background: #fff8e1; border: 1px solid #f5d06f; }
+
     .proctor-widget {
       position: fixed;
       right: 12px;
@@ -449,6 +536,10 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
 export class QcmTakeComponent implements OnInit, OnDestroy {
   status: PageStatus = 'loading';
   qcm: QcmTake | null = null;
+  acces: QcmAcces | null = null;
+  password = '';
+  starting = false;
+  startError = '';
   resultat: Resultat | null = null;
   answers: Record<number, number> = {};
   practicalAnswers: Record<number, Record<string, string>> = {};
@@ -517,21 +608,9 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
           this.status = 'blocked';
           return;
         }
-        // Pas encore passé → charger les questions et afficher les règles
-        this.http.post<QcmTake>(`/api/qcm/${this.qcmId}/commencer`, {}).subscribe({
-          next: (q) => {
-            this.qcm = q;
-            this.paperCorrectionUrl = q.paperCorrectionUrl || '';
-            this.paperCorrectionFilename = q.paperCorrectionFilename || '';
-            this.safeSubjectUrl = q.subjectFileUrl
-              ? this.sanitizer.bypassSecurityTrustResourceUrl(q.subjectFileUrl)
-              : null;
-            q.questions.filter(question => question.questionType === 'PRACTICAL').forEach(question => {
-              this.tableRows[question.id] = 1;
-              this.tableCols[question.id] = Math.max(1, question.valueLabels.length);
-            });
-            this.status = 'welcome';
-          },
+        // Pas encore passé → afficher les règles ; les questions sont chargées au démarrage (mot de passe vérifié)
+        this.http.get<QcmAcces>(`/api/qcm/${this.qcmId}/acces`).subscribe({
+          next: (a) => { this.acces = a; this.status = 'welcome'; },
           error: () => { this.router.navigate(['/qcm']); }
         });
       }
@@ -584,7 +663,84 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   }
 
   get requiresPaperCorrection(): boolean {
-    return !!this.qcm && (this.qcm.paperCorrectionRequired === true || this.hasCaseQuestion);
+    if (!this.qcm) return false;
+    if (this.qcm.paperCorrectionRequired === true) return true;
+    // La copie papier n'est requise que si un cas pratique n'a pas de réponse saisie
+    return this.qcm.questions.some(q => this.isCaseQuestion(q) && !this.textAnswers[q.id]?.trim());
+  }
+
+  /** Le sujet documentaire est déjà affiché dans la question « cas pratique » : inutile de le répéter. */
+  get subjectShownInCase(): boolean {
+    const subject = this.qcm?.subjectText?.trim();
+    if (!subject) return false;
+    const head = subject.substring(0, 80);
+    return this.qcm!.questions.some(q => this.isCaseQuestion(q) && q.questionText?.includes(head));
+  }
+
+  wordCount(text: string | undefined): number {
+    return text?.trim() ? text.trim().split(/\s+/).length : 0;
+  }
+
+  private caseBlocksCache = new Map<string, { text?: string; heading?: boolean; table?: string[][] }[]>();
+
+  /**
+   * Découpe l'énoncé en paragraphes et tableaux : les lignes contenant des tabulations
+   * (tableaux extraits du document Word) ou des « | » sont rendues sous forme de tableau.
+   */
+  caseBlocks(text: string | null | undefined): { text?: string; heading?: boolean; table?: string[][] }[] {
+    const source = (text || '').replace(/\r\n?/g, '\n');
+    const cached = this.caseBlocksCache.get(source);
+    if (cached) return cached;
+
+    const blocks: { text?: string; heading?: boolean; table?: string[][] }[] = [];
+    let table: string[][] | null = null;
+    let paragraph: string[] = [];
+    const flushParagraph = () => {
+      if (paragraph.length) {
+        const joined = paragraph.join('\n').trim();
+        if (joined) blocks.push({ text: joined, heading: this.isHeadingLine(joined) });
+      }
+      paragraph = [];
+    };
+    const flushTable = () => {
+      if (table && table.length) blocks.push({ table });
+      table = null;
+    };
+    for (const rawLine of source.split('\n')) {
+      const line = rawLine.trimEnd();
+      const cells = line.includes('\t') ? line.split('\t')
+        : (line.split('|').length > 2 ? line.split('|') : null);
+      if (cells) {
+        flushParagraph();
+        const cleaned = cells.map(c => c.trim());
+        while (cleaned.length && !cleaned[0]) cleaned.shift();
+        while (cleaned.length && !cleaned[cleaned.length - 1]) cleaned.pop();
+        if (cleaned.length) (table ??= []).push(cleaned);
+      } else if (!line.trim()) {
+        flushTable();
+        flushParagraph();
+      } else {
+        flushTable();
+        if (this.isHeadingLine(line)) {
+          flushParagraph();
+          blocks.push({ text: line.trim(), heading: true });
+        } else {
+          paragraph.push(line);
+        }
+      }
+    }
+    flushTable();
+    flushParagraph();
+    this.caseBlocksCache.set(source, blocks);
+    return blocks;
+  }
+
+  private isHeadingLine(line: string): boolean {
+    const t = line.trim();
+    if (t.length > 90 || t.includes('\n')) return false;
+    return /^(exercice|question|partie|travail à faire|annexe|dossier|cas|document)\b/i.test(t)
+      || /^[IVX]+[.)-]\s/.test(t)
+      || (t === t.toUpperCase() && /[A-ZÀ-Ý]{4,}/.test(t));
   }
 
   onPaperCorrectionSelected(event: Event) {
@@ -622,8 +778,41 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   }
 
   startQcm() {
-    this.status = 'active';
+    if (this.starting || !this.acces) return;
+    if (this.acces.passwordRequired && !this.password.trim()) return;
+    // Le navigateur n'autorise le plein écran que pendant le geste utilisateur
     this.enterFullscreen();
+    this.starting = true;
+    this.startError = '';
+    this.http.post<QcmTake>(`/api/qcm/${this.qcmId}/commencer`, { password: this.password.trim() }).subscribe({
+      next: (q) => {
+        this.starting = false;
+        this.loadQcm(q);
+        this.activate();
+      },
+      error: (err) => {
+        this.starting = false;
+        if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+        this.startError = err.error?.message || 'Impossible de démarrer le devoir.';
+      }
+    });
+  }
+
+  private loadQcm(q: QcmTake) {
+    this.qcm = q;
+    this.paperCorrectionUrl = q.paperCorrectionUrl || '';
+    this.paperCorrectionFilename = q.paperCorrectionFilename || '';
+    this.safeSubjectUrl = q.subjectFileUrl
+      ? this.sanitizer.bypassSecurityTrustResourceUrl(q.subjectFileUrl)
+      : null;
+    q.questions.filter(question => question.questionType === 'PRACTICAL').forEach(question => {
+      this.tableRows[question.id] = 1;
+      this.tableCols[question.id] = Math.max(1, question.valueLabels.length);
+    });
+  }
+
+  private activate() {
+    this.status = 'active';
     this.lockScroll();
     this.uiChrome.hide();
     this.startQcmCountdown();

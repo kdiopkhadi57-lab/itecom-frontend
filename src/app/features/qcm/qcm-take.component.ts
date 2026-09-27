@@ -329,7 +329,9 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                   <i class="bi bi-briefcase-fill"></i>
                   <div>
                     <div class="fw-bold">Cas pratique</div>
-                    <div class="small opacity-75">Lisez attentivement les données, puis rédigez votre réponse dans la zone prévue en dessous.</div>
+                    <div class="small opacity-75">{{ hasAnswerTable(q)
+                      ? 'Lisez l’énoncé et complétez la colonne réponse du tableau (un résultat par ligne).'
+                      : 'Lisez attentivement les données, puis répondez dans la zone prévue en dessous.' }}</div>
                   </div>
                 </div>
 
@@ -340,21 +342,34 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
 
                 <div class="case-section case-section-statement">
                   <div class="case-section-title"><i class="bi bi-list-check me-1"></i>Énoncé / travail à faire</div>
+                  <div *ngIf="hasAnswerTable(q) && scanReadNotice[q.id]" class="alert alert-info small py-2">
+                    <i class="bi bi-magic me-1"></i>Valeurs lues sur votre copie : vérifiez-les et corrigez si nécessaire.
+                  </div>
                   <div class="case-text">
                     <ng-container *ngFor="let block of caseBlocks(q.questionText)">
-                      <table *ngIf="block.table" class="table table-sm table-bordered case-table mb-3">
+                      <div *ngIf="block.table" class="table-responsive">
+                      <table class="table table-sm table-bordered case-table mb-3 align-middle">
                         <tbody>
                           <tr *ngFor="let row of block.table; let ri = index" [class.table-light]="ri === 0">
-                            <td *ngFor="let cell of row" [class.fw-semibold]="ri === 0">{{ cell }}</td>
+                            <td *ngFor="let cell of row; let ci = index" [class.fw-semibold]="ri === 0"
+                                [class.answer-cell]="ri > 0 && ci === answerColumn(block.table)">
+                              <input *ngIf="ri > 0 && ci === answerColumn(block.table); else plainCell"
+                                     class="form-control form-control-sm" placeholder="Votre réponse"
+                                     [attr.aria-label]="'Réponse ligne ' + row[0]"
+                                     [ngModel]="getPracticalAnswer(q.id, tableRowId(row, ri))"
+                                     (ngModelChange)="setPracticalAnswer(q.id, tableRowId(row, ri), $event)">
+                              <ng-template #plainCell>{{ cell }}</ng-template>
+                            </td>
                           </tr>
                         </tbody>
                       </table>
+                      </div>
                       <div *ngIf="!block.table" class="case-line" [class.case-heading]="block.heading">{{ block.text }}</div>
                     </ng-container>
                   </div>
                 </div>
 
-                <div *ngIf="q.gridRows?.length" class="case-grid">
+                <div *ngIf="q.gridRows?.length && !hasAnswerTable(q)" class="case-grid">
                   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
                     <div class="fw-semibold"><i class="bi bi-table me-1"></i>Vos résultats</div>
                     <span class="small text-muted">Un résultat final par ligne — c'est cette valeur qui est comparée à la correction.</span>
@@ -364,11 +379,10 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                   </div>
                   <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0 grid-table">
-                      <thead><tr><th style="width:70px">Ligne</th><th>Question</th><th style="width:220px">Votre résultat</th></tr></thead>
+                      <thead><tr><th style="width:90px">Ligne</th><th>Votre résultat</th></tr></thead>
                       <tbody>
                         <tr *ngFor="let row of q.gridRows">
                           <td class="fw-semibold">{{ row.label }}</td>
-                          <td class="small text-muted">{{ row.question || '—' }}</td>
                           <td>
                             <input class="form-control form-control-sm" [attr.aria-label]="'Résultat ' + row.label"
                                    placeholder="Ex. 5 280 000"
@@ -381,10 +395,10 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                   </div>
                 </div>
 
-                <div class="case-answer">
+                <div *ngIf="!hasAnswerTable(q) && !q.gridRows?.length" class="case-answer">
                   <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                     <label class="fw-semibold mb-0" [for]="'case-answer-' + q.id">
-                      <i class="bi bi-pencil-square me-1"></i>{{ q.gridRows?.length ? 'Justification et calculs' : 'Votre réponse' }}
+                      <i class="bi bi-pencil-square me-1"></i>Votre réponse
                     </label>
                     <span class="small text-muted">{{ wordCount(textAnswers[q.id]) }} mot(s)</span>
                   </div>
@@ -536,6 +550,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
     .case-table td { padding: 6px 10px; }
     .case-answer { padding: 16px 18px; border-radius: 12px; background: #fff; border: 2px solid #10b981; }
     .case-textarea { min-height: 280px; font-size: .98rem; line-height: 1.6; resize: vertical; border-radius: 10px; }
+    .answer-cell { min-width: 190px; background: #f0f7ff; }
     .case-grid { padding: 16px 18px; border-radius: 12px; background: #fff; border: 2px solid #1d6ff2; }
     .grid-table thead th { font-size: .75rem; text-transform: uppercase; color: #64748b; background: #f8fafc; }
     .case-paper { padding: 14px 16px; border-radius: 12px; background: #fff8e1; border: 1px solid #f5d06f; }
@@ -800,6 +815,25 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
     while (blocks.length && !blocks[blocks.length - 1].table && !blocks[blocks.length - 1].text?.trim()) blocks.pop();
     this.caseBlocksCache.set(source, blocks);
     return blocks;
+  }
+
+  /** Colonne « Réponse de l'étudiant » (ou « Votre réponse », « Résultat ») d'un tableau du sujet, sinon -1. */
+  answerColumn(table: string[][]): number {
+    const header = (table[0] || []).map(c => c.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase());
+    return header.findIndex(h => /reponse|resultat/.test(h));
+  }
+
+  /** Identifiant de ligne aligné sur la grille de correction : « 1 » → Q1, sinon libellé court, sinon L<n>. */
+  tableRowId(row: string[], rowIndex: number): string {
+    const first = (row[0] || '').trim();
+    if (/^\d{1,3}$/.test(first)) return 'Q' + first;
+    if (first && first.length <= 12) return first;
+    return 'L' + rowIndex;
+  }
+
+  /** Le sujet contient un tableau avec une colonne réponse : l'étudiant répond directement dedans. */
+  hasAnswerTable(q: Question): boolean {
+    return this.caseBlocks(q.questionText).some(block => !!block.table && block.table.length > 1 && this.answerColumn(block.table) >= 0);
   }
 
   private isHeadingLine(line: string): boolean {

@@ -309,6 +309,9 @@ Bonne réponse: C</code>
             </div>
           </div>
 
+          <div *ngIf="studentListError" id="studentListError" class="alert alert-danger py-2 mt-3 mb-0">
+            <i class="bi bi-exclamation-octagon me-2"></i>{{ studentListError }}
+          </div>
           <div *ngIf="studentError" class="alert alert-danger py-2 mt-3 mb-0">
             <i class="bi bi-exclamation-triangle me-2"></i>{{ studentError }}
           </div>
@@ -340,7 +343,7 @@ Bonne réponse: C</code>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let s of students; let i = index">
+                  <tr *ngFor="let s of students; let i = index" [class.table-danger]="invalidEmails.has(s.email.trim().toLowerCase())">
                     <td class="text-muted small">{{ i+1 }}</td>
                     <td><input class="form-control form-control-sm" [(ngModel)]="s.lastName" placeholder="Nom"></td>
                     <td><input class="form-control form-control-sm" [(ngModel)]="s.firstName" placeholder="Prénom"></td>
@@ -640,6 +643,9 @@ export class QcmCreateComponent implements OnInit {
     return password;
   }
 
+  invalidEmails = new Set<string>();
+  studentListError = '';
+
   get duplicatePasswords(): Set<string> {
     const seen = new Set<string>();
     const duplicates = new Set<string>();
@@ -653,6 +659,8 @@ export class QcmCreateComponent implements OnInit {
   }
 
   save() {
+    this.invalidEmails = new Set();
+    this.studentListError = '';
     if (this.duplicatePasswords.size) {
       this.error = 'Chaque étudiant doit avoir un mot de passe unique : corrigez les doublons dans la liste des étudiants.';
       return;
@@ -696,7 +704,16 @@ export class QcmCreateComponent implements OnInit {
           error: e => { this.error = e.error?.error || 'Erreur lors de l’enregistrement des documents.'; this.loading = false; }
         });
       },
-      error: (e) => { this.error = e.error?.message || 'Erreur'; this.loading = false; }
+      error: (e) => {
+        this.error = e.error?.message || 'Erreur';
+        this.loading = false;
+        const invalid: string[] = e.error?.invalidEmails || [];
+        this.invalidEmails = new Set(invalid.map(email => email.toLowerCase()));
+        this.studentListError = invalid.length ? this.error : '';
+        if (invalid.length) {
+          setTimeout(() => document.getElementById('studentListError')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+        }
+      }
     });
   }
 }

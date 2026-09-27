@@ -16,6 +16,10 @@ interface AppUser {
   registrationStatus: string;
   enabled: boolean;
   createdAt: string;
+  birthDate?: string | null;
+  birthPlace?: string | null;
+  level?: string | null;
+  subjects?: string | null;
 }
 
 @Component({
@@ -75,6 +79,31 @@ interface AppUser {
               <div class="col-md-6">
                 <label class="form-label fw-semibold small" for="newEmail">Email</label>
                 <input id="newEmail" type="email" class="form-control" name="email" [(ngModel)]="newUser.email" required email>
+              </div>
+              <ng-container *ngIf="newUser.role === 'STUDENT'">
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small" for="newBirthDate">Date de naissance</label>
+                  <input id="newBirthDate" type="date" class="form-control" name="birthDate" [(ngModel)]="newUser.birthDate"
+                         [max]="maxBirthDate" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small" for="newBirthPlace">Lieu de naissance</label>
+                  <input id="newBirthPlace" class="form-control" name="birthPlace" [(ngModel)]="newUser.birthPlace"
+                         placeholder="Ex. Dakar" required>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold small" for="newLevel">Niveau</label>
+                  <select id="newLevel" class="form-select" name="level" [(ngModel)]="newUser.level" required>
+                    <option value="" disabled>— Choisir —</option>
+                    <option *ngFor="let l of levels" [value]="l">{{ l }}</option>
+                  </select>
+                </div>
+              </ng-container>
+              <div class="col-12" *ngIf="newUser.role === 'TEACHER'">
+                <label class="form-label fw-semibold small" for="newSubjects">Matières enseignées</label>
+                <input id="newSubjects" class="form-control" name="subjects" [(ngModel)]="newUser.subjects" required
+                       placeholder="Ex. Comptabilité analytique, Fiscalité, Mathématiques financières">
+                <div class="form-text">Séparez les matières par des virgules.</div>
               </div>
               <div class="col-md-6" *ngIf="newUser.role === 'STUDENT'">
                 <label class="form-label fw-semibold small" for="newSpecialization">Filière</label>
@@ -220,11 +249,21 @@ interface AppUser {
                   <div class="fw-bold text-truncate">{{ u.firstName }} {{ u.lastName }}</div>
                   <div class="text-muted small text-truncate">{{ u.email }}</div>
 
-                  <!-- Filière (apprenants) -->
-                  <span *ngIf="activeTab === 'students' && u.specialization"
-                        class="badge mt-1" style="background:#ede9fe;color:#6d28d9;font-size:.72rem">
-                    {{ getSpecialization(u.specialization) }}
-                  </span>
+                  <!-- Niveau, filière, naissance (apprenants) -->
+                  <div *ngIf="activeTab === 'students'" class="d-flex flex-wrap gap-1 mt-1">
+                    <span *ngIf="u.level" class="badge" style="background:#dbeafe;color:#1d4ed8;font-size:.72rem">{{ u.level }}</span>
+                    <span *ngIf="u.specialization" class="badge" style="background:#ede9fe;color:#6d28d9;font-size:.72rem">
+                      {{ getSpecialization(u.specialization) }}
+                    </span>
+                  </div>
+                  <div *ngIf="activeTab === 'students' && (u.birthDate || u.birthPlace)" class="text-muted small mt-1">
+                    <i class="bi bi-calendar-event me-1"></i>Né(e) {{ u.birthDate ? ('le ' + (u.birthDate | date:'dd/MM/yyyy')) : '' }}{{ u.birthPlace ? ' à ' + u.birthPlace : '' }}
+                  </div>
+
+                  <!-- Matières (partenaires) -->
+                  <div *ngIf="activeTab === 'teachers' && u.subjects" class="d-flex flex-wrap gap-1 mt-1">
+                    <span *ngFor="let m of subjectList(u.subjects)" class="badge" style="background:#d1fae5;color:#047857;font-size:.72rem">{{ m }}</span>
+                  </div>
 
                   <!-- Bio (partenaires) -->
                   <p *ngIf="activeTab === 'teachers' && u.bio"
@@ -296,6 +335,8 @@ export class AdminUsersComponent implements OnInit {
   createMessage = '';
   createEmailSent = true;
   newUser = this.emptyUser();
+  readonly levels = ['L1', 'L2', 'L3', 'M1', 'M2'];
+  readonly maxBirthDate = new Date(new Date().getFullYear() - 10, 11, 31).toISOString().substring(0, 10);
   readonly specializations = [
     { value: 'genie-logiciel', label: 'Génie Logiciel' }, { value: 'reseau', label: 'Réseaux' },
     { value: 'comptabilite', label: 'Comptabilité' }, { value: 'sante', label: 'Santé' },
@@ -329,7 +370,10 @@ export class AdminUsersComponent implements OnInit {
   }
 
   private emptyUser() {
-    return { role: 'STUDENT', firstName: '', lastName: '', email: '', specialization: '', password: this.generatePassword() };
+    return {
+      role: 'STUDENT', firstName: '', lastName: '', email: '', specialization: '', password: this.generatePassword(),
+      birthDate: '', birthPlace: '', level: '', subjects: ''
+    };
   }
 
   openCreate() {
@@ -349,7 +393,15 @@ export class AdminUsersComponent implements OnInit {
     if (this.creating) return;
     this.creating = true;
     this.createError = '';
-    const body = { ...this.newUser, specialization: this.newUser.role === 'STUDENT' ? this.newUser.specialization : '' };
+    const student = this.newUser.role === 'STUDENT';
+    const body = {
+      ...this.newUser,
+      specialization: student ? this.newUser.specialization : '',
+      birthDate: student ? this.newUser.birthDate : '',
+      birthPlace: student ? this.newUser.birthPlace : '',
+      level: student ? this.newUser.level : '',
+      subjects: student ? '' : this.newUser.subjects
+    };
     this.http.post<{ user: AppUser; emailSent: boolean; message: string }>('/api/admin/users', body).subscribe({
       next: res => {
         this.creating = false;
@@ -392,6 +444,10 @@ export class AdminUsersComponent implements OnInit {
       },
       error: () => { this.processing[u.id] = false; }
     });
+  }
+
+  subjectList(subjects: string | null | undefined): string[] {
+    return (subjects || '').split(/[,;]/).map(m => m.trim()).filter(Boolean);
   }
 
   getSpecialization(s: string | null): string {

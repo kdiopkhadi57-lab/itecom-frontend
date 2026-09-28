@@ -35,9 +35,9 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
       <!-- Indicateurs -->
       <div class="row g-3 mb-4" *ngIf="!loading && results.length">
         <div class="col-6 col-md-3"><div class="stat"><div class="stat-value">{{ results.length }}</div><div class="stat-label">Étudiants</div></div></div>
-        <div class="col-6 col-md-3"><div class="stat"><div class="stat-value text-success">{{ submittedCount }}</div><div class="stat-label">Copies rendues</div></div></div>
-        <div class="col-6 col-md-3"><div class="stat"><div class="stat-value" style="color:#1d6ff2">{{ averageLabel }}</div><div class="stat-label">Moyenne</div></div></div>
-        <div class="col-6 col-md-3"><div class="stat"><div class="stat-value text-warning">{{ results.length - submittedCount }}</div><div class="stat-label">Non rendues</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat"><div class="stat-value">{{ submittedCount }}</div><div class="stat-label">Copies rendues</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat"><div class="stat-value">{{ averageLabel }}</div><div class="stat-label">Moyenne</div></div></div>
+        <div class="col-6 col-md-3"><div class="stat"><div class="stat-value">{{ results.length - submittedCount }}</div><div class="stat-label">Non rendues</div></div></div>
       </div>
 
       <div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-primary"></div></div>
@@ -48,67 +48,86 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
         <p class="text-muted">Aucun étudiant n'est inscrit à ce devoir et personne ne l'a encore passé.</p>
       </div>
 
-      <div *ngIf="!loading && results.length" class="card border-0 shadow-sm" style="border-radius:16px;overflow:hidden">
-        <div class="p-3 border-bottom d-flex gap-2 flex-wrap align-items-center">
-          <div class="input-group input-group-sm" style="max-width:320px">
-            <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
-            <input class="form-control" [(ngModel)]="search" placeholder="Rechercher un étudiant…" aria-label="Rechercher un étudiant">
+      <div *ngIf="!loading && results.length">
+        <!-- Recherche et filtres -->
+        <div class="card mb-3" style="border-radius:14px">
+          <div class="card-body p-3">
+            <div class="d-flex gap-2 flex-wrap align-items-center">
+              <div class="input-group input-group-sm" style="max-width:340px">
+                <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                <input type="search" class="form-control" [(ngModel)]="search" placeholder="Rechercher un étudiant (nom, email…)" aria-label="Rechercher un étudiant">
+              </div>
+              <select class="form-select form-select-sm" style="max-width:200px" [(ngModel)]="statusFilter" aria-label="Filtrer par statut">
+                <option value="">Tous les statuts</option>
+                <option value="SOUMIS">Rendu</option>
+                <option value="EN_COURS">En cours</option>
+                <option value="NON_COMMENCE">Non commencé</option>
+              </select>
+            </div>
+            <div class="d-flex flex-wrap gap-2 mt-3" role="group" aria-label="Filtrer par niveau">
+              <button type="button" class="chip" [class.active]="!levelFilter" (click)="levelFilter = ''">Tous les niveaux</button>
+              <button type="button" *ngFor="let g of allLevelGroups" class="chip" [class.active]="levelFilter === g.key" (click)="levelFilter = g.key">
+                {{ g.label }} <span class="chip-count">{{ g.rows.length }}</span>
+              </button>
+            </div>
           </div>
-          <select class="form-select form-select-sm" style="max-width:200px" [(ngModel)]="statusFilter" aria-label="Filtrer par statut">
-            <option value="">Tous les statuts</option>
-            <option value="SOUMIS">Rendu</option>
-            <option value="EN_COURS">En cours</option>
-            <option value="NON_COMMENCE">Non commencé</option>
-          </select>
         </div>
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0 results-table">
-            <thead>
-              <tr>
-                <th style="width:48px">#</th>
-                <th>Nom</th>
-                <th>Prénom</th>
-                <th>Date de naissance</th>
-                <th>Niveau</th>
-                <th>Email</th>
-                <th>Statut</th>
-                <th class="text-end">Note</th>
-                <th class="text-end" style="width:110px">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let r of filteredResults; let i = index">
-                <td class="text-muted">{{ i + 1 }}</td>
-                <td class="fw-semibold">{{ r.lastName || lastNameOf(r) }}</td>
-                <td>{{ r.firstName || firstNameOf(r) }}</td>
-                <td>{{ r.birthDate ? (r.birthDate | date:'dd/MM/yyyy') : '—' }}</td>
-                <td>{{ r.studentLevel || '—' }}</td>
-                <td class="text-muted small">{{ r.studentEmail }}</td>
-                <td><span class="status-badge" [ngClass]="statusClass(r.status)">{{ statusLabel(r.status) }}</span></td>
-                <td class="text-end">
-                  <ng-container *ngIf="r.status === 'SOUMIS'; else noGrade">
-                    <div class="fw-bold" [style.color]="getColor(r.score, r.maxScore)">{{ r.score ?? '—' }} / {{ r.maxScore ?? '—' }}</div>
-                    <div class="small text-muted">{{ r.percentage }}<span *ngIf="r.manualScore != null" title="Note modifiée par le professeur"> · <i class="bi bi-pencil-fill"></i></span></div>
-                  </ng-container>
-                  <ng-template #noGrade><span class="text-muted">—</span></ng-template>
-                </td>
-                <td class="text-end text-nowrap">
-                  <button class="btn btn-sm btn-light action-btn" (click)="openDetail(r)" title="Voir le détail" aria-label="Voir le détail">
-                    <i class="bi bi-eye"></i>
-                  </button>
-                  <button class="btn btn-sm btn-light action-btn ms-1" (click)="openEdit(r)"
-                          [disabled]="r.status !== 'SOUMIS' || !r.passageId"
-                          [title]="r.status === 'SOUMIS' ? 'Modifier la note' : 'Disponible une fois la copie rendue'"
-                          aria-label="Modifier la note">
-                    <i class="bi bi-pencil-square"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr *ngIf="filteredResults.length === 0">
-                <td colspan="9" class="text-center text-muted py-4">Aucun étudiant ne correspond à la recherche.</td>
-              </tr>
-            </tbody>
-          </table>
+
+        <div *ngIf="visibleLevelGroups.length === 0" class="text-center text-muted py-5">Aucun étudiant ne correspond à la recherche.</div>
+
+        <!-- Un groupe par niveau -->
+        <div *ngFor="let g of visibleLevelGroups" class="card mb-3 group-card">
+          <button type="button" class="group-head" (click)="collapsed[g.key] = !collapsed[g.key]" [attr.aria-expanded]="!collapsed[g.key]">
+            <i class="bi" [ngClass]="collapsed[g.key] ? 'bi-chevron-right' : 'bi-chevron-down'"></i>
+            <span class="group-title">{{ g.label }}</span>
+            <span class="group-meta">
+              {{ g.rows.length }} étudiant{{ g.rows.length > 1 ? 's' : '' }} · {{ submittedIn(g.rows) }} copie{{ submittedIn(g.rows) > 1 ? 's' : '' }} rendue{{ submittedIn(g.rows) > 1 ? 's' : '' }} · moyenne {{ averageOf(g.rows) }}
+            </span>
+          </button>
+          <div *ngIf="!collapsed[g.key]" class="table-responsive">
+            <table class="table table-hover align-middle mb-0 results-table">
+              <thead>
+                <tr>
+                  <th style="width:48px">#</th>
+                  <th style="width:16%">Nom</th>
+                  <th style="width:16%">Prénom</th>
+                  <th style="width:13%">Naissance</th>
+                  <th>Email</th>
+                  <th style="width:12%">Statut</th>
+                  <th class="text-end" style="width:11%">Note</th>
+                  <th class="text-end" style="width:110px">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let r of g.rows; let i = index">
+                  <td class="text-muted">{{ i + 1 }}</td>
+                  <td class="fw-semibold">{{ r.lastName || lastNameOf(r) }}</td>
+                  <td>{{ r.firstName || firstNameOf(r) }}</td>
+                  <td>{{ r.birthDate ? (r.birthDate | date:'dd/MM/yyyy') : '—' }}</td>
+                  <td class="text-muted small">{{ r.studentEmail }}</td>
+                  <td><span class="status-badge" [ngClass]="statusClass(r.status)">{{ statusLabel(r.status) }}</span></td>
+                  <td class="text-end">
+                    <ng-container *ngIf="r.status === 'SOUMIS'; else noGrade">
+                      <div class="fw-bold">{{ r.score ?? '—' }} / {{ r.maxScore ?? '—' }}</div>
+                      <div class="small text-muted">{{ r.percentage }}<span *ngIf="r.manualScore != null" title="Note modifiée par le professeur"> · <i class="bi bi-pencil-fill"></i></span></div>
+                    </ng-container>
+                    <ng-template #noGrade><span class="text-muted">—</span></ng-template>
+                  </td>
+                  <td class="text-end text-nowrap">
+                    <button class="btn btn-sm btn-light action-btn" (click)="openDetail(r)" title="Voir le détail" aria-label="Voir le détail">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-light action-btn ms-1" (click)="openEdit(r)"
+                            [disabled]="r.status !== 'SOUMIS' || !r.passageId"
+                            [title]="r.status === 'SOUMIS' ? 'Modifier la note' : 'Disponible une fois la copie rendue'"
+                            aria-label="Modifier la note">
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -237,8 +256,19 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
     </div>
   `,
   styles: [`
-    .stat { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 1px 3px rgba(15, 23, 42, .08); text-align: center; }
-    .stat-value { font-size: 1.6rem; font-weight: 800; color: #0f172a; }
+    .chip { border: 1px solid var(--border); background: #fff; color: var(--dark); border-radius: 999px; padding: 4px 12px; font-size: .85rem; font-weight: 500; }
+    .chip:hover { border-color: var(--dark); }
+    .chip.active { background: var(--dark); border-color: var(--dark); color: #fff; }
+    .chip-count { opacity: .65; margin-left: 2px; }
+    .group-card { border-radius: 14px; overflow: hidden; }
+    .group-head { width: 100%; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px 18px; border: 0;
+      background: var(--gray-50); border-bottom: 1px solid var(--border); text-align: left; }
+    .group-title { font-weight: 700; color: var(--dark); }
+    .group-meta { margin-left: auto; color: var(--muted); font-size: .85rem; }
+    .results-table { table-layout: fixed; min-width: 900px; }
+    .results-table td { overflow: hidden; text-overflow: ellipsis; }
+    .stat { background: #fff; border-radius: 14px; padding: 16px; border: 1px solid var(--border); text-align: center; }
+    .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--dark); }
     .stat-label { font-size: .8rem; color: #64748b; }
     .results-table thead th { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; background: #f8fafc; white-space: nowrap; }
     .results-table td { white-space: nowrap; }
@@ -298,6 +328,48 @@ export class QcmResultatsComponent implements OnInit {
       (!this.statusFilter || r.status === this.statusFilter) &&
       (!q || [r.lastName, r.firstName, r.studentName, r.studentEmail, r.studentLevel]
         .some(v => (v || '').toLowerCase().includes(q))));
+  }
+
+  levelFilter = '';
+  collapsed: Record<string, boolean> = {};
+  private readonly lmdLevels = ['L1', 'L2', 'L3', 'M1', 'M2'];
+  private readonly lmdLabels: Record<string, string> = {
+    L1: 'Licence 1 (L1)', L2: 'Licence 2 (L2)', L3: 'Licence 3 (L3)', M1: 'Master 1 (M1)', M2: 'Master 2 (M2)'
+  };
+
+  /** Étudiants groupés par niveau : L1 → M2, autres niveaux saisis, puis « Niveau non renseigné ». */
+  get allLevelGroups(): { key: string; label: string; rows: PassageResult[] }[] {
+    const map = new Map<string, PassageResult[]>();
+    for (const r of this.filteredResults) {
+      const key = (r.studentLevel || '').trim().toUpperCase().replace(/\s+/g, ' ') || '__none__';
+      if (!map.has(key)) map.set(key, []);
+      map.get(key)!.push(r);
+    }
+    const rank = (k: string) => k === '__none__' ? 999 : (this.lmdLevels.indexOf(k) >= 0 ? this.lmdLevels.indexOf(k) : 100);
+    return [...map.entries()]
+      .sort(([a], [b]) => rank(a) - rank(b) || a.localeCompare(b, 'fr'))
+      .map(([key, rows]) => ({
+        key,
+        label: key === '__none__' ? 'Niveau non renseigné' : (this.lmdLabels[key] || key),
+        rows: [...rows].sort((x, y) => ((x.lastName || this.lastNameOf(x)) + ' ' + (x.firstName || ''))
+          .localeCompare((y.lastName || this.lastNameOf(y)) + ' ' + (y.firstName || ''), 'fr'))
+      }));
+  }
+
+  get visibleLevelGroups() {
+    return this.allLevelGroups.filter(g => !this.levelFilter || g.key === this.levelFilter);
+  }
+
+  submittedIn(rows: PassageResult[]): number {
+    return rows.filter(r => r.status === 'SOUMIS').length;
+  }
+
+  /** Moyenne sur 20 des copies rendues d'un groupe. */
+  averageOf(rows: PassageResult[]): string {
+    const graded = rows.filter(r => r.status === 'SOUMIS' && r.score != null && r.maxScore);
+    if (!graded.length) return '—';
+    const avg = graded.reduce((sum, r) => sum + (r.score! / r.maxScore!) * 20, 0) / graded.length;
+    return avg.toFixed(1).replace('.', ',') + ' / 20';
   }
 
   get submittedCount(): number {

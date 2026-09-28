@@ -47,6 +47,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/virtual-class/virtual-class.component').then(m => m.VirtualClassComponent)
   },
   {
+    path: 'virtual-class/:id/attendance',
+    canActivate: [authGuard, teacherGuard],
+    loadComponent: () => import('./features/virtual-class/virtual-class-attendance.component').then(m => m.VirtualClassAttendanceComponent)
+  },
+  {
     path: 'virtual-class/:id/room',
     canActivate: [authGuard],
     loadComponent: () => import('./features/virtual-class/virtual-class-room.component').then(m => m.VirtualClassRoomComponent)

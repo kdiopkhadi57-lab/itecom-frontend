@@ -172,6 +172,11 @@ interface VirtualClass {
                   <i class="bi bi-archive me-2"></i>Session terminée (sans enregistrement)
                 </button>
               </div>
+              <a *ngIf="canSeeAttendance(vc) && (vc.status !== 'SCHEDULED' || isOverdue(vc))"
+                 [routerLink]="['/virtual-class', vc.id, 'attendance']"
+                 class="btn btn-outline-primary w-100 mt-2">
+                <i class="bi bi-person-check me-2"></i>Présences et rapport
+              </a>
             </div>
           </div>
         </div>
@@ -332,6 +337,13 @@ export class VirtualClassComponent implements OnInit {
     if (vc.status !== 'SCHEDULED') return false;
     const end = new Date(vc.scheduledAt).getTime() + (vc.durationMinutes || 0) * 60000;
     return end < Date.now();
+  }
+
+  /** Rapport de présence : professeur de la séance ou administrateur. */
+  canSeeAttendance(vc: VirtualClass): boolean {
+    if (this.authService.isAdmin) return true;
+    const currentUserId = this.authService.currentUser?.id;
+    return !!(this.authService.isTeacher && currentUserId && vc.teacherId === currentUserId);
   }
 
   canDelete(vc: VirtualClass): boolean {

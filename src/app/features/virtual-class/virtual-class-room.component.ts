@@ -1,7 +1,8 @@
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
+import { SILENT_ERRORS } from '../../core/interceptors/error.interceptor';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 
@@ -140,6 +141,11 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
 
   private joinTimeoutHandle: any;
 
+  // Présence : une connexion enregistrée côté serveur, confirmée toutes les 30 s
+  private attendanceId: number | null = null;
+  private attendanceHeartbeat: ReturnType<typeof setInterval> | null = null;
+  private static readonly HEARTBEAT_MS = 30000;
+
   private jitsiApi: any;
   private mediaRecorder: MediaRecorder | null = null;
   private recordedChunks: Blob[] = [];
@@ -178,6 +184,7 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
    */
   @HostListener('window:beforeunload', ['$event'])
   beforeUnload(event: BeforeUnloadEvent) {
+    this.leaveAttendance(true);
     if (this.recording || this.uploading) {
       event.preventDefault();
       event.returnValue = '';
@@ -190,7 +197,41 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
     }
     this.displayStream?.getTracks().forEach(t => t.stop());
     clearTimeout(this.joinTimeoutHandle);
+    this.leaveAttendance();
     this.jitsiApi?.dispose();
+  }
+
+  // --- Présence ---
+
+  private joinAttendance() {
+    if (!this.vc || this.attendanceId) return;
+    const classId = this.vc.id;
+    this.http.post<{ attendanceId: number }>(`/api/virtual-classes/${classId}/attendance/join`, {},
+      { context: new HttpContext().set(SILENT_ERRORS, true) }).subscribe({
+      next: r => {
+        this.attendanceId = r.attendanceId;
+        this.attendanceHeartbeat = setInterval(() => {
+          if (!this.attendanceId) return;
+          this.http.post(`/api/virtual-classes/${classId}/attendance/${this.attendanceId}/heartbeat`, {},
+            { context: new HttpContext().set(SILENT_ERRORS, true) }).subscribe({ error: () => {} });
+        }, VirtualClassRoomComponent.HEARTBEAT_MS);
+      },
+      error: () => this.log('Présence non enregistrée (erreur serveur)')
+    });
+  }
+
+  /** @param unloading page en cours de fermeture : envoi en keepalive pour que la requête aboutisse. */
+  private leaveAttendance(unloading = false) {
+    if (this.attendanceHeartbeat) { clearInterval(this.attendanceHeartbeat); this.attendanceHeartbeat = null; }
+    if (!this.vc || !this.attendanceId) return;
+    const url = `/api/virtual-classes/${this.vc.id}/attendance/${this.attendanceId}/leave`;
+    this.attendanceId = null;
+    if (unloading) {
+      const token = this.authService.getToken();
+      fetch(url, { method: 'POST', keepalive: true, headers: token ? { Authorization: `Bearer ${token}` } : {} }).catch(() => {});
+    } else {
+      this.http.post(url, {}, { context: new HttpContext().set(SILENT_ERRORS, true) }).subscribe({ error: () => {} });
+    }
   }
 
   reloadConference() {
@@ -268,6 +309,7 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
         this.showReload = false;
         clearTimeout(this.joinTimeoutHandle);
         this.log('videoConferenceJoined : ' + (event?.displayName || '') + ' (id=' + event?.id + ')');
+        this.joinAttendance();
         // Récupère les participants déjà présents dans le salon au moment
         // où le professeur ouvre la page (ex: étudiants connectés avant lui).
         const existing = this.jitsiApi.getParticipantsInfo?.() || [];
@@ -279,6 +321,7 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
 
       this.jitsiApi.addListener('videoConferenceLeft', () => {
         this.log('videoConferenceLeft');
+        this.leaveAttendance();
       });
 
       this.jitsiApi.addListener('participantRoleChanged', (event: any) => {

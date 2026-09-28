@@ -16,6 +16,7 @@ const PAGE_TITLES: [string, PageTitle][] = [
   ['/my-exams', { title: 'Examens', subtitle: 'Mes examens en ligne' }],
   ['/qcm', { title: 'Devoirs', subtitle: 'Mes devoirs' }],
   ['/virtual-class', { title: 'Classes virtuelles', subtitle: 'Sessions en direct' }],
+  ['/virtual-class/*/attendance', { title: 'Rapport de présence', subtitle: 'Classes virtuelles' }],
   ['/profile', { title: 'Mon profil', subtitle: 'Informations personnelles' }],
   ['/teacher/courses', { title: 'Mes cours', subtitle: 'Espace professeur' }],
   ['/teacher/courses/*/progress', { title: 'Suivi des étudiants', subtitle: 'Mes cours' }],

@@ -26,21 +26,21 @@ import { EditCourseComponent } from '../edit-course/edit-course.component';
       <!-- Stats -->
       <div class="row g-3 mb-4">
         <div class="col-sm-4">
-          <div class="card border-0 bg-primary text-white p-4 text-center" style="border-radius:16px">
-            <div class="fw-bold fs-2">{{ courses.length }}</div>
-            <div class="opacity-75 small">Cours créés</div>
+          <div class="kpi-card">
+            <div class="kpi-card-label">Cours créés</div>
+            <div class="kpi-card-value">{{ courses.length }}</div>
           </div>
         </div>
         <div class="col-sm-4">
-          <div class="card border-0 bg-success text-white p-4 text-center" style="border-radius:16px">
-            <div class="fw-bold fs-2">{{ publishedCount }}</div>
-            <div class="opacity-75 small">Cours publiés</div>
+          <div class="kpi-card">
+            <div class="kpi-card-label">Cours publiés</div>
+            <div class="kpi-card-value">{{ publishedCount }}</div>
           </div>
         </div>
         <div class="col-sm-4">
-          <div class="card border-0 bg-warning text-white p-4 text-center" style="border-radius:16px">
-            <div class="fw-bold fs-2">{{ draftCount }}</div>
-            <div class="opacity-75 small">Brouillons</div>
+          <div class="kpi-card">
+            <div class="kpi-card-label">Brouillons</div>
+            <div class="kpi-card-value">{{ draftCount }}</div>
           </div>
         </div>
       </div>
@@ -58,19 +58,17 @@ import { EditCourseComponent } from '../edit-course/edit-course.component';
 
       <div class="row g-4" *ngIf="!loading">
         <div class="col-md-6" *ngFor="let course of courses">
-          <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden">
-            <div class="p-3 d-flex align-items-center gap-3"
-                 [style.background]="getCategoryGradient(course.category)">
-              <div style="font-size:2.5rem"><i class="bi" [ngClass]="getCategoryIcon(course.category)"></i></div>
-              <div class="flex-grow-1">
-                <div class="fw-bold text-white">{{ course.title }}</div>
-                <div class="d-flex gap-2 mt-1">
-                  <span class="badge bg-white text-dark rounded-pill" style="font-size:.7rem">
-                    {{ getCategoryLabel(course.category) }}
-                  </span>
-                  <span class="badge rounded-pill" style="font-size:.7rem"
-                        [class.bg-success]="course.published"
-                        [class.bg-warning]="!course.published">
+          <div class="card h-100" style="border-radius:16px;overflow:hidden;border:1px solid var(--surface-border)">
+            <div class="p-3 d-flex align-items-center gap-3" style="background:var(--surface-muted);border-bottom:1px solid var(--surface-border)">
+              <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                   style="width:52px;height:52px;border-radius:12px;background:var(--navy);color:#fff;font-size:1.5rem">
+                <i class="bi" [ngClass]="getCategoryIcon(course.category)"></i>
+              </div>
+              <div class="flex-grow-1 min-w-0">
+                <div class="fw-bold" style="color:#1f2a5c">{{ course.title }}</div>
+                <div class="d-flex gap-2 mt-1 flex-wrap">
+                  <span class="status-badge status-draft">{{ getCategoryLabel(course.category) }}</span>
+                  <span class="status-badge" [class.status-published]="course.published" [class.status-draft]="!course.published">
                     {{ course.published ? 'Publié' : 'Brouillon' }}
                   </span>
                 </div>
@@ -96,9 +94,8 @@ import { EditCourseComponent } from '../edit-course/edit-course.component';
                    class="btn btn-outline-secondary btn-sm">
                   <i class="bi bi-eye"></i>
                 </a>
-                <button class="btn btn-sm"
-                        [class.btn-outline-warning]="course.published"
-                        [class.btn-outline-success]="!course.published"
+                <button class="btn btn-sm btn-outline-secondary"
+                        [title]="course.published ? 'Dépublier' : 'Publier'"
                         (click)="togglePublish(course)">
                   <i class="bi" [class.bi-eye-slash]="course.published" [class.bi-eye]="!course.published"></i>
                 </button>
@@ -146,10 +143,6 @@ export class TeacherCoursesComponent implements OnInit {
 
   getCategoryIcon(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.icon || 'bi-journal-bookmark'; }
   getCategoryLabel(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.label || cat; }
-  getCategoryGradient(cat: string) {
-    let color = COURSE_CATEGORIES.find(c => c.key === cat)?.color || '#2b3ea8';
-    return `linear-gradient(135deg, ${color}, ${color}bb)`;
-  }
   getLevelLabel(lvl: string) { return courseLevelLabel(lvl); }
   formatDuration(min: number) { return min < 60 ? `${min}min` : `${Math.floor(min/60)}h${min%60 > 0 ? (min%60)+'min' : ''}`; }
 }

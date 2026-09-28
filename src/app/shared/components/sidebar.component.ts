@@ -1,11 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { RouterLink, RouterLinkActive, Router } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { UserScopeService } from '../../core/services/user-scope.service';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { DialogService } from '../../core/services/dialog.service';
-import { CreateCourseComponent } from '../../features/admin/create-course/create-course.component';
 import { LayoutService } from '../../core/services/layout.service';
 
 @Component({
@@ -51,7 +49,7 @@ import { LayoutService } from '../../core/services/layout.service';
             <li class="sidebar-heading"><span>Espace professeur</span></li>
             <li><a class="nav-link" routerLink="/teacher/courses" routerLinkActive="active" title="Mes cours">
               <i class="bi bi-collection"></i><span>Mes cours</span></a></li>
-            <li><a class="nav-link" href="#" (click)="$event.preventDefault(); openCourseCreator()" title="Créer un cours">
+            <li><a class="nav-link" routerLink="/teacher/create-course" routerLinkActive="active" title="Créer un cours">
               <i class="bi bi-plus-circle"></i><span>Créer un cours</span></a></li>
             <li><a class="nav-link" routerLink="/teacher/exams" routerLinkActive="active" title="Devoirs et examens">
               <i class="bi bi-journal-check"></i><span>Devoirs et examens</span></a></li>
@@ -93,17 +91,7 @@ export class SidebarComponent implements OnInit {
   pendingCount = 0;
 
   constructor(public authService: AuthService, public userScope: UserScopeService, private http: HttpClient,
-              private dialogs: DialogService, private router: Router,
               public layout: LayoutService) {}
-
-  /** Création d'un cours dans une popup, puis affichage de « Mes cours ». */
-  openCourseCreator() {
-    this.dialogs.open(CreateCourseComponent, { title: 'Créer un cours', icon: 'bi-plus-circle', size: 'xl' })
-      .afterClosed.then(saved => {
-        if (!saved) return;
-        this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigateByUrl('/teacher/courses'));
-      });
-  }
 
   ngOnInit() {
     if (this.authService.isAdmin) {

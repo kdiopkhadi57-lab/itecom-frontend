@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
-import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
+import { Course, COURSE_CATEGORIES, courseLevelLabel } from '../../../core/models/course.model';
 import { DialogService } from '../../../core/services/dialog.service';
 import { CreateCourseComponent } from '../create-course/create-course.component';
 import { EditCourseComponent } from '../edit-course/edit-course.component';
@@ -150,6 +150,6 @@ export class TeacherCoursesComponent implements OnInit {
     let color = COURSE_CATEGORIES.find(c => c.key === cat)?.color || '#1d6ff2';
     return `linear-gradient(135deg, ${color}, ${color}bb)`;
   }
-  getLevelLabel(lvl: string) { return { BEGINNER: 'Débutant', INTERMEDIATE: 'Intermédiaire', ADVANCED: 'Avancé' }[lvl] || lvl; }
+  getLevelLabel(lvl: string) { return courseLevelLabel(lvl); }
   formatDuration(min: number) { return min < 60 ? `${min}min` : `${Math.floor(min/60)}h${min%60 > 0 ? (min%60)+'min' : ''}`; }
 }

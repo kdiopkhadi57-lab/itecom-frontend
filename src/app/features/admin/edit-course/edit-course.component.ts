@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angula
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { UploadService } from '../../../core/services/upload.service';
-import { COURSE_CATEGORIES } from '../../../core/models/course.model';
+import { COURSE_CATEGORIES, COURSE_LEVELS } from '../../../core/models/course.model';
 import { Course, Lesson } from '../../../core/models/course.model';
 import { DialogService, DialogRef, DIALOG_DATA } from '../../../core/services/dialog.service';
 
@@ -49,9 +49,7 @@ const CODE_FILE_EXTENSIONS: Record<string, string> = {
                 <div class="col-6">
                   <label class="form-label fw-semibold">Niveau</label>
                   <select class="form-select" formControlName="level">
-                    <option value="BEGINNER">Débutant</option>
-                    <option value="INTERMEDIATE">Intermédiaire</option>
-                    <option value="ADVANCED">Avancé</option>
+                    <option *ngFor="let l of courseLevels" [value]="l.key">{{ l.label }}</option>
                   </select>
                 </div>
               </div>
@@ -254,6 +252,7 @@ const CODE_FILE_EXTENSIONS: Record<string, string> = {
   `
 })
 export class EditCourseComponent implements OnInit {
+  readonly courseLevels = COURSE_LEVELS;
   categories = COURSE_CATEGORIES;
   courseForm!: FormGroup;
   loading = true;

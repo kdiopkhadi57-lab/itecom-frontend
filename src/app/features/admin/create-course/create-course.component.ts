@@ -4,7 +4,7 @@ import { FormBuilder, FormGroup, FormArray, Validators, ReactiveFormsModule } fr
 import { Router, RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { UploadService, UploadedFile } from '../../../core/services/upload.service';
-import { COURSE_CATEGORIES } from '../../../core/models/course.model';
+import { COURSE_CATEGORIES, COURSE_LEVELS } from '../../../core/models/course.model';
 import { DialogService, DialogRef, DIALOG_DATA } from '../../../core/services/dialog.service';
 
 interface PendingUpload {
@@ -80,9 +80,7 @@ interface PendingUpload {
                 <div class="col-md-6">
                   <label class="form-label fw-semibold">Niveau *</label>
                   <select class="form-select" formControlName="level">
-                    <option value="BEGINNER">Débutant</option>
-                    <option value="INTERMEDIATE">Intermédiaire</option>
-                    <option value="ADVANCED">Avancé</option>
+                    <option *ngFor="let l of courseLevels" [value]="l.key">{{ l.label }}</option>
                   </select>
                 </div>
               </div>
@@ -228,6 +226,7 @@ interface PendingUpload {
   `
 })
 export class CreateCourseComponent {
+  readonly courseLevels = COURSE_LEVELS;
   categories = COURSE_CATEGORIES;
   loading = false;
   error = '';
@@ -258,7 +257,7 @@ export class CreateCourseComponent {
       title: ['', Validators.required],
       description: ['', Validators.required],
       category: ['', Validators.required],
-      level: ['BEGINNER', Validators.required],
+      level: ['L1', Validators.required],
       published: [false],
       lessons: this.fb.array([])
     });

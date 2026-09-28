@@ -4,7 +4,7 @@ import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
 import { ProgressService } from '../../../core/services/progress.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
+import { Course, COURSE_CATEGORIES, courseLevelLabel } from '../../../core/models/course.model';
 
 @Component({
   selector: 'app-course-detail',
@@ -201,8 +201,8 @@ export class CourseDetailComponent implements OnInit {
     let color = COURSE_CATEGORIES.find(c => c.key === cat)?.color || '#1d6ff2';
     return `linear-gradient(135deg, ${color}, ${color}cc)`;
   }
-  getLevelLabel(lvl: string) { return { BEGINNER: 'Débutant', INTERMEDIATE: 'Intermédiaire', ADVANCED: 'Avancé' }[lvl] || lvl; }
-  getLevelColor(lvl: string) { return { BEGINNER: '#10b981', INTERMEDIATE: '#f59e0b', ADVANCED: '#ef4444' }[lvl] || '#1d6ff2'; }
+  getLevelLabel(lvl: string) { return courseLevelLabel(lvl); }
+  getLevelColor(_lvl: string) { return 'var(--dark)'; }
   getLessonTypeLabel(t: string) { return { VIDEO: 'Vidéo', PDF: 'Document PDF', CODE_EXERCISE: 'Exercice de code', EXCEL_EXERCISE: 'Exercice Excel', QUIZ: 'Quiz' }[t] || t; }
   formatDuration(min: number) { if (!min) return '—'; return min < 60 ? `${min}min` : `${Math.floor(min/60)}h${min%60 > 0 ? (min%60)+'min' : ''}`; }
 }

@@ -162,7 +162,7 @@ body {
   font-weight: 600;
 }
 
-.badge-level.BEGINNER, .badge-level.INTERMEDIATE, .badge-level.ADVANCED { background: var(--gray-100); color: var(--dark); border: 1px solid var(--border); }
+.badge-level { background: var(--gray-100); color: var(--dark); border: 1px solid var(--border); }
 
 /* ===== PROGRESS BAR ===== */
 .progress-custom {

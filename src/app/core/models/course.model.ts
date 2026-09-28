@@ -1,10 +1,28 @@
+/** Niveaux du système LMD (Licence / Master). */
+export type CourseLevel = 'L1' | 'L2' | 'L3' | 'M1' | 'M2';
+
+export const COURSE_LEVELS: { key: CourseLevel; label: string }[] = [
+  { key: 'L1', label: 'Licence 1 (L1)' },
+  { key: 'L2', label: 'Licence 2 (L2)' },
+  { key: 'L3', label: 'Licence 3 (L3)' },
+  { key: 'M1', label: 'Master 1 (M1)' },
+  { key: 'M2', label: 'Master 2 (M2)' }
+];
+
+/** Libellé d'un niveau ; les anciens niveaux (Débutant, Intermédiaire, Avancé) correspondent à L1, L2, L3. */
+export function courseLevelLabel(level: string | null | undefined): string {
+  const legacy: Record<string, string> = { BEGINNER: 'L1', INTERMEDIATE: 'L2', ADVANCED: 'L3' };
+  const key = legacy[level || ''] || level || '';
+  return COURSE_LEVELS.find(l => l.key === key)?.label || key;
+}
+
 export interface Course {
   id: number;
   title: string;
   description: string;
   thumbnailUrl?: string;
   category: string;
-  level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  level: CourseLevel;
   published: boolean;
   teacher: any;
   lessons?: Lesson[];

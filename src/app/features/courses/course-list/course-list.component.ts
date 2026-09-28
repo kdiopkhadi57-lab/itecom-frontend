@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CourseService } from '../../../core/services/course.service';
-import { Course, COURSE_CATEGORIES } from '../../../core/models/course.model';
+import { Course, COURSE_CATEGORIES, COURSE_LEVELS, courseLevelLabel } from '../../../core/models/course.model';
 import { UserScopeService } from '../../../core/services/user-scope.service';
 
 @Component({
@@ -141,11 +141,7 @@ export class CourseListComponent implements OnInit {
 
   categories = COURSE_CATEGORIES;
   userCategoryKeys: string[] | null = null;
-  levels = [
-    { key: 'BEGINNER', label: 'Débutant' },
-    { key: 'INTERMEDIATE', label: 'Intermédiaire' },
-    { key: 'ADVANCED', label: 'Avancé' }
-  ];
+  levels = COURSE_LEVELS;
 
   get visibleCategories() {
     if (this.userCategoryKeys && this.userCategoryKeys.length > 0)
@@ -218,8 +214,7 @@ export class CourseListComponent implements OnInit {
   }
 
   getLevelLabel(level: string): string {
-    let map: Record<string, string> = { BEGINNER: 'Débutant', INTERMEDIATE: 'Intermédiaire', ADVANCED: 'Avancé' };
-    return map[level] || level;
+    return courseLevelLabel(level);
   }
 
   formatDuration(min: number): string {

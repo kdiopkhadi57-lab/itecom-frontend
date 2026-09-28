@@ -46,7 +46,7 @@ interface QcmSummary {
       <div class="row g-3" *ngIf="!loading && qcms.length > 0">
         <div class="col-12 col-md-6 col-xl-4" *ngFor="let qcm of qcms">
           <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden">
-            <div style="height:5px" [style.background]="qcm.status === 'PUBLISHED' ? '#10b981' : '#1d6ff2'"></div>
+            <div style="height:5px" [style.background]="qcm.status === 'PUBLISHED' ? '#10b981' : '#2b3ea8'"></div>
             <div class="card-body p-4 d-flex flex-column">
               <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                 <h5 class="fw-bold mb-0">{{ qcm.title }}</h5>

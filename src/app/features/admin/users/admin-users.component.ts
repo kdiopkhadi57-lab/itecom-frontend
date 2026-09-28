@@ -171,7 +171,7 @@ const NO_SUBJECT = '__none__';
     </div>
   `,
   styles: [`
-    .chip { border: 1px solid var(--border); background: #fff; color: var(--dark); border-radius: 999px; padding: 4px 12px; font-size: .85rem; font-weight: 500; }
+    .chip { border: 1px solid var(--border); background: var(--surface); color: var(--dark); border-radius: 999px; padding: 4px 12px; font-size: .85rem; font-weight: 500; }
     .chip:hover { border-color: var(--dark); }
     .chip.active { background: var(--dark); border-color: var(--dark); color: #fff; }
     .chip-count { opacity: .65; margin-left: 2px; }
@@ -182,7 +182,7 @@ const NO_SUBJECT = '__none__';
     }
     .group-title { font-weight: 700; font-size: 1rem; color: var(--dark); }
     .group-count { margin-left: auto; color: var(--muted); font-size: .85rem; }
-    .members-table thead th { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: #fff; white-space: nowrap; }
+    .members-table thead th { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: var(--surface); white-space: nowrap; }
     .members-table { table-layout: fixed; min-width: 860px; }
     .members-table td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .members-table.teachers td:nth-child(3) { white-space: normal; }

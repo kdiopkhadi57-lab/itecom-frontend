@@ -57,7 +57,7 @@ interface PendingStudent {
             <div class="d-flex align-items-stretch">
 
               <!-- Bande couleur gauche -->
-              <div style="width:6px;background:#1d6ff2;flex-shrink:0"></div>
+              <div style="width:6px;background:#2b3ea8;flex-shrink:0"></div>
 
               <div class="card-body p-4">
                 <div class="row align-items-center g-3">
@@ -65,13 +65,13 @@ interface PendingStudent {
                   <!-- Infos étudiant -->
                   <div class="col-md-4">
                     <div class="d-flex align-items-center gap-3">
-                      <div style="width:48px;height:48px;border-radius:50%;background:#1d6ff2;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.1rem;flex-shrink:0">
+                      <div style="width:48px;height:48px;border-radius:50%;background:#2b3ea8;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.1rem;flex-shrink:0">
                         {{ s.firstName.charAt(0) }}{{ s.lastName.charAt(0) }}
                       </div>
                       <div>
                         <div class="fw-bold">{{ s.firstName }} {{ s.lastName }}</div>
                         <div class="text-muted small">{{ s.email }}</div>
-                        <span class="badge" style="background:#eef4ff;color:#1658c4;font-size:.75rem">
+                        <span class="badge" style="background:#eef0fb;color:#1f2d7a;font-size:.75rem">
                           {{ getSpecialization(s.specialization) }}
                         </span>
                       </div>

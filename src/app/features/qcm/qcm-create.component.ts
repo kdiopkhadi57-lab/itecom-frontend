@@ -51,7 +51,7 @@ interface StudentEntry {
         <div class="card-body p-4">
           <div class="d-flex align-items-center gap-3 mb-3">
             <div class="rounded-circle d-flex align-items-center justify-content-center"
-                 style="width:44px;height:44px;background:#eef4ff;color:#1d6ff2;font-size:1.3rem;flex-shrink:0">
+                 style="width:44px;height:44px;background:#eef0fb;color:#2b3ea8;font-size:1.3rem;flex-shrink:0">
               <i class="bi bi-file-earmark-text"></i>
             </div>
             <div>
@@ -76,7 +76,7 @@ interface StudentEntry {
           <!-- Format attendu -->
           <div *ngIf="!wordError && !wordPreview" class="p-3 rounded-3" style="background:#f8faff;font-size:.82rem">
             <p class="fw-semibold mb-2 text-muted">Format attendu dans le fichier Word :</p>
-            <code style="display:block;white-space:pre;color:#1658c4;font-size:.78rem">Titre: Examen Java Chapitre 3
+            <code style="display:block;white-space:pre;color:#1f2d7a;font-size:.78rem">Titre: Examen Java Chapitre 3
 Description: Durée 30 minutes
 Question 1: Qu'est-ce qu'un objet en Java ?
 A) Un type primitif
@@ -106,7 +106,7 @@ Bonne réponse: C</code>
                   <i class="bi bi-x me-1"></i>Annuler
                 </button>
                 <button class="btn btn-sm fw-semibold" (click)="applyWordPreview()"
-                        style="background:#1d6ff2;color:white;border-radius:8px">
+                        style="background:#2b3ea8;color:white;border-radius:8px">
                   <i class="bi bi-check2 me-1"></i>Utiliser ces questions
                 </button>
               </div>
@@ -114,11 +114,11 @@ Bonne réponse: C</code>
 
             <!-- Questions preview -->
             <div *ngFor="let q of wordPreview.questions; let qi = index"
-                 class="p-3 rounded-3 mb-2" style="background:#f8faff;border:1px solid #eef4ff">
+                 class="p-3 rounded-3 mb-2" style="background:#f8faff;border:1px solid #eef0fb">
               <div class="d-flex gap-2 mb-2">
-                <span class="fw-bold" style="color:#1d6ff2;min-width:24px">Q{{ qi + 1 }}</span>
+                <span class="fw-bold" style="color:#2b3ea8;min-width:24px">Q{{ qi + 1 }}</span>
                 <span class="fw-semibold">{{ q.questionText || '(sans texte)' }}</span>
-                <span class="badge rounded-pill ms-auto" style="background:#eef4ff;color:#1658c4">{{ q.points }} pt</span>
+                <span class="badge rounded-pill ms-auto" style="background:#eef0fb;color:#1f2d7a">{{ q.points }} pt</span>
               </div>
               <div *ngFor="let c of q.choices; let ci = index"
                    class="d-flex align-items-center gap-2 mb-1" style="padding-left:24px;font-size:.88rem">
@@ -190,11 +190,11 @@ Bonne réponse: C</code>
       <!-- ═══ Questions ════════════════════════════════════════════════════ -->
       <div *ngFor="let q of questions; let qi = index"
            class="card border-0 shadow-sm mb-3" style="border-radius:16px;overflow:hidden">
-        <div style="height:4px;background:#1d6ff2"></div>
+        <div style="height:4px;background:#2b3ea8"></div>
         <div class="card-body p-4">
           <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
             <div class="d-flex align-items-center gap-2 flex-grow-1">
-              <span class="fw-bold" style="color:#1d6ff2;font-size:1.1rem;min-width:28px">Q{{ qi + 1 }}</span>
+              <span class="fw-bold" style="color:#2b3ea8;font-size:1.1rem;min-width:28px">Q{{ qi + 1 }}</span>
               <input type="text" class="form-control fw-semibold"
                      [(ngModel)]="q.questionText" placeholder="Énoncé de la question...">
             </div>
@@ -349,7 +349,7 @@ Bonne réponse: C</code>
         <div class="card-body p-4">
           <div class="d-flex align-items-center gap-3 flex-wrap">
             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:44px;height:44px;background:#eef4ff;color:#1d6ff2;font-size:1.3rem"><i class="bi bi-people"></i></div>
+                 style="width:44px;height:44px;background:#eef0fb;color:#2b3ea8;font-size:1.3rem"><i class="bi bi-people"></i></div>
             <div class="flex-grow-1">
               <h6 class="fw-bold mb-0">Étudiants concernés <span class="badge rounded-pill bg-secondary ms-1" style="font-size:.7rem">Optionnel</span></h6>
               <p class="text-muted mb-0 small">
@@ -456,7 +456,7 @@ Bonne réponse: C</code>
             <button type="button" class="btn btn-outline-secondary" (click)="finish(false)">Annuler</button>
                 <button class="btn fw-semibold px-4" (click)="save()"
                   [disabled]="loading || !canSave"
-                    style="background:#1d6ff2;color:white;border-radius:10px">
+                    style="background:#2b3ea8;color:white;border-radius:10px">
               <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
               {{ loading ? 'Enregistrement...' : (isEdit ? 'Enregistrer' : 'Créer le devoir') }}
             </button>

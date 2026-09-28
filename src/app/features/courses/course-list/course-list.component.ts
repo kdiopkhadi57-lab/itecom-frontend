@@ -14,7 +14,7 @@ import { UserScopeService } from '../../../core/services/user-scope.service';
     <div class="fade-in-up">
       <!-- Header -->
       <div class="text-center py-5 mb-4 rounded-4"
-           style="background: #1d6ff2;">
+           style="background: #2b3ea8;">
         <h1 class="fw-bold text-white mb-2"><i class="bi bi-mortarboard me-1"></i>Nos Cours</h1>
         <p class="text-white opacity-75 mb-4">Maîtrisez les technologies les plus demandées</p>
         <div class="d-flex justify-content-center">
@@ -209,7 +209,7 @@ export class CourseListComponent implements OnInit {
   }
 
   getCategoryColor(cat: string): string {
-    let color = COURSE_CATEGORIES.find(c => c.key === cat)?.color || '#1d6ff2';
+    let color = COURSE_CATEGORIES.find(c => c.key === cat)?.color || '#2b3ea8';
     return `linear-gradient(135deg, ${color}22, ${color}44)`;
   }
 

@@ -140,7 +140,7 @@ interface StudentPreview { name: string; email: string; }
         <div class="card-body p-4">
           <div class="d-flex align-items-center gap-3 mb-3">
             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:44px;height:44px;background:#eef4ff;color:#1d6ff2;font-size:1.3rem">
+                 style="width:44px;height:44px;background:#eef0fb;color:#2b3ea8;font-size:1.3rem">
               <i class="bi bi-people"></i>
             </div>
             <div class="flex-grow-1">

@@ -256,7 +256,7 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
     </div>
   `,
   styles: [`
-    .chip { border: 1px solid var(--border); background: #fff; color: var(--dark); border-radius: 999px; padding: 4px 12px; font-size: .85rem; font-weight: 500; }
+    .chip { border: 1px solid var(--border); background: var(--surface); color: var(--dark); border-radius: 999px; padding: 4px 12px; font-size: .85rem; font-weight: 500; }
     .chip:hover { border-color: var(--dark); }
     .chip.active { background: var(--dark); border-color: var(--dark); color: #fff; }
     .chip-count { opacity: .65; margin-left: 2px; }
@@ -267,7 +267,7 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
     .group-meta { margin-left: auto; color: var(--muted); font-size: .85rem; }
     .results-table { table-layout: fixed; min-width: 900px; }
     .results-table td { overflow: hidden; text-overflow: ellipsis; }
-    .stat { background: #fff; border-radius: 14px; padding: 16px; border: 1px solid var(--border); text-align: center; }
+    .stat { background: var(--surface); border-radius: 14px; padding: 16px; border: 1px solid var(--border); text-align: center; }
     .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--dark); }
     .stat-label { font-size: .8rem; color: #64748b; }
     .results-table thead th { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; background: #f8fafc; white-space: nowrap; }
@@ -277,9 +277,9 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
     .status-badge.progress { background: #fef3c7; color: #92400e; }
     .status-badge.todo { background: #e5e7eb; color: #374151; }
     .action-btn { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; }
-    .action-btn:hover:not(:disabled) { background: #e0ebff; color: #1d6ff2; }
+    .action-btn:hover:not(:disabled) { background: #e0ebff; color: #2b3ea8; }
     .modal-backdrop-custom { position: fixed; inset: 0; background: rgba(15, 23, 42, .5); z-index: 1060; display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; overflow-y: auto; }
-    .modal-panel { background: #fff; border-radius: 18px; width: 100%; max-width: 480px; box-shadow: 0 30px 60px rgba(15, 23, 42, .3); animation: pop .18s ease-out; }
+    .modal-panel { background: var(--surface); border-radius: 18px; width: 100%; max-width: 480px; box-shadow: 0 30px 60px rgba(15, 23, 42, .3); animation: pop .18s ease-out; }
     .modal-lg-panel { max-width: 860px; }
     .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 24px; border-bottom: 1px solid #e5e7eb; }
     .modal-body-scroll { padding: 20px 24px; max-height: 75vh; overflow-y: auto; }

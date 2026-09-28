@@ -196,12 +196,12 @@ interface Template {
       outline: none;
       tab-size: 2;
     }
-    .code-editor:focus { border-color: #1d6ff2; box-shadow: 0 0 0 2px rgba(29,111,242,.15); }
+    .code-editor:focus { border-color: #2b3ea8; box-shadow: 0 0 0 2px rgba(43, 62, 168,.15); }
     .preview-container {
       flex: 1;
       border: 1px solid #d1d5db;
       border-radius: 8px;
-      background: #ffffff;
+      background: var(--surface);
       overflow: auto;
       padding: 16px;
       position: relative;

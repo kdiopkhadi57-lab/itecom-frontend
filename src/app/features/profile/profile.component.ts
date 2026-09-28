@@ -19,7 +19,7 @@ import { HttpClient } from '@angular/common/http';
           <div class="card border-0 shadow-sm text-center p-4" style="border-radius:20px">
             <div class="position-relative d-inline-block mx-auto mb-3">
               <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto"
-                   style="width:100px;height:100px;font-size:2.5rem;font-weight:800;background:#1d6ff2;color:white">
+                   style="width:100px;height:100px;font-size:2.5rem;font-weight:800;background:#2b3ea8;color:white">
                 {{ user?.firstName?.charAt(0) }}{{ user?.lastName?.charAt(0) }}
               </div>
             </div>
@@ -101,7 +101,8 @@ import { HttpClient } from '@angular/common/http';
               </div>
               <div class="mb-3">
                 <label class="form-label fw-semibold">Nouveau mot de passe</label>
-                <input type="password" class="form-control" formControlName="newPassword">
+                <input type="password" class="form-control" formControlName="newPassword" autocomplete="new-password">
+                <small class="text-muted">8 caractères minimum.</small>
               </div>
               <div class="mb-4">
                 <label class="form-label fw-semibold">Confirmer le nouveau mot de passe</label>
@@ -110,6 +111,7 @@ import { HttpClient } from '@angular/common/http';
               <div *ngIf="pwdSuccess" class="alert alert-success py-2"><i class="bi bi-check-circle me-1"></i>Mot de passe mis à jour !</div>
               <div *ngIf="pwdError" class="alert alert-danger py-2">{{ pwdError }}</div>
               <button type="submit" class="btn btn-outline-danger" [disabled]="changingPwd">
+                <span *ngIf="changingPwd" class="spinner-border spinner-border-sm me-1"></span>
                 Changer le mot de passe
               </button>
             </form>
@@ -183,13 +185,18 @@ export class ProfileComponent implements OnInit {
   }
 
   changePassword() {
-    if (this.passwordForm.invalid) return;
-    let { newPassword, confirmPassword } = this.passwordForm.value;
-    if (newPassword !== confirmPassword) { this.pwdError = 'Les mots de passe ne correspondent pas'; return; }
+    this.pwdError = '';
+    this.pwdSuccess = false;
+    let { currentPassword, newPassword, confirmPassword } = this.passwordForm.value;
+    // Le formulaire invalide n'envoyait rien et n'affichait aucun message
+    if (!currentPassword || !newPassword || !confirmPassword) { this.pwdError = 'Veuillez remplir les trois champs.'; return; }
+    if (newPassword.length < 8) { this.pwdError = 'Le nouveau mot de passe doit contenir au moins 8 caractères.'; return; }
+    if (newPassword !== confirmPassword) { this.pwdError = 'Les mots de passe ne correspondent pas.'; return; }
+    if (newPassword === currentPassword) { this.pwdError = 'Le nouveau mot de passe doit être différent de l\'actuel.'; return; }
     this.changingPwd = true;
-    this.http.put('/api/users/change-password', this.passwordForm.value).subscribe({
-      next: () => { this.pwdSuccess = true; this.changingPwd = false; this.passwordForm.reset(); setTimeout(() => this.pwdSuccess = false, 3000); },
-      error: (err) => { this.pwdError = err.error?.message || 'Erreur lors du changement'; this.changingPwd = false; }
+    this.http.put('/api/users/change-password', { currentPassword, newPassword }).subscribe({
+      next: () => { this.pwdSuccess = true; this.changingPwd = false; this.passwordForm.reset(); setTimeout(() => this.pwdSuccess = false, 4000); },
+      error: (err) => { this.pwdError = err.error?.message || 'Erreur lors du changement du mot de passe.'; this.changingPwd = false; }
     });
   }
 

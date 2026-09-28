@@ -25,7 +25,7 @@ import { CommonModule } from '@angular/common';
             </div>
             <div class="alert alert-danger" *ngIf="error">{{ error }}</div>
             <button type="submit" class="btn w-100 py-2" [disabled]="loading || form.invalid"
-              style="background: #1d6ff2; color:white; border-radius:10px;">
+              style="background: #2b3ea8; color:white; border-radius:10px;">
               <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
               Envoyer le lien
             </button>

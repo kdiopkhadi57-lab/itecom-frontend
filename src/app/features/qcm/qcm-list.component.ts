@@ -19,7 +19,7 @@ interface Qcm { id: number; title: string; description: string; status: string; 
           <p class="text-muted mb-0">Créez et gérez vos questionnaires à choix multiples</p>
         </div>
         <button type="button" (click)="openQcmEditor()" class="btn fw-semibold px-4"
-           style="background:#1d6ff2;color:white;border-radius:12px">
+           style="background:#2b3ea8;color:white;border-radius:12px">
           <i class="bi bi-plus-circle me-2"></i>Créer un devoir
         </button>
       </div>
@@ -39,13 +39,13 @@ interface Qcm { id: number; title: string; description: string; status: string; 
         <div class="col-12 col-md-6 col-xl-4" *ngFor="let q of qcms">
           <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden">
             <div style="height:5px"
-                 [style.background]="q.status === 'PUBLISHED' ? '#1d6ff2' : '#1d6ff2'">
+                 [style.background]="q.status === 'PUBLISHED' ? '#2b3ea8' : '#2b3ea8'">
             </div>
             <div class="card-body p-4">
               <div class="d-flex align-items-start justify-content-between mb-2">
                 <h6 class="fw-bold mb-0 flex-grow-1 me-2">{{ q.title }}</h6>
                 <span class="badge rounded-pill flex-shrink-0"
-                      [style.background]="q.status === 'PUBLISHED' ? '#d1fae5' : '#eef4ff'"
+                      [style.background]="q.status === 'PUBLISHED' ? '#d1fae5' : '#eef0fb'"
                       [style.color]="q.status === 'PUBLISHED' ? '#065f46' : '#3730a3'">
                   {{ q.status === 'PUBLISHED' ? 'Publié' : 'Brouillon' }}
                 </span>

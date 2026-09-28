@@ -110,7 +110,7 @@ interface ProjectFile {
                  [class.text-white]="selectedExercise?.id === ex.id"
                  [class.bg-light]="selectedExercise?.id !== ex.id"
                  (click)="selectExercise(ex)"
-                 style="border-radius:10px;cursor:pointer;transition:all 0.2s;border-left:3px solid #1d6ff2">
+                 style="border-radius:10px;cursor:pointer;transition:all 0.2s;border-left:3px solid #2b3ea8">
               <h6 class="fw-bold mb-1 small" style="word-break:break-word">{{ ex.title }}</h6>
               <p class="text-muted small mb-1" [class.text-white-50]="selectedExercise?.id === ex.id" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
                 {{ ex.description || '—' }}

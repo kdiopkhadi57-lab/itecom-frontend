@@ -30,7 +30,7 @@ interface QcmItem { id: number; title: string; description: string; professorNam
         <div class="col-12 col-md-6 col-xl-4" *ngFor="let q of qcms">
           <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden">
             <div style="height:5px"
-                 [style.background]="q.alreadyTaken ? '#1d6ff2' : '#1d6ff2'">
+                 [style.background]="q.alreadyTaken ? '#2b3ea8' : '#2b3ea8'">
             </div>
             <div class="card-body p-4 d-flex flex-column">
               <div class="d-flex align-items-start justify-content-between mb-2">
@@ -38,7 +38,7 @@ interface QcmItem { id: number; title: string; description: string; professorNam
                 <span *ngIf="q.alreadyTaken" class="badge rounded-pill flex-shrink-0"
                       style="background:#d1fae5;color:#065f46"><i class="bi bi-check-circle me-1"></i>Déjà passé</span>
                 <span *ngIf="!q.alreadyTaken" class="badge rounded-pill flex-shrink-0"
-                      style="background:#eef4ff;color:#5b21b6">Nouveau</span>
+                      style="background:#eef0fb;color:#5b21b6">Nouveau</span>
               </div>
               <p class="text-muted small mb-3 flex-grow-1">{{ q.description || 'Aucune description.' }}</p>
               <div class="d-flex gap-3 text-muted small mb-4">
@@ -47,7 +47,7 @@ interface QcmItem { id: number; title: string; description: string; professorNam
               </div>
               <a *ngIf="!q.alreadyTaken" [routerLink]="['/qcm', q.id, 'passer']"
                  class="btn w-100 fw-semibold"
-                 style="background:#1d6ff2;color:white;border-radius:10px">
+                 style="background:#2b3ea8;color:white;border-radius:10px">
                 <i class="bi bi-play-fill me-2"></i>Commencer
               </a>
               <a *ngIf="q.alreadyTaken" [routerLink]="['/qcm', q.id, 'passer']"

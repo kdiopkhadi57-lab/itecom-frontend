@@ -127,7 +127,7 @@ export class MyLearningComponent implements OnInit {
   getCategoryIcon(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.icon || 'bi-journal-bookmark'; }
   getCategoryLabel(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.label || cat; }
   getCategoryGradient(cat: string) {
-    let color = COURSE_CATEGORIES.find(c => c.key === cat)?.color || '#1d6ff2';
+    let color = COURSE_CATEGORIES.find(c => c.key === cat)?.color || '#2b3ea8';
     return `linear-gradient(135deg, ${color}22, ${color}55)`;
   }
 }

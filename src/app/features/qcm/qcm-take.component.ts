@@ -108,7 +108,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
           Vous avez <strong>{{ fullscreenRemainingTime }} secondes</strong> pour revenir en plein écran,
           sinon vos réponses seront automatiquement soumises.
         </p>
-        <button class="btn btn-lg" style="background:#1d6ff2;color:#fff;border-radius:12px" (click)="resumeFullscreen()">
+        <button class="btn btn-lg" style="background:#2b3ea8;color:#fff;border-radius:12px" (click)="resumeFullscreen()">
           <i class="bi bi-arrows-fullscreen me-1"></i>Revenir en plein écran
         </button>
       </div>
@@ -144,9 +144,9 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
           <h2 class="fw-bold mt-2">{{ resultat.mention }}</h2>
           <p class="text-muted">{{ resultat.qcmTitle }}</p>
           <div class="d-inline-flex align-items-center gap-4 p-4 rounded-4 mb-3"
-               style="background:linear-gradient(135deg,#f7f9fa,#eef4ff)">
+               style="background:linear-gradient(135deg,#f7f9fa,#eef0fb)">
             <div class="text-center">
-              <div class="fw-bold" style="font-size:2.5rem;color:#1d6ff2">{{ resultat.score }}</div>
+              <div class="fw-bold" style="font-size:2.5rem;color:#2b3ea8">{{ resultat.score }}</div>
               <div class="text-muted small">Points obtenus</div>
             </div>
             <div style="font-size:2rem;color:#9ca3af">/</div>
@@ -252,7 +252,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
             Le devoir démarre en plein écran. Le copier/coller et le clic droit sont désactivés pendant l'épreuve.
           </div>
           <div *ngIf="startError" class="alert alert-danger small">{{ startError }}</div>
-          <button class="btn btn-lg fw-semibold" style="background:#1d6ff2;color:#fff;border-radius:12px" (click)="startQcm()"
+          <button class="btn btn-lg fw-semibold" style="background:#2b3ea8;color:#fff;border-radius:12px" (click)="startQcm()"
                   [disabled]="starting">
             <span *ngIf="starting" class="spinner-border spinner-border-sm me-2"></span>
             ▶ Commencer le devoir
@@ -281,7 +281,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
 
           <!-- Barre de progression -->
           <div *ngIf="qcm.questions.length" class="progress mb-4" style="height:6px;border-radius:4px">
-            <div class="progress-bar" style="background:#1d6ff2"
+            <div class="progress-bar" style="background:#2b3ea8"
                  [style.width.%]="(answered / qcm.questions.length) * 100"></div>
           </div>
 
@@ -321,7 +321,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
             <div style="height:4px" [style.background]="answers[q.id] ? '#10b981' : '#e5e7eb'"></div>
             <div class="card-body p-4">
               <div class="d-flex gap-2 mb-3">
-                <span class="badge rounded-pill" style="background:#eef4ff;color:#1658c4">Q{{ qi + 1 }}</span>
+                <span class="badge rounded-pill" style="background:#eef0fb;color:#1f2d7a">Q{{ qi + 1 }}</span>
                 <span class="text-muted small" style="margin-top:2px">{{ q.points }} pt{{ q.points > 1 ? 's' : '' }}</span>
               </div>
               <p *ngIf="!isCaseQuestion(q)" class="fw-semibold mb-3">{{ q.questionText }}</p>
@@ -467,16 +467,16 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
               <ng-container *ngIf="q.questionType === 'QCM'">
               <div *ngFor="let c of q.choices; let ci = index"
                    class="d-flex align-items-center gap-3 p-3 mb-2 rounded-3"
-                   [style.background]="answers[q.id] === c.id ? '#eef4ff' : '#f9fafb'"
-                   [style.border]="answers[q.id] === c.id ? '2px solid #1d6ff2' : '2px solid transparent'"
+                   [style.background]="answers[q.id] === c.id ? '#eef0fb' : '#f9fafb'"
+                   [style.border]="answers[q.id] === c.id ? '2px solid #2b3ea8' : '2px solid transparent'"
                    (click)="select(q.id, c.id)"
                    style="cursor:pointer;transition:all .15s">
                 <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;flex-shrink:0"
-                     [style.background]="answers[q.id] === c.id ? '#1d6ff2' : '#e5e7eb'"
+                     [style.background]="answers[q.id] === c.id ? '#2b3ea8' : '#e5e7eb'"
                      [style.color]="answers[q.id] === c.id ? 'white' : '#6b7280'">
                   {{ labels[ci] }}
                 </div>
-                <span [style.color]="answers[q.id] === c.id ? '#1658c4' : '#374151'"
+                <span [style.color]="answers[q.id] === c.id ? '#1f2d7a' : '#374151'"
                       [style.font-weight]="answers[q.id] === c.id ? '600' : '400'">
                   {{ c.choiceText }}
                 </span>
@@ -513,7 +513,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
               <button class="btn fw-semibold px-5 py-2"
                       (click)="submit()"
                       [disabled]="submitting || paperCorrectionUploading || (requiresPaperCorrection && !paperCorrectionUrl)"
-                      style="background:#1d6ff2;color:white;border-radius:12px">
+                      style="background:#2b3ea8;color:white;border-radius:12px">
                 <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
                 {{ submitting ? 'Soumission...' : 'Soumettre mes réponses' }}
               </button>
@@ -536,24 +536,24 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
     .case-block { display: flex; flex-direction: column; gap: 14px; }
     .case-banner {
       display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px;
-      background: #1d6ff2; color: #fff;
+      background: #2b3ea8; color: #fff;
     }
     .case-banner > i { font-size: 1.5rem; }
     .case-section { padding: 16px 18px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
     .case-section-statement { background: #eef2ff; border-color: #c8dbfd; }
     .case-section-title {
       font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
-      color: #1658c4; margin-bottom: 10px;
+      color: #1f2d7a; margin-bottom: 10px;
     }
     .case-text { font-size: .98rem; line-height: 1.7; color: #1f2937; word-break: break-word; }
     .case-line { white-space: pre-wrap; min-height: 1.7em; }
     .case-heading { font-weight: 700; color: #312e81; }
-    .case-table { background: #fff; font-size: .9rem; white-space: normal; margin: 6px 0; }
+    .case-table { background: var(--surface); font-size: .9rem; white-space: normal; margin: 6px 0; }
     .case-table td { padding: 6px 10px; }
-    .case-answer { padding: 16px 18px; border-radius: 12px; background: #fff; border: 2px solid #10b981; }
+    .case-answer { padding: 16px 18px; border-radius: 12px; background: var(--surface); border: 2px solid #10b981; }
     .case-textarea { min-height: 280px; font-size: .98rem; line-height: 1.6; resize: vertical; border-radius: 10px; }
     .answer-cell { min-width: 190px; background: #f0f7ff; }
-    .case-grid { padding: 16px 18px; border-radius: 12px; background: #fff; border: 2px solid #1d6ff2; }
+    .case-grid { padding: 16px 18px; border-radius: 12px; background: var(--surface); border: 2px solid #2b3ea8; }
     .grid-table thead th { font-size: .75rem; text-transform: uppercase; color: #64748b; background: #f8fafc; }
     .case-paper { padding: 14px 16px; border-radius: 12px; background: #fff8e1; border: 1px solid #f5d06f; }
 
@@ -887,7 +887,7 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   }
 
   get pctColor() {
-    if (!this.resultat) return '#1d6ff2';
+    if (!this.resultat) return '#2b3ea8';
     const p = parseInt(this.resultat.percentage);
     return p >= 80 ? '#10b981' : p >= 60 ? '#3b82f6' : p >= 50 ? '#f59e0b' : '#ef4444';
   }

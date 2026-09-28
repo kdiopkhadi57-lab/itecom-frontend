@@ -102,7 +102,7 @@ interface StudentPreview { name: string; email: string; }
           <div class="card-body p-4">
             <div class="d-flex align-items-center gap-3">
               <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                   style="width:44px;height:44px;background:#eef4ff;color:#1d6ff2;font-size:1.3rem"><i class="bi bi-people"></i></div>
+                   style="width:44px;height:44px;background:#eef0fb;color:#2b3ea8;font-size:1.3rem"><i class="bi bi-people"></i></div>
               <div class="flex-grow-1">
                 <h6 class="fw-bold mb-0">Ajouter des étudiants</h6>
                 <p class="text-muted mb-0 small">Excel (.xlsx), PDF ou Word (.docx) — col. A = Nom, col. B = Email</p>
@@ -138,7 +138,7 @@ interface StudentPreview { name: string; email: string; }
                   <button class="btn btn-sm btn-outline-secondary" (click)="addStudentPreview=[]">Annuler</button>
                   <button class="btn btn-sm fw-semibold" (click)="confirmAddStudents()"
                           [disabled]="addStudentSaving"
-                          style="background:#1d6ff2;color:white;border-radius:8px">
+                          style="background:#2b3ea8;color:white;border-radius:8px">
                     <span *ngIf="addStudentSaving" class="spinner-border spinner-border-sm me-1"></span>
                     <i *ngIf="!addStudentSaving" class="bi bi-check2 me-1"></i>
                     {{ addStudentSaving ? 'Ajout...' : 'Confirmer l\'ajout' }}

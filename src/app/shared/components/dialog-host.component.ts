@@ -75,7 +75,7 @@ import { DIALOG_DATA, DialogRef, DialogService, DialogState } from '../../core/s
       animation: fade .15s ease-out;
     }
     .dlg {
-      width: 100%; background: #fff; border-radius: 20px; box-shadow: 0 30px 70px rgba(6, 22, 61, .35);
+      width: 100%; background: var(--surface); border-radius: 20px; box-shadow: 0 30px 70px rgba(6, 22, 61, .35);
       animation: pop .2s cubic-bezier(.2, .8, .2, 1); display: flex; flex-direction: column; max-height: 88vh;
     }
     .dlg-sm { max-width: 440px; }
@@ -96,7 +96,7 @@ import { DIALOG_DATA, DialogRef, DialogService, DialogState } from '../../core/s
       width: 60px; height: 60px; border-radius: 18px; margin: 0 auto; display: flex; align-items: center; justify-content: center;
       font-size: 1.7rem;
     }
-    .tone-primary { background: #e0ebff; color: #1d6ff2; }
+    .tone-primary { background: #e0ebff; color: #2b3ea8; }
     .tone-info { background: #e0f2fe; color: #0284c7; }
     .tone-success { background: #dcfce7; color: #16a34a; }
     .tone-warning { background: #fef3c7; color: #d97706; }
@@ -114,7 +114,7 @@ import { DIALOG_DATA, DialogRef, DialogService, DialogState } from '../../core/s
     .toast-item.tone-success > i { color: #16a34a; }
     .toast-item.tone-danger > i { color: #dc2626; }
     .toast-item.tone-warning > i { color: #d97706; }
-    .toast-item.tone-info > i, .toast-item.tone-primary > i { color: #1d6ff2; }
+    .toast-item.tone-info > i, .toast-item.tone-primary > i { color: #2b3ea8; }
     @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
     @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
     @keyframes slide { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }

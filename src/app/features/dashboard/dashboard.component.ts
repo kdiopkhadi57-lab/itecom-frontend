@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { DecimalPipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 import { CourseService } from '../../core/services/course.service';
@@ -10,154 +10,203 @@ import { Course } from '../../core/models/course.model';
 import { Progress } from '../../core/models/course.model';
 import { COURSE_CATEGORIES } from '../../core/models/course.model';
 import { UserScopeService } from '../../core/services/user-scope.service';
+import { BarChartComponent, BarDatum } from '../../shared/components/bar-chart.component';
+
+/** Devoir vu par un professeur / administrateur (GET /api/teacher/qcms) */
+interface StaffQcm { id: number; title: string; status: string; studentCount: number; questionCount: number; createdAt: string | null; }
+/** Devoir vu par un étudiant (GET /api/qcm) */
+interface StudentQcm { id: number; title: string; alreadyTaken: boolean; score: number | null; maxScore: number | null; createdAt: string | null; }
+
+interface Kpi { label: string; value: string | number; link?: string; hint?: string; }
+interface TypeOption { value: string; label: string; }
+
+const MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Août', 'Sept.', 'Oct.', 'Nov.', 'Déc.'];
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, DecimalPipe],
+  imports: [CommonModule, FormsModule, RouterLink, BarChartComponent],
   styles: [`
-    .pending-alert { background: #fff; border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 12px; cursor: pointer; transition: box-shadow .2s; }
-    .pending-alert:hover { box-shadow: 0 6px 18px rgba(28, 29, 31, .08); }
-    .pending-icon { width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--primary-soft); color: var(--primary); font-size: 1.2rem; }
+    :host {
+      --db-navy: #1f2d7a; --db-navy-2: #2b3ea8; --db-ink: #1f2a5c; --db-muted: #6b7280;
+    }
+    .db-hero {
+      position: relative; overflow: hidden; border-radius: 20px; padding: 2rem 2.25rem;
+      background: var(--db-navy); color: #fff;
+    }
+    .db-eyebrow { color: rgba(255,255,255,.65); font-weight: 700; font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; }
+    .db-hero h1 { font-size: 2.1rem; font-weight: 800; margin: .35rem 0 .6rem; color: #fff; }
+    .db-hero p { max-width: 720px; font-size: 1.02rem; line-height: 1.6; color: rgba(255,255,255,.88); margin-bottom: 1.1rem; }
+    .db-pill {
+      display: inline-flex; align-items: center; gap: .5rem; padding: .45rem 1rem; border-radius: 999px;
+      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18); font-weight: 600; font-size: .92rem;
+    }
+
+    .db-card { background: var(--surface); border-radius: 16px; border: 1px solid var(--surface-border); }
+    .db-filters { padding: 1.25rem 1.5rem; }
+    .db-filters label { font-size: .75rem; font-weight: 700; letter-spacing: .1em; color: var(--db-muted); text-transform: uppercase; margin-bottom: .4rem; }
+    .db-filters .form-control, .db-filters .form-select { border-radius: 10px; min-height: 44px; border-color: var(--surface-border); }
+    .db-btn-primary { background: var(--db-navy); border-color: var(--db-navy); color: #fff; border-radius: 10px; min-height: 44px; font-weight: 600; padding: 0 1.4rem; }
+    .db-btn-primary:hover { background: var(--db-navy-2); border-color: var(--db-navy-2); color: #fff; }
+    .db-btn-ghost { border: 1px solid var(--surface-border); color: var(--db-navy); background: var(--surface); border-radius: 10px; min-height: 44px; font-weight: 600; padding: 0 1.2rem; }
+    .db-btn-ghost:hover { background: var(--surface-muted); color: var(--db-navy); }
+
+    .db-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 1rem; }
+    .db-kpi {
+      display: block; text-decoration: none; background: var(--surface); border-radius: 18px; padding: 1.2rem 1.4rem;
+      border: 1px solid var(--surface-border);
+      transition: transform .15s, box-shadow .15s; min-height: 128px;
+    }
+    a.db-kpi:hover { border-color: var(--db-navy-2); }
+    .db-kpi-label { font-size: .78rem; font-weight: 700; letter-spacing: .1em; color: var(--db-muted); text-transform: uppercase; line-height: 1.35; }
+    .db-kpi-value { font-size: 2.4rem; font-weight: 800; color: var(--db-ink); line-height: 1.1; margin-top: .5rem; font-variant-numeric: tabular-nums; }
+    .db-kpi-hint { font-size: .78rem; color: var(--db-muted); margin-top: .2rem; }
+
+    .db-chart { padding: 1.5rem; height: 100%; }
+    .db-chart-title { display: flex; align-items: center; gap: .6rem; font-size: 1.2rem; font-weight: 700; color: var(--db-ink); margin-bottom: 1.25rem; }
+    .db-chart-sub { font-size: .82rem; color: var(--db-muted); margin: -1rem 0 1.1rem; }
+
+    .db-quick a { border-radius: 10px; }
+    @media (max-width: 576px) {
+      .db-hero { padding: 1.5rem; }
+      .db-hero h1 { font-size: 1.6rem; }
+    }
   `],
   template: `
     <div class="fade-in-up">
-      <!-- Header -->
-      <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h1 class="fw-bold mb-1">Bonjour, {{ authService.currentUser?.firstName }}</h1>
-          <p class="text-muted">Continuez votre apprentissage aujourd'hui !</p>
-        </div>
-        <a routerLink="/courses" class="btn btn-primary-custom">
-          <i class="bi bi-compass me-2"></i>Explorer les cours
-        </a>
-      </div>
+      <!-- ── Bannière ─────────────────────────────────────────────────── -->
+      <section class="db-hero mb-4">
+        <div class="db-eyebrow">ITECOM · {{ roleLabel }}</div>
+        <h1>Bonjour {{ authService.currentUser?.firstName }} <span aria-hidden="true">👋</span></h1>
+        <p>{{ heroText }}</p>
+        <span class="db-pill"><i class="bi bi-calendar3"></i>{{ periodLabel }}</span>
+      </section>
 
-      <!-- Warning Admin : inscriptions en attente -->
-      <a *ngIf="authService.isAdmin && pendingCount > 0"
-         routerLink="/admin/registrations"
-         class="d-block text-decoration-none mb-4">
-        <div class="alert d-flex align-items-center gap-3 mb-0 pending-alert">
-          <div class="pending-icon"><i class="bi bi-bell"></i></div>
-          <div class="flex-grow-1">
-            <div class="fw-bold" style="color:var(--dark);font-size:1rem">
-              {{ pendingCount }} inscription{{ pendingCount > 1 ? 's' : '' }} en attente de validation
-            </div>
-            <div class="small" style="color:var(--muted)">
-              Des étudiants ont soumis leur paiement et attendent votre validation. Cliquez pour accéder à la liste.
-            </div>
+      <!-- ── Filtres ──────────────────────────────────────────────────── -->
+      <section class="db-card db-filters mb-4">
+        <div class="row g-3 align-items-end">
+          <div class="col-12 col-sm-6 col-lg-3">
+            <label class="form-label d-block" for="db-from">Du</label>
+            <input id="db-from" type="date" class="form-control" [(ngModel)]="draftFrom" [max]="draftTo || null">
           </div>
-          <div style="flex-shrink:0">
-            <span class="badge rounded-pill" style="background:var(--primary);color:white;font-size:.9rem;padding:6px 14px">
-              {{ pendingCount }} en attente
-            </span>
-            <i class="bi bi-chevron-right ms-2" style="color:var(--muted)"></i>
+          <div class="col-12 col-sm-6 col-lg-3">
+            <label class="form-label d-block" for="db-to">Au</label>
+            <input id="db-to" type="date" class="form-control" [(ngModel)]="draftTo" [min]="draftFrom || null">
+          </div>
+          <div class="col-12 col-sm-6 col-lg-2">
+            <label class="form-label d-block" for="db-type">Type</label>
+            <select id="db-type" class="form-select" [(ngModel)]="draftType">
+              <option *ngFor="let t of typeOptions" [value]="t.value">{{ t.label }}</option>
+            </select>
+          </div>
+          <div class="col-12 col-lg-4 d-flex gap-2 justify-content-lg-end">
+            <button type="button" class="btn db-btn-primary" (click)="apply()">Appliquer</button>
+            <button type="button" class="btn db-btn-ghost" (click)="reset()">Réinitialiser</button>
           </div>
         </div>
-      </a>
+      </section>
 
-      <!-- Stats Row -->
-      <div class="row g-3 mb-4">
-        <div class="col-6 col-xl-3">
-          <div class="stat-card">
-            <div class="stat-icon"><i class="bi bi-journal-bookmark"></i></div>
-            <div class="stat-value">{{ enrolledCourses.length }}</div>
-            <div class="stat-label">Cours inscrits</div>
-          </div>
-        </div>
-        <div class="col-6 col-xl-3">
-          <div class="stat-card">
-            <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
-            <div class="stat-value">{{ completedLessons }}</div>
-            <div class="stat-label">Leçons complétées</div>
-          </div>
-        </div>
-        <div class="col-6 col-xl-3">
-          <div class="stat-card">
-            <div class="stat-icon"><i class="bi bi-fire"></i></div>
-            <div class="stat-value">{{ avgProgress }}%</div>
-            <div class="stat-label">Progression moyenne</div>
-          </div>
-        </div>
-      </div>
+      <!-- ── Indicateurs ─────────────────────────────────────────────── -->
+      <section class="db-kpis mb-4">
+        <ng-container *ngFor="let k of kpis">
+          <a *ngIf="k.link; else plainKpi" class="db-kpi" [routerLink]="k.link">
+            <div class="db-kpi-label">{{ k.label }}</div>
+            <div class="db-kpi-value">{{ loading ? '—' : k.value }}</div>
+            <div *ngIf="k.hint" class="db-kpi-hint">{{ k.hint }}</div>
+          </a>
+          <ng-template #plainKpi>
+            <div class="db-kpi">
+              <div class="db-kpi-label">{{ k.label }}</div>
+              <div class="db-kpi-value">{{ loading ? '—' : k.value }}</div>
+              <div *ngIf="k.hint" class="db-kpi-hint">{{ k.hint }}</div>
+            </div>
+          </ng-template>
+        </ng-container>
+      </section>
 
-      <div class="row g-4">
-        <!-- My Courses Progress -->
-        <div class="col-12 col-xl-8">
-          <div class="card" style="border-radius:14px;">
-            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center p-4">
-              <h5 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow me-1"></i>Ma progression</h5>
-              <a routerLink="/courses/my-learning" class="btn btn-sm btn-outline-primary">Tout voir</a>
-            </div>
-            <div class="card-body px-4 pb-4">
-              <div *ngIf="progressList.length === 0" class="text-center py-4 text-muted">
-                <div style="font-size:3rem"><i class="bi bi-journal-bookmark"></i></div>
-                <p class="mt-2">Pas encore inscrit à des cours</p>
-                <a routerLink="/courses" class="btn btn-primary-custom btn-sm">Explorer les cours</a>
-              </div>
-              <div *ngFor="let p of progressList.slice(0,5)" class="mb-4">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                  <div>
-                    <div class="fw-semibold">{{ p.courseTitle }}</div>
-                    <div class="text-muted small">{{ p.completedLessons }}/{{ p.totalLessons }} leçons</div>
-                  </div>
-                  <span class="fw-semibold small">{{ p.overallPercentage | number:'1.0-0' }} %</span>
-                </div>
-                <div class="progress-custom">
-                  <div class="progress-bar" [style.width.%]="p.overallPercentage"></div>
-                </div>
-              </div>
+      <!-- ── Graphiques ──────────────────────────────────────────────── -->
+      <section class="row g-4 mb-4">
+        <div class="col-12 col-xl-6">
+          <div class="db-card db-chart">
+            <div class="db-chart-title">{{ leftChart.title }}</div>
+            <div class="db-chart-sub">{{ leftChart.subtitle }}</div>
+            <app-bar-chart orientation="horizontal" [data]="leftChart.data" [unit]="leftChart.unit"
+                           [maxValue]="leftChart.max" [labelHeader]="leftChart.labelHeader"
+                           [valueHeader]="leftChart.valueHeader" [emptyText]="leftChart.empty"></app-bar-chart>
+          </div>
+        </div>
+        <div class="col-12 col-xl-6">
+          <div class="db-card db-chart">
+            <div class="db-chart-title">{{ rightChart.title }}</div>
+            <div class="db-chart-sub">{{ rightChart.subtitle }}</div>
+            <app-bar-chart orientation="vertical" [data]="rightChart.data" [unit]="rightChart.unit"
+                           [maxValue]="rightChart.max" [labelHeader]="rightChart.labelHeader"
+                           [valueHeader]="rightChart.valueHeader" [emptyText]="rightChart.empty"></app-bar-chart>
+          </div>
+        </div>
+      </section>
+
+      <!-- ── Accès rapide ────────────────────────────────────────────── -->
+      <section class="row g-4">
+        <div class="col-12 col-xl-5">
+          <div class="db-card db-chart">
+            <div class="db-chart-title">Accès rapide</div>
+            <div class="d-grid gap-2 db-quick">
+              <ng-container *ngIf="isStaff">
+                <a routerLink="/teacher/qcms/create" class="btn btn-outline-primary text-start"><i class="bi bi-plus-circle me-2"></i>Créer un devoir</a>
+                <a routerLink="/teacher/exams" class="btn btn-outline-primary text-start"><i class="bi bi-clipboard-check me-2"></i>Devoirs et examens</a>
+                <a routerLink="/teacher/students" class="btn btn-outline-primary text-start"><i class="bi bi-people me-2"></i>Étudiants et notes</a>
+              </ng-container>
+              <ng-container *ngIf="!isStaff">
+                <a routerLink="/courses" class="btn btn-outline-primary text-start"><i class="bi bi-compass me-2"></i>Explorer les cours</a>
+                <a routerLink="/qcm" class="btn btn-outline-primary text-start"><i class="bi bi-ui-checks me-2"></i>Mes devoirs</a>
+              </ng-container>
+              <a routerLink="/virtual-class" class="btn btn-outline-primary text-start"><i class="bi bi-camera-video me-2"></i>Classes virtuelles</a>
             </div>
           </div>
         </div>
-
-        <!-- Quick Actions -->
-        <div class="col-12 col-xl-4">
-          <div class="card mb-3" style="border-radius:14px;">
-            <div class="card-body p-4">
-              <h5 class="fw-bold mb-3"><i class="bi bi-rocket-takeoff me-1"></i>Accès rapide</h5>
-              <div class="d-grid gap-2">
-                <a routerLink="/virtual-class" class="btn btn-outline-primary text-start">
-                  <i class="bi bi-camera-video me-2"></i>Classes virtuelles
-                </a>
-              </div>
-            </div>
-          </div>
-
-          <div class="card" style="border-radius:14px;">
-            <div class="card-body p-4">
-              <h5 class="fw-bold mb-3"><i class="bi bi-folder2-open me-1"></i>Catégories</h5>
-              <div class="d-flex flex-wrap gap-2">
-                <a *ngFor="let cat of visibleCategories" [routerLink]="['/courses']" [queryParams]="{category: cat.key}"
-                   class="btn btn-sm btn-light border rounded-pill">
-                  <i class="bi me-1" [ngClass]="cat.icon"></i>{{ cat.label }}
-                </a>
-              </div>
+        <div class="col-12 col-xl-7">
+          <div class="db-card db-chart">
+            <div class="db-chart-title">Catégories</div>
+            <div class="d-flex flex-wrap gap-2">
+              <a *ngFor="let cat of visibleCategories" [routerLink]="['/courses']" [queryParams]="{category: cat.key}"
+                 class="btn btn-sm btn-light border rounded-pill">
+                <i class="bi me-1" [ngClass]="cat.icon"></i>{{ cat.label }}
+              </a>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </div>
   `
 })
 export class DashboardComponent implements OnInit {
-  enrolledCourses: Course[] = [];
-  progressList: Progress[] = [];
-  completedLessons = 0;
-  avgProgress = 0;
   categories = COURSE_CATEGORIES;
   hideProgramming = false;
   userCategoryKeys: string[] | null = null;
 
-  get visibleCategories() {
-    if (this.userCategoryKeys && this.userCategoryKeys.length > 0)
-      return this.categories.filter(c => this.userCategoryKeys!.includes(c.key));
-    return this.hideProgramming
-      ? this.categories.filter(c => c.key !== 'algorithms' && !['java','python','javascript','angular','springboot','sql'].includes(c.key))
-      : this.categories;
-  }
+  loading = true;
 
-  pendingCount = 0;
+  // Données brutes
+  enrolledCourses: Course[] = [];
+  progressList: Progress[] = [];
+  teacherCourses: Course[] = [];
+  staffQcms: StaffQcm[] = [];
+  studentQcms: StudentQcm[] = [];
+  adminStats: { students: number; teachers: number; pending: number } | null = null;
+
+  // Filtres : brouillon (formulaire) et appliqués
+  draftFrom = '';
+  draftTo = '';
+  draftType = 'ALL';
+  from = '';
+  to = '';
+  type = 'ALL';
+
+  // Vue calculée
+  kpis: Kpi[] = [];
+  leftChart = emptyChart();
+  rightChart = emptyChart();
 
   constructor(
     public authService: AuthService,
@@ -167,25 +216,215 @@ export class DashboardComponent implements OnInit {
     private http: HttpClient
   ) {}
 
+  get isStaff(): boolean { return this.authService.isTeacher || this.authService.isAdmin; }
+
+  get roleLabel(): string {
+    return this.authService.isAdmin ? 'Administration' : this.authService.isTeacher ? 'Espace professeur' : 'Espace étudiant';
+  }
+
+  get heroText(): string {
+    if (this.authService.isAdmin) {
+      return "Bienvenue sur votre espace d'administration. Suivez en un coup d'œil les inscriptions, les devoirs et l'activité des étudiants de la plateforme.";
+    }
+    if (this.authService.isTeacher) {
+      return "Bienvenue sur votre espace professeur. Suivez vos cours, vos devoirs et le nombre d'étudiants inscrits à chacun.";
+    }
+    return "Bienvenue sur votre espace d'apprentissage. Suivez votre progression dans vos cours, vos devoirs à rendre et vos notes.";
+  }
+
+  get periodLabel(): string {
+    if (!this.from && !this.to) return 'Toute la période';
+    const f = this.from ? formatDate(this.from) : '…';
+    const t = this.to ? formatDate(this.to) : formatDate(todayIso());
+    return `${f} → ${t}`;
+  }
+
+  get typeOptions(): TypeOption[] {
+    return this.isStaff
+      ? [
+          { value: 'ALL', label: 'Tous' },
+          { value: 'PUBLISHED', label: 'Publiés' },
+          { value: 'DRAFT', label: 'Brouillons' },
+          { value: 'CLOSED', label: 'Clôturés' }
+        ]
+      : [
+          { value: 'ALL', label: 'Tous' },
+          { value: 'TODO', label: 'À rendre' },
+          { value: 'DONE', label: 'Rendus' }
+        ];
+  }
+
+  get visibleCategories() {
+    if (this.userCategoryKeys && this.userCategoryKeys.length > 0)
+      return this.categories.filter(c => this.userCategoryKeys!.includes(c.key));
+    return this.hideProgramming
+      ? this.categories.filter(c => c.key !== 'algorithms' && !['java','python','javascript','angular','springboot','sql'].includes(c.key))
+      : this.categories;
+  }
+
   ngOnInit() {
-    this.courseService.getEnrolledCourses().subscribe(courses => {
-      this.enrolledCourses = courses;
-    });
-    this.progressService.getMyProgress().subscribe(progress => {
-      this.progressList = progress;
-      this.completedLessons = progress.reduce((sum, p) => sum + p.completedLessons, 0);
-      this.avgProgress = progress.length > 0
-        ? Math.round(progress.reduce((sum, p) => sum + p.overallPercentage, 0) / progress.length)
-        : 0;
-    });
     this.userScope.hideProgramming$.subscribe(hide => this.hideProgramming = hide);
     this.userScope.userCategoryKeys$.subscribe(keys => this.userCategoryKeys = keys);
 
-    if (this.authService.isAdmin) {
-      this.http.get<{count: number}>('/api/admin/registrations/count').subscribe({
-        next: (res) => this.pendingCount = res.count,
-        error: () => {}
-      });
+    let pending = 0;
+    const done = () => { if (--pending <= 0) { this.loading = false; this.recompute(); } };
+    const load = <T>(url: string, assign: (v: T) => void) => {
+      pending++;
+      this.http.get<T>(url).subscribe({ next: v => { assign(v); done(); }, error: () => done() });
+    };
+
+    if (this.isStaff) {
+      load<StaffQcm[]>('/api/teacher/qcms', v => this.staffQcms = v || []);
+      pending++;
+      this.courseService.getTeacherCourses().subscribe({ next: c => { this.teacherCourses = c || []; done(); }, error: () => done() });
+      if (this.authService.isAdmin) {
+        load<{ students: number; teachers: number; pending: number }>('/api/admin/users/stats', v => this.adminStats = v);
+      }
+    } else {
+      load<StudentQcm[]>('/api/qcm', v => this.studentQcms = v || []);
+      pending++;
+      this.courseService.getEnrolledCourses().subscribe({ next: c => { this.enrolledCourses = c || []; done(); }, error: () => done() });
+      pending++;
+      this.progressService.getMyProgress().subscribe({ next: p => { this.progressList = p || []; done(); }, error: () => done() });
     }
+    this.recompute();
   }
+
+  apply() {
+    this.from = this.draftFrom;
+    this.to = this.draftTo;
+    this.type = this.draftType;
+    this.recompute();
+  }
+
+  reset() {
+    this.draftFrom = this.draftTo = this.from = this.to = '';
+    this.draftType = this.type = 'ALL';
+    this.recompute();
+  }
+
+  private inPeriod(date: string | null): boolean {
+    if (!this.from && !this.to) return true;
+    if (!date) return false;
+    const day = date.slice(0, 10);
+    return (!this.from || day >= this.from) && (!this.to || day <= this.to);
+  }
+
+  private recompute() {
+    if (this.isStaff) this.computeStaff(); else this.computeStudent();
+  }
+
+  private computeStaff() {
+    const periodQcms = this.staffQcms.filter(q => this.inPeriod(q.createdAt));
+    const qcms = this.type === 'ALL' ? periodQcms : periodQcms.filter(q => q.status === this.type);
+    const count = (status: string) => periodQcms.filter(q => q.status === status).length;
+    const assigned = qcms.reduce((s, q) => s + (q.studentCount || 0), 0);
+
+    this.kpis = [
+      { label: 'Devoirs', value: qcms.length, link: '/teacher/exams' },
+      { label: 'Étudiants assignés', value: assigned, link: '/teacher/students', hint: 'Total des listes de devoirs' },
+      { label: 'Devoirs publiés', value: count('PUBLISHED') },
+      { label: 'Brouillons à publier', value: count('DRAFT') }
+    ];
+    if (this.authService.isAdmin) {
+      this.kpis.unshift({ label: 'Étudiants inscrits', value: this.adminStats?.students ?? 0, link: '/admin/users' });
+      this.kpis.push({ label: 'Inscriptions en attente', value: this.adminStats?.pending ?? 0, link: '/admin/registrations' });
+    } else {
+      this.kpis.unshift({ label: 'Mes cours', value: this.teacherCourses.length, link: '/teacher/courses' });
+      this.kpis.push({ label: 'Devoirs clôturés', value: count('CLOSED') });
+    }
+
+    this.leftChart = {
+      title: 'Étudiants par devoir',
+      subtitle: 'Les 6 devoirs avec le plus d\'étudiants assignés',
+      data: [...qcms].sort((a, b) => (b.studentCount || 0) - (a.studentCount || 0)).slice(0, 6)
+        .map(q => ({ label: q.title, value: q.studentCount || 0 })),
+      unit: '', max: null, labelHeader: 'Devoir', valueHeader: 'Étudiants',
+      empty: 'Aucun devoir pour ces filtres'
+    };
+    this.rightChart = {
+      title: 'Devoirs créés par mois',
+      subtitle: this.from || this.to ? 'Sur la période sélectionnée' : 'Les 6 derniers mois',
+      data: this.monthlyCounts(qcms.map(q => q.createdAt)),
+      unit: '', max: null, labelHeader: 'Mois', valueHeader: 'Devoirs',
+      empty: 'Aucun devoir pour ces filtres'
+    };
+  }
+
+  private computeStudent() {
+    const periodQcms = this.studentQcms.filter(q => this.inPeriod(q.createdAt));
+    const qcms = this.type === 'TODO' ? periodQcms.filter(q => !q.alreadyTaken)
+      : this.type === 'DONE' ? periodQcms.filter(q => q.alreadyTaken) : periodQcms;
+    const graded = qcms.filter(q => q.alreadyTaken && q.score != null && q.maxScore);
+    const avg = graded.length
+      ? graded.reduce((s, q) => s + (q.score! / q.maxScore!) * 20, 0) / graded.length
+      : null;
+    const completedLessons = this.progressList.reduce((s, p) => s + (p.completedLessons || 0), 0);
+    const avgProgress = this.progressList.length
+      ? Math.round(this.progressList.reduce((s, p) => s + (p.overallPercentage || 0), 0) / this.progressList.length)
+      : 0;
+
+    this.kpis = [
+      { label: 'Cours inscrits', value: this.enrolledCourses.length, link: '/courses/my-learning' },
+      { label: 'Leçons complétées', value: completedLessons },
+      { label: 'Progression moyenne', value: `${avgProgress}%` },
+      { label: 'Devoirs à rendre', value: qcms.filter(q => !q.alreadyTaken).length, link: '/qcm' },
+      { label: 'Moyenne des devoirs', value: avg == null ? '—' : `${avg.toFixed(1).replace('.', ',')}/20`,
+        hint: graded.length ? `${graded.length} devoir(s) noté(s)` : 'Aucune note pour le moment' }
+    ];
+
+    this.leftChart = {
+      title: 'Progression par cours',
+      subtitle: 'Pourcentage de leçons terminées',
+      data: [...this.progressList].sort((a, b) => b.overallPercentage - a.overallPercentage).slice(0, 6)
+        .map(p => ({ label: p.courseTitle, value: Math.round(p.overallPercentage || 0) })),
+      unit: '%', max: 100, labelHeader: 'Cours', valueHeader: 'Progression',
+      empty: 'Pas encore inscrit à des cours'
+    };
+    this.rightChart = {
+      title: 'Notes des devoirs',
+      subtitle: 'Note sur 20 des derniers devoirs rendus',
+      data: [...graded].sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || '')).slice(-6)
+        .map(q => ({ label: q.title, value: Math.round((q.score! / q.maxScore!) * 200) / 10 })),
+      unit: '', max: 20, labelHeader: 'Devoir', valueHeader: 'Note /20',
+      empty: 'Aucun devoir noté pour ces filtres'
+    };
+  }
+
+  /** Nombre d'éléments par mois : période filtrée, ou 6 derniers mois par défaut */
+  private monthlyCounts(dates: (string | null)[]): BarDatum[] {
+    const end = this.to ? parseLocalDate(this.to) : new Date();
+    const start = this.from ? parseLocalDate(this.from) : new Date(end.getFullYear(), end.getMonth() - 5, 1);
+    const months: { key: string; label: string }[] = [];
+    const cursor = new Date(start.getFullYear(), start.getMonth(), 1);
+    while (cursor <= end && months.length < 12) {
+      const key = `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, '0')}`;
+      months.push({ key, label: `${MONTHS[cursor.getMonth()]} ${String(cursor.getFullYear()).slice(2)}` });
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+    return months.map(m => ({ label: m.label, value: dates.filter(d => d?.startsWith(m.key)).length }));
+  }
+}
+
+function emptyChart() {
+  return {
+    title: '', subtitle: '', data: [] as BarDatum[], unit: '', max: null as number | null,
+    labelHeader: '', valueHeader: '', empty: ''
+  };
+}
+
+/** « AAAA-MM-JJ » en date locale (new Date(iso) l'interpréterait en UTC) */
+function parseLocalDate(iso: string): Date {
+  const [y, m, d] = iso.slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+function todayIso(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function formatDate(iso: string): string {
+  const [y, m, d] = iso.slice(0, 10).split('-');
+  return `${d}/${m}/${y}`;
 }

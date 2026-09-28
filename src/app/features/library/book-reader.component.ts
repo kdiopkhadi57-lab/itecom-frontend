@@ -300,7 +300,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
   <div *ngIf="showNoteDialog" class="modal-overlay" (click)="showNoteDialog=false">
     <div class="note-dialog" (click)="$event.stopPropagation()">
       <h6 class="fw-bold mb-3"><i class="bi bi-sticky me-2"></i>Ajouter une note</h6>
-      <div class="mb-2 p-2 bg-light rounded small text-muted" *ngIf="pendingText" style="border-left:3px solid #1d6ff2">
+      <div class="mb-2 p-2 bg-light rounded small text-muted" *ngIf="pendingText" style="border-left:3px solid #2b3ea8">
         "{{ pendingText | slice:0:120 }}{{ pendingText.length > 120 ? '…' : '' }}"
       </div>
       <textarea class="form-control form-control-sm mb-3" rows="4"
@@ -366,7 +366,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
 
     /* ── Top bar ─────────────────────────────────────────── */
     .reader-topbar {
-      background: #fff; border-bottom: 1px solid #e2e8f0;
+      background: var(--surface); border-bottom: 1px solid #e2e8f0;
       height: 52px; flex-shrink: 0; position: sticky; top: 0; z-index: 50;
     }
     [data-mode="night"] .reader-topbar { background: #16213e; border-color: #2d3748; }
@@ -377,7 +377,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
       position: relative;
     }
     .btn-ghost:hover { background: #f1f5f9; color: #1e293b; }
-    .btn-ghost.active-panel, .btn-ghost.active { background: #eef4ff; color: #1658c4; }
+    .btn-ghost.active-panel, .btn-ghost.active { background: #eef0fb; color: #1f2d7a; }
     [data-mode="night"] .btn-ghost { color: #94a3b8; }
     [data-mode="night"] .btn-ghost:hover { background: #2d3748; }
     .mode-btn { font-size: .85rem; }
@@ -389,7 +389,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
     [data-mode="night"] .page-input { background:#2d3748; color:#e2e8f0; border-color:#4a5568; }
     .zoom-select {
       border: 1px solid #e2e8f0; border-radius: 6px; font-size: .78rem;
-      padding: 2px 4px; background: #fff; color: #334155;
+      padding: 2px 4px; background: var(--surface); color: #334155;
     }
     [data-mode="night"] .zoom-select { background:#2d3748; color:#e2e8f0; border-color:#4a5568; }
     .badge-count {
@@ -403,7 +403,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
       height: 3px; background: #e2e8f0; flex-shrink: 0;
     }
     .reading-progress-fill {
-      height: 100%; background: #1d6ff2;
+      height: 100%; background: #2b3ea8;
       transition: width .3s ease;
     }
 
@@ -414,7 +414,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
 
     /* ── Side panel ──────────────────────────────────────── */
     .side-panel {
-      width: 280px; flex-shrink: 0; background: #fff;
+      width: 280px; flex-shrink: 0; background: var(--surface);
       border-right: 1px solid #e2e8f0; overflow-y: auto;
     }
     [data-mode="night"] .side-panel { background: #16213e; border-color: #2d3748; }
@@ -428,7 +428,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
       background: #f8fafc; border: 1px solid #e2e8f0; cursor: pointer;
       transition: border-color .15s;
     }
-    .annotation-card:hover { border-color: #1d6ff2; }
+    .annotation-card:hover { border-color: #2b3ea8; }
     [data-mode="night"] .annotation-card { background: #2d3748; border-color: #4a5568; }
     .note-card { border-left: 3px solid #f59e0b; }
     .ann-color-dot {
@@ -439,7 +439,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
       display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
     }
     [data-mode="night"] .ann-text { color: #94a3b8; }
-    .ann-note { font-size: .75rem; color: #1d6ff2; margin: 0; }
+    .ann-note { font-size: .75rem; color: #2b3ea8; margin: 0; }
     .btn-xs { padding: 1px 4px; font-size: .7rem; }
 
     .bookmark-item {
@@ -462,7 +462,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
     }
     .pdf-viewer-wrapper {
       width: 100%; max-width: 900px;
-      background: #fff; border-radius: 4px;
+      background: var(--surface); border-radius: 4px;
       box-shadow: 0 4px 24px rgba(0,0,0,.12);
       overflow: hidden;
     }
@@ -480,7 +480,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
 
     /* ── Highlight popup ─────────────────────────────────── */
     .highlight-popup {
-      position: fixed; z-index: 1000; background: #fff;
+      position: fixed; z-index: 1000; background: var(--surface);
       border-radius: 12px; padding: 12px 14px;
       box-shadow: 0 8px 32px rgba(0,0,0,.18);
       border: 1px solid #e2e8f0; min-width: 180px;
@@ -508,7 +508,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
       z-index: 2000; display: flex; align-items: center; justify-content: center; padding: 16px;
     }
     .note-dialog {
-      background: #fff; border-radius: 16px; padding: 24px;
+      background: var(--surface); border-radius: 16px; padding: 24px;
       width: 100%; max-width: 460px; box-shadow: 0 20px 60px rgba(0,0,0,.2);
     }
 
@@ -527,7 +527,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
 
     .bottom-nav {
       display: flex; align-items: center; justify-content: center; gap: 20px;
-      padding: 14px 24px; background: #fff; border-top: 1px solid #e2e8f0;
+      padding: 14px 24px; background: var(--surface); border-top: 1px solid #e2e8f0;
       flex-shrink: 0; position: sticky; bottom: 0; z-index: 10;
     }
     [data-mode="night"] .bottom-nav { background: #16213e; border-color: #2d3748; }

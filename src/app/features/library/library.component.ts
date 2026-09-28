@@ -491,7 +491,7 @@ interface DiscoveredBook {
       z-index: 1050; display: flex; align-items: center; justify-content: center; padding: 16px;
     }
     .modal-box {
-      background: #fff; border-radius: 16px; padding: 24px;
+      background: var(--surface); border-radius: 16px; padding: 24px;
       max-width: 800px; width: 100%; max-height: 90vh; overflow-y: auto;
       box-shadow: 0 20px 60px rgba(0,0,0,.2);
     }

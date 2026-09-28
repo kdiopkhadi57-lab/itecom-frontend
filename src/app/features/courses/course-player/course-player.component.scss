@@ -14,7 +14,7 @@
 .content-area {
   flex: 1;
   overflow-y: auto;
-  background: white;
+  background: var(--surface);
   border-radius: 12px;
 
   .lessons-panel + & {
@@ -33,8 +33,8 @@
   }
 
   &.active {
-    background: rgba(29, 111, 242, .2);
-    border-left-color: #1d6ff2;
+    background: rgba(43, 62, 168, .2);
+    border-left-color: #2b3ea8;
   }
 
   &.completed {

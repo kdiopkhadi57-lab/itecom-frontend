@@ -45,7 +45,7 @@ export interface FileViewerData {
     .viewer-body { border-radius: 12px; overflow: auto; background: #f8fafc; height: 70vh; display: flex; align-items: flex-start; justify-content: center; }
     .viewer-body.dark { background: #1f2937; align-items: center; }
     .viewer-body img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform .2s ease; transform-origin: center; }
-    .viewer-body iframe { width: 100%; height: 100%; border: 0; background: #fff; }
+    .viewer-body iframe { width: 100%; height: 100%; border: 0; background: var(--surface); }
   `]
 })
 export class FileViewerComponent {

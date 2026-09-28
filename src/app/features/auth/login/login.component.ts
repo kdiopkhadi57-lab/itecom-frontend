@@ -110,7 +110,7 @@ import { CommonModule } from '@angular/common';
   styles: [`
     :host { display: block; }
     .landing {
-      --navy: #0b2a6f; --blue: #1d6ff2;
+      --navy: #0b2a6f; --blue: #2b3ea8;
       position: relative; min-height: 100vh; overflow: hidden; color: #fff;
       background: #06163d; font-family: 'Inter', sans-serif;
     }
@@ -119,7 +119,7 @@ import { CommonModule } from '@angular/common';
     .bg { position: absolute; inset: 0; overflow: hidden;
       background: radial-gradient(120% 90% at 80% 0%, #123a8c 0%, #0b2a6f 42%, #06163d 100%); }
     .glow { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .55; animation: drift 18s ease-in-out infinite alternate; }
-    .glow-1 { width: 520px; height: 520px; background: #1d6ff2; top: -140px; right: 8%; }
+    .glow-1 { width: 520px; height: 520px; background: #2b3ea8; top: -140px; right: 8%; }
     .glow-2 { width: 420px; height: 420px; background: #06b6d4; bottom: -160px; left: 18%; opacity: .35; animation-delay: -6s; }
     .glow-3 { width: 360px; height: 360px; background: #6366f1; top: 35%; left: -120px; opacity: .35; animation-delay: -12s; }
     .grid { position: absolute; inset: 0; opacity: .12;
@@ -134,7 +134,7 @@ import { CommonModule } from '@angular/common';
     .brand-mark {
       width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
       background: linear-gradient(135deg, #3b82f6, var(--blue)); color: #fff; font-size: 1.2rem;
-      box-shadow: 0 6px 16px rgba(29, 111, 242, .45);
+      box-shadow: 0 6px 16px rgba(43, 62, 168, .45);
     }
     .brand-name { font-size: 1.5rem; font-weight: 800; letter-spacing: .02em; }
     .brand-name .ite { color: #fff; }
@@ -183,9 +183,9 @@ import { CommonModule } from '@angular/common';
     .login-head span { font-size: .75rem; color: #64748b; }
     .field {
       display: flex; align-items: center; gap: 10px; height: 46px; padding: 0 12px; border-radius: 12px;
-      border: 1.5px solid #dbe3f0; background: #fff; transition: border-color .2s, box-shadow .2s;
+      border: 1.5px solid #dbe3f0; background: var(--surface); transition: border-color .2s, box-shadow .2s;
     }
-    .field:focus-within { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(29, 111, 242, .14); }
+    .field:focus-within { border-color: var(--blue); box-shadow: 0 0 0 4px rgba(43, 62, 168, .14); }
     .field.invalid { border-color: #dc3545; }
     .field > i { color: #94a3b8; }
     .field input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font-size: .95rem; color: #0f172a; }
@@ -193,10 +193,10 @@ import { CommonModule } from '@angular/common';
     .field .eye:hover { color: var(--blue); }
     .btn-login {
       height: 46px; border: 0; border-radius: 12px; font-weight: 700; color: #fff;
-      background: linear-gradient(135deg, var(--navy), var(--blue)); box-shadow: 0 10px 22px rgba(29, 111, 242, .35);
+      background: linear-gradient(135deg, var(--navy), var(--blue)); box-shadow: 0 10px 22px rgba(43, 62, 168, .35);
       transition: transform .15s, box-shadow .2s;
     }
-    .btn-login:hover:not(:disabled) { color: #fff; transform: translateY(-1px); box-shadow: 0 14px 28px rgba(29, 111, 242, .45); }
+    .btn-login:hover:not(:disabled) { color: #fff; transform: translateY(-1px); box-shadow: 0 14px 28px rgba(43, 62, 168, .45); }
     .btn-login:disabled { color: #fff; opacity: .85; }
     .login-foot { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 10px; font-size: .78rem; }
     .login-foot a { color: var(--blue); font-weight: 600; text-decoration: none; }

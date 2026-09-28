@@ -469,7 +469,7 @@ type View = 'list' | 'form' | 'citation';
   styles: [`
     /* ── Stats ─────────────────────────────── */
     .stat-card {
-      background: #fff; border-radius: 12px; padding: 16px; text-align: center;
+      background: var(--surface); border-radius: 12px; padding: 16px; text-align: center;
       border: 1px solid #e2e8f0; transition: box-shadow .2s;
     }
     .stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); }
@@ -480,7 +480,7 @@ type View = 'list' | 'form' | 'citation';
     /* ── Collections sidebar ────────────────── */
     .collections-sidebar {
       width: 220px; flex-shrink: 0;
-      background: #fff; border: 1px solid #e2e8f0;
+      background: var(--surface); border: 1px solid #e2e8f0;
       border-radius: 12px; padding: 8px; height: fit-content; position: sticky; top: 8px;
     }
     .sidebar-section { margin-bottom: 8px; }
@@ -496,11 +496,11 @@ type View = 'list' | 'form' | 'citation';
       transition: background .12s; cursor: pointer;
     }
     .sidebar-item:hover { background: #f1f5f9; }
-    .sidebar-item.active { background: #eef4ff; color: #1658c4; font-weight: 600; }
+    .sidebar-item.active { background: #eef0fb; color: #1f2d7a; font-weight: 600; }
 
     /* ── Ref cards ──────────────────────────── */
     .ref-card {
-      background: #fff; border: 1px solid #e2e8f0; border-radius: 10px;
+      background: var(--surface); border: 1px solid #e2e8f0; border-radius: 10px;
       padding: 14px 16px; margin-bottom: 10px; transition: box-shadow .15s;
     }
     .ref-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,.07); }
@@ -513,7 +513,7 @@ type View = 'list' | 'form' | 'citation';
     .ref-meta { font-size: .78rem; color: #64748b; margin: 3px 0; }
     .ref-authors { font-style: italic; }
     .ref-year { margin-left: 6px; color: #94a3b8; }
-    .ref-journal { color: #1d6ff2; }
+    .ref-journal { color: #2b3ea8; }
     .btn-xs { padding: 2px 7px; font-size: .72rem; }
     .btn-ghost { background: transparent; border: none; color: #64748b; }
 
@@ -524,7 +524,7 @@ type View = 'list' | 'form' | 'citation';
       justify-content: center; padding: 16px;
     }
     .modal-box {
-      background: #fff; border-radius: 16px; padding: 24px;
+      background: var(--surface); border-radius: 16px; padding: 24px;
       max-width: 760px; width: 100%; max-height: 90vh; overflow-y: auto;
       box-shadow: 0 20px 60px rgba(0,0,0,.18);
     }
@@ -532,7 +532,7 @@ type View = 'list' | 'form' | 'citation';
     /* ── Citation ─────────────────────────────── */
     .citation-box {
       background: #f8fafc; border-radius: 10px; padding: 16px;
-      border-left: 4px solid #1d6ff2;
+      border-left: 4px solid #2b3ea8;
     }
     .citation-text { font-size: .88rem; line-height: 1.7; color: #1e293b; }
     .citation-text em { font-style: italic; }

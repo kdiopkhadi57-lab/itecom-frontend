@@ -6,98 +6,95 @@ import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { DialogService } from '../../core/services/dialog.service';
 import { CreateCourseComponent } from '../../features/admin/create-course/create-course.component';
+import { LayoutService } from '../../core/services/layout.service';
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive],
   template: `
-    <div class="sidebar pt-3">
-      <div class="px-3 mb-4">
-        <div class="d-flex align-items-center gap-2 p-3 rounded-3" style="background:var(--gray-50);border:1px solid var(--border)">
-          <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="background:var(--dark)"
-               [style.width.px]="40" [style.height.px]="40" [style.fontSize.rem]="0.9" [style.flexShrink]="0">
-            {{ authService.currentUser?.firstName?.charAt(0) }}{{ authService.currentUser?.lastName?.charAt(0) }}
-          </div>
-          <div class="overflow-hidden">
-            <div class="fw-semibold text-truncate" style="font-size:0.85rem;color:var(--dark)">
-              {{ authService.currentUser?.firstName }} {{ authService.currentUser?.lastName }}
-            </div>
-            <span class="d-block small" style="color:var(--muted)">
-              {{ authService.isAdmin ? 'Admin' : authService.isTeacher ? 'Professeur' : 'Étudiant' }}
-            </span>
-          </div>
-        </div>
+    <aside class="sidebar" [class.open]="layout.mobileOpen">
+      <div class="sidebar-brand">
+        <a routerLink="/dashboard" class="sidebar-logo" (click)="layout.closeMobile()">
+          <span class="sidebar-logo-mark"><i class="bi bi-mortarboard-fill"></i></span>
+          <span class="sidebar-logo-text">
+            <span class="sidebar-logo-name">ITECOM</span>
+            <span class="sidebar-logo-sub">E-learning</span>
+          </span>
+        </a>
+        <button type="button" class="sidebar-collapse-btn d-none d-md-inline-flex" (click)="layout.toggleCollapsed()"
+                [attr.aria-label]="layout.collapsed ? 'Déplier le menu' : 'Replier le menu'"
+                [title]="layout.collapsed ? 'Déplier le menu' : 'Replier le menu'">
+          <i class="bi" [ngClass]="layout.collapsed ? 'bi-chevron-double-right' : 'bi-chevron-double-left'"></i>
+        </button>
+        <button type="button" class="sidebar-collapse-btn d-md-none" (click)="layout.closeMobile()" aria-label="Fermer le menu">
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
 
-      <ul class="nav flex-column px-1">
-        <li><a class="nav-link" routerLink="/dashboard" routerLinkActive="active">
-          <i class="bi bi-speedometer2"></i>Tableau de bord</a></li>
-        <li><a class="nav-link" routerLink="/courses" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">
-          <i class="bi bi-compass"></i>Explorer les cours</a></li>
-        <li *ngIf="authService.isStudent || authService.isAdmin">
-          <a class="nav-link" routerLink="/courses/my-learning" routerLinkActive="active">
-            <i class="bi bi-mortarboard"></i>Mon Apprentissage</a></li>
-        <li *ngIf="authService.isStudent || authService.isAdmin">
-          <a class="nav-link" routerLink="/my-exams" routerLinkActive="active">
-            <i class="bi bi-clipboard-check"></i>Examens en ligne</a></li>
-      <!--  <li><a class="nav-link" routerLink="/library" routerLinkActive="active">
-          <i class="bi bi-book"></i>Bibliothèque</a></li>
-        <li><a class="nav-link" routerLink="/references" routerLinkActive="active">
-          <i class="bi bi-journals"></i>Références Zotero</a></li> -->
-        <li><a class="nav-link" routerLink="/virtual-class" routerLinkActive="active">
-          <i class="bi bi-camera-video"></i>Classes Virtuelles</a></li>
-        <li><a class="nav-link" routerLink="/profile" routerLinkActive="active">
-          <i class="bi bi-person-gear"></i>Mon Profil</a></li>
+      <nav class="sidebar-nav" (click)="layout.closeMobile()">
+        <ul class="nav flex-column">
+          <li><a class="nav-link" routerLink="/dashboard" routerLinkActive="active" title="Tableau de bord">
+            <i class="bi bi-bar-chart-line"></i><span>Tableau de bord</span></a></li>
+          <li><a class="nav-link" routerLink="/courses" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" title="Explorer les cours">
+            <i class="bi bi-compass"></i><span>Explorer les cours</span></a></li>
+          <li *ngIf="authService.isStudent || authService.isAdmin">
+            <a class="nav-link" routerLink="/courses/my-learning" routerLinkActive="active" title="Mon apprentissage">
+              <i class="bi bi-mortarboard"></i><span>Mon apprentissage</span></a></li>
+          <li *ngIf="authService.isStudent || authService.isAdmin">
+            <a class="nav-link" routerLink="/my-exams" routerLinkActive="active" title="Examens en ligne">
+              <i class="bi bi-clipboard-check"></i><span>Examens en ligne</span></a></li>
+          <li><a class="nav-link" routerLink="/virtual-class" routerLinkActive="active" title="Classes virtuelles">
+            <i class="bi bi-camera-video"></i><span>Classes virtuelles</span></a></li>
 
-        <ng-container *ngIf="authService.isTeacher || authService.isAdmin">
-          <li class="mt-3 px-2">
-            <span class="sidebar-section">
-              Espace Professeur
-            </span>
-          </li>
-          <li><a class="nav-link" routerLink="/teacher/courses" routerLinkActive="active">
-            <i class="bi bi-collection"></i>Mes Cours</a></li>
-          <li><a class="nav-link" href="#" (click)="$event.preventDefault(); openCourseCreator()">
-            <i class="bi bi-plus-circle"></i>Créer un cours</a></li>
-          <li><a class="nav-link" routerLink="/teacher/exams" routerLinkActive="active">
-            <i class="bi bi-clipboard-check"></i>Examens en ligne</a></li>
-          <li><a class="nav-link" routerLink="/teacher/students" routerLinkActive="active">
-            <i class="bi bi-people"></i>Étudiants et notes</a></li>
-        </ng-container>
+          <ng-container *ngIf="authService.isTeacher || authService.isAdmin">
+            <li class="sidebar-heading"><span>Espace professeur</span></li>
+            <li><a class="nav-link" routerLink="/teacher/courses" routerLinkActive="active" title="Mes cours">
+              <i class="bi bi-collection"></i><span>Mes cours</span></a></li>
+            <li><a class="nav-link" href="#" (click)="$event.preventDefault(); openCourseCreator()" title="Créer un cours">
+              <i class="bi bi-plus-circle"></i><span>Créer un cours</span></a></li>
+            <li><a class="nav-link" routerLink="/teacher/exams" routerLinkActive="active" title="Devoirs et examens">
+              <i class="bi bi-journal-check"></i><span>Devoirs et examens</span></a></li>
+            <li><a class="nav-link" routerLink="/teacher/students" routerLinkActive="active" title="Étudiants et notes">
+              <i class="bi bi-people"></i><span>Étudiants et notes</span></a></li>
+          </ng-container>
 
-        <ng-container *ngIf="authService.isAdmin">
-          <li class="mt-3 px-2">
-            <span class="sidebar-section">
-              Administration
-            </span>
-          </li>
-          <li>
-            <a class="nav-link d-flex align-items-center justify-content-between"
-               routerLink="/admin/registrations" routerLinkActive="active">
-              <span><i class="bi bi-person-check me-2"></i>Inscriptions</span>
-              <span *ngIf="pendingCount > 0"
-                    class="badge rounded-pill"
-                    style="background:var(--primary);color:white;font-size:.65rem;min-width:20px;text-align:center">
-                {{ pendingCount }}
-              </span>
-            </a>
-          </li>
-          <li>
-            <a class="nav-link" routerLink="/admin/users" routerLinkActive="active">
-              <i class="bi bi-people me-2"></i>Étudiants et professeurs
-            </a>
-          </li>
-        </ng-container>
-      </ul>
-    </div>
+          <ng-container *ngIf="authService.isAdmin">
+            <li class="sidebar-heading"><span>Administration</span></li>
+            <li>
+              <a class="nav-link" routerLink="/admin/registrations" routerLinkActive="active" title="Inscriptions">
+                <i class="bi bi-person-check"></i><span>Inscriptions</span>
+                <span *ngIf="pendingCount > 0" class="sidebar-badge">{{ pendingCount }}</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/admin/users" routerLinkActive="active" title="Étudiants et professeurs">
+                <i class="bi bi-person-lines-fill"></i><span>Étudiants et professeurs</span>
+              </a>
+            </li>
+          </ng-container>
+
+          <li class="sidebar-heading"><span>Compte</span></li>
+          <li><a class="nav-link" routerLink="/profile" routerLinkActive="active" title="Mon profil">
+            <i class="bi bi-gear"></i><span>Mon profil</span></a></li>
+        </ul>
+      </nav>
+
+      <div class="sidebar-footer">
+        <button type="button" class="nav-link sidebar-logout" (click)="authService.logout()" title="Déconnexion">
+          <i class="bi bi-box-arrow-left"></i><span>Déconnexion</span>
+        </button>
+      </div>
+    </aside>
+    <div class="sidebar-backdrop" *ngIf="layout.mobileOpen" (click)="layout.closeMobile()"></div>
   `
 })
 export class SidebarComponent implements OnInit {
   pendingCount = 0;
 
   constructor(public authService: AuthService, public userScope: UserScopeService, private http: HttpClient,
-              private dialogs: DialogService, private router: Router) {}
+              private dialogs: DialogService, private router: Router,
+              public layout: LayoutService) {}
 
   /** Création d'un cours dans une popup, puis affichage de « Mes cours ». */
   openCourseCreator() {

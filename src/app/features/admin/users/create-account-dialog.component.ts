@@ -119,7 +119,7 @@ export interface CreatedAccount {
   styles: [`
     .role-card {
       width: 100%; height: 100%; text-align: left; display: flex; flex-direction: column; gap: 6px;
-      padding: 20px; border-radius: 14px; border: 1px solid var(--border); background: #fff;
+      padding: 20px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface);
       transition: border-color .15s, box-shadow .15s, transform .15s;
     }
     .role-card:hover { border-color: var(--primary); box-shadow: 0 8px 22px rgba(28, 29, 31, .08); transform: translateY(-1px); }

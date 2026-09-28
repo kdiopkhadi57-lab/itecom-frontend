@@ -64,7 +64,7 @@ export class CoursePlayerComponent implements OnInit {
 
   exerciseColor(ex: Lesson): string {
     if (ex.type === 'EXCEL_EXERCISE') return '#0ea5e9';
-    if (ex.type === 'CODE_EXERCISE') return '#1d6ff2';
+    if (ex.type === 'CODE_EXERCISE') return '#2b3ea8';
     return '#f59e0b';
   }
 

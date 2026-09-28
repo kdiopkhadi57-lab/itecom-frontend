@@ -27,23 +27,23 @@ interface QcmSummary {
       <!-- Onglets -->
       <div class="d-flex gap-2 mb-4">
         <button class="btn px-4 fw-semibold"
-                [style.background]="tab === 'exams' ? '#6366f1' : '#f3f4f6'"
+                [style.background]="tab === 'exams' ? '#1d6ff2' : '#f3f4f6'"
                 [style.color]="tab === 'exams' ? 'white' : '#374151'"
                 style="border-radius:12px;border:none"
                 (click)="tab = 'exams'">
           <i class="bi bi-clipboard-text me-2"></i>Examens
           <span class="badge ms-1 rounded-pill"
-                [style.background]="tab === 'exams' ? 'rgba(255,255,255,.3)' : '#6366f1'"
+                [style.background]="tab === 'exams' ? 'rgba(255,255,255,.3)' : '#1d6ff2'"
                 style="color:white">{{ exams.length }}</span>
         </button>
         <button class="btn px-4 fw-semibold"
-                [style.background]="tab === 'qcm' ? '#6366f1' : '#f3f4f6'"
+                [style.background]="tab === 'qcm' ? '#1d6ff2' : '#f3f4f6'"
                 [style.color]="tab === 'qcm' ? 'white' : '#374151'"
                 style="border-radius:12px;border:none"
                 (click)="tab = 'qcm'; loadQcms()">
           <i class="bi bi-list-check me-2"></i>Devoirs
           <span class="badge ms-1 rounded-pill"
-                [style.background]="tab === 'qcm' ? 'rgba(255,255,255,.3)' : '#6366f1'"
+                [style.background]="tab === 'qcm' ? 'rgba(255,255,255,.3)' : '#1d6ff2'"
                 style="color:white">{{ qcms.length }}</span>
         </button>
       </div>
@@ -60,7 +60,7 @@ interface QcmSummary {
         <div class="row g-3" *ngIf="!loading && exams.length > 0">
           <div class="col-md-6 col-lg-4" *ngFor="let exam of exams">
             <div class="card h-100 border-0 shadow-sm" style="border-radius:16px;overflow:hidden">
-              <div style="height:4px;background:linear-gradient(90deg,#6366f1,#4f46e5)"></div>
+              <div style="height:4px;background:#1d6ff2"></div>
               <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                   <h5 class="card-title fw-bold mb-0">{{ exam.examTitle }}</h5>
@@ -109,7 +109,7 @@ interface QcmSummary {
           <div class="col-md-6 col-lg-4" *ngFor="let q of qcms">
             <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden">
               <div style="height:4px"
-                   [style.background]="q.alreadyTaken ? 'linear-gradient(90deg,#10b981,#059669)' : 'linear-gradient(90deg,#6366f1,#4f46e5)'">
+                   [style.background]="q.alreadyTaken ? '#1d6ff2' : '#1d6ff2'">
               </div>
               <div class="card-body p-4">
                 <div class="d-flex align-items-start justify-content-between mb-2">
@@ -140,7 +140,7 @@ interface QcmSummary {
               <div class="card-footer bg-transparent border-0 pb-3 px-4 pt-0">
                 <div class="d-flex gap-2">
                   <a *ngIf="!q.alreadyTaken" [routerLink]="['/qcm', q.id, 'passer']"
-                     class="btn btn-sm fw-semibold" style="background:#6366f1;color:white;border-radius:8px">
+                     class="btn btn-sm fw-semibold" style="background:#1d6ff2;color:white;border-radius:8px">
                     <i class="bi bi-play-fill me-1"></i>Commencer
                   </a>
                   <a *ngIf="q.alreadyTaken" [routerLink]="['/qcm', q.id, 'passer']"

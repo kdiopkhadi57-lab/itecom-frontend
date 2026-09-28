@@ -25,11 +25,11 @@ interface Qcm { id: number; title: string; description: string; status: string; 
         </div>
         <div class="d-flex gap-2">
           <!-- <a *ngIf="tab === 'exams'" routerLink="/teacher/exams/create"
-             class="btn fw-semibold" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;border-radius:12px">
+             class="btn fw-semibold" style="background:#1d6ff2;color:white;border-radius:12px">
             <i class="bi bi-plus-circle me-2"></i>Créer un examen
           </a> -->
           <button type="button" *ngIf="tab === 'qcm'" (click)="openQcmEditor()"
-             class="btn fw-semibold" style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;border-radius:12px">
+             class="btn fw-semibold" style="background:#1d6ff2;color:white;border-radius:12px">
             <i class="bi bi-plus-circle me-2"></i>Créer un devoir
           </button>
         </div>
@@ -38,24 +38,24 @@ interface Qcm { id: number; title: string; description: string; status: string; 
       <!-- Onglets -->
       <div class="d-flex gap-2 mb-4">
        <!-- <button class="btn px-4 fw-semibold"
-                [style.background]="tab === 'exams' ? '#6366f1' : '#f3f4f6'"
+                [style.background]="tab === 'exams' ? '#1d6ff2' : '#f3f4f6'"
                 [style.color]="tab === 'exams' ? 'white' : '#374151'"
                 style="border-radius:12px;border:none"
                 (click)="tab = 'exams'">
           <i class="bi bi-clipboard-text me-2"></i>
           Examens
           <span class="badge ms-1 rounded-pill"
-                [style.background]="tab === 'exams' ? 'rgba(255,255,255,.3)' : '#6366f1'"
+                [style.background]="tab === 'exams' ? 'rgba(255,255,255,.3)' : '#1d6ff2'"
                 style="color:white">{{ exams.length }}</span>
         </button>-->
         <button class="btn px-4 fw-semibold"
-                [style.background]="tab === 'qcm' ? '#6366f1' : '#f3f4f6'"
+                [style.background]="tab === 'qcm' ? '#1d6ff2' : '#f3f4f6'"
                 [style.color]="tab === 'qcm' ? 'white' : '#374151'"
                 style="border-radius:12px;border:none"
                 (click)="tab = 'qcm'; loadQcms()">
           <i class="bi bi-list-check me-2"></i>Devoirs ou Examens
           <span class="badge ms-1 rounded-pill"
-                [style.background]="tab === 'qcm' ? 'rgba(255,255,255,.3)' : '#6366f1'"
+                [style.background]="tab === 'qcm' ? 'rgba(255,255,255,.3)' : '#1d6ff2'"
                 style="color:white">{{ qcms.length }}</span>
         </button>
       </div>
@@ -74,7 +74,7 @@ interface Qcm { id: number; title: string; description: string; status: string; 
         <div class="row g-3" *ngIf="!loadingExams && exams.length > 0">
           <div class="col-md-6 col-lg-4" *ngFor="let exam of exams">
             <div class="card h-100 border-0 shadow-sm" style="border-radius:16px;overflow:hidden">
-              <div style="height:5px;background:linear-gradient(90deg,#6366f1,#4f46e5)"></div>
+              <div style="height:5px;background:#1d6ff2"></div>
               <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                   <h6 class="card-title fw-bold mb-0 flex-grow-1 me-2">{{ exam.title }}</h6>
@@ -133,13 +133,13 @@ interface Qcm { id: number; title: string; description: string; status: string; 
           <div class="col-12 col-md-6 col-xl-4" *ngFor="let q of qcms">
             <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden">
               <div style="height:5px"
-                   [style.background]="q.status === 'PUBLISHED' ? 'linear-gradient(90deg,#10b981,#059669)' : 'linear-gradient(90deg,#6366f1,#4f46e5)'">
+                   [style.background]="q.status === 'PUBLISHED' ? '#1d6ff2' : '#1d6ff2'">
               </div>
               <div class="card-body p-4">
                 <div class="d-flex align-items-start justify-content-between mb-2">
                   <h6 class="fw-bold mb-0 flex-grow-1 me-2">{{ q.title }}</h6>
                   <span class="badge rounded-pill"
-                        [style.background]="q.status === 'PUBLISHED' ? '#d1fae5' : '#e0e7ff'"
+                        [style.background]="q.status === 'PUBLISHED' ? '#d1fae5' : '#eef4ff'"
                         [style.color]="q.status === 'PUBLISHED' ? '#065f46' : '#3730a3'">
                     {{ q.status === 'PUBLISHED' ? 'Publié' : 'Brouillon' }}
                   </span>

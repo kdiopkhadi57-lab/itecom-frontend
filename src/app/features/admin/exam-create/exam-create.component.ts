@@ -136,11 +136,11 @@ interface StudentPreview { name: string; email: string; }
       </div>
 
       <!-- ── Liste des étudiants ─────────────────────────────────────── -->
-      <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #c7d2fe!important">
+      <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #c8dbfd!important">
         <div class="card-body p-4">
           <div class="d-flex align-items-center gap-3 mb-3">
             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:44px;height:44px;background:#ede9fe;color:#6366f1;font-size:1.3rem">
+                 style="width:44px;height:44px;background:#eef4ff;color:#1d6ff2;font-size:1.3rem">
               <i class="bi bi-people"></i>
             </div>
             <div class="flex-grow-1">

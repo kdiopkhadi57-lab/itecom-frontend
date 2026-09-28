@@ -1,17 +1,32 @@
-/* ===== GLOBAL STYLES - ELearning Platform ===== */
+/* ===== GLOBAL STYLES - ITECOM =====
+   Palette sobre (façon Udemy) : une seule couleur d'accent, des neutres pour le reste.
+   Vert / rouge / orange sont réservés aux états (juste, faux, erreur, alerte). */
 :root {
-  --primary: #6366f1;
-  --primary-dark: #4f46e5;
-  --secondary: #06b6d4;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --dark: #0f172a;
-  --gray-50: #f8fafc;
-  --gray-100: #f1f5f9;
-  --gray-200: #e2e8f0;
-  --gray-600: #475569;
-  --gray-800: #1e293b;
+  --primary: #1d6ff2;          /* accent unique : boutons, liens, élément actif */
+  --primary-dark: #1658c4;
+  --primary-soft: #eef4ff;     /* fond léger d'un élément actif */
+  --secondary: #1d6ff2;
+  --success: #1e8e3e;
+  --warning: #b4690e;
+  --danger: #c0392b;
+  --dark: #1c1d1f;             /* texte principal */
+  --muted: #6a6f73;            /* texte secondaire */
+  --border: #d1d7dc;           /* bordures */
+  --gray-50: #f7f9fa;
+  --gray-100: #f1f3f5;
+  --gray-200: #e4e8eb;
+  --gray-600: #6a6f73;
+  --gray-800: #2d2f31;
+
+  /* Bootstrap aligné sur la palette */
+  --bs-primary: #1d6ff2;
+  --bs-primary-rgb: 29, 111, 242;
+  --bs-link-color: #1d6ff2;
+  --bs-link-color-rgb: 29, 111, 242;
+  --bs-link-hover-color: #1658c4;
+  --bs-body-color: #1c1d1f;
+  --bs-secondary-color: #6a6f73;
+  --bs-border-color: #d1d7dc;
   --sidebar-width: 260px;
   --navbar-height: 65px;
 }
@@ -26,13 +41,33 @@ body {
 }
 
 /* ===== NAVBAR ===== */
-.navbar-brand {
-  font-weight: 800;
-  font-size: 1.4rem;
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+.app-navbar { background: #fff; border-bottom: 1px solid var(--border); }
+.navbar-brand { font-weight: 800; font-size: 1.35rem; color: var(--dark) !important; letter-spacing: .01em; }
+.navbar-brand .com { color: var(--primary); }
+
+/* ===== BOOTSTRAP : couleurs d'accent unifiées ===== */
+.btn-primary {
+  --bs-btn-bg: var(--primary); --bs-btn-border-color: var(--primary);
+  --bs-btn-hover-bg: var(--primary-dark); --bs-btn-hover-border-color: var(--primary-dark);
+  --bs-btn-active-bg: var(--primary-dark); --bs-btn-active-border-color: var(--primary-dark);
+  --bs-btn-disabled-bg: var(--primary); --bs-btn-disabled-border-color: var(--primary);
 }
+.btn-outline-primary {
+  --bs-btn-color: var(--primary); --bs-btn-border-color: var(--primary);
+  --bs-btn-hover-bg: var(--primary); --bs-btn-hover-border-color: var(--primary);
+  --bs-btn-active-bg: var(--primary-dark); --bs-btn-active-border-color: var(--primary-dark);
+}
+.btn-success {
+  --bs-btn-bg: var(--dark); --bs-btn-border-color: var(--dark);
+  --bs-btn-hover-bg: #000; --bs-btn-hover-border-color: #000;
+}
+.text-primary { color: var(--primary) !important; }
+.bg-primary { background-color: var(--primary) !important; }
+.border-primary { border-color: var(--primary) !important; }
+.form-check-input:checked { background-color: var(--primary); border-color: var(--primary); }
+.form-control:focus, .form-select:focus { border-color: var(--primary); box-shadow: 0 0 0 .2rem rgba(29, 111, 242, .15); }
+.card { border-color: var(--border); }
+.text-muted { color: var(--muted) !important; }
 
 /* ===== SIDEBAR ===== */
 .sidebar {
@@ -41,14 +76,15 @@ body {
   top: var(--navbar-height);
   width: var(--sidebar-width);
   height: calc(100vh - var(--navbar-height));
-  background: var(--gray-800);
+  background: #fff;
+  border-right: 1px solid var(--border);
   overflow-y: auto;
   z-index: 100;
   transition: all 0.3s ease;
 }
 
 .sidebar .nav-link {
-  color: #94a3b8;
+  color: var(--dark);
   padding: 12px 20px;
   border-radius: 8px;
   margin: 2px 10px;
@@ -59,10 +95,11 @@ body {
   gap: 10px;
 }
 
-.sidebar .nav-link:hover, .sidebar .nav-link.active {
-  background: var(--primary);
-  color: white;
-}
+.sidebar .nav-link:hover { background: var(--gray-100); color: var(--dark); }
+.sidebar .nav-link.active { background: var(--primary-soft); color: var(--primary); font-weight: 600; }
+.sidebar .nav-link i { color: var(--muted); }
+.sidebar .nav-link.active i { color: var(--primary); }
+.sidebar-section { font-size: .68rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 700; color: var(--muted); }
 
 .main-content {
   margin-left: var(--sidebar-width);
@@ -82,7 +119,7 @@ body {
 
 /* ===== CARDS ===== */
 .course-card {
-  border: none;
+  border: 1px solid var(--border);
   border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -91,7 +128,7 @@ body {
 
 .course-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 20px 40px rgba(99,102,241,.15);
+  box-shadow: 0 12px 28px rgba(28, 29, 31, .12);
 }
 
 .course-thumbnail {
@@ -110,8 +147,8 @@ body {
 
 /* ===== BADGES ===== */
 .badge-category {
-  background: rgba(99,102,241,.1);
-  color: var(--primary);
+  background: var(--gray-100);
+  color: var(--dark);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 0.75rem;
@@ -125,9 +162,7 @@ body {
   font-weight: 600;
 }
 
-.badge-level.BEGINNER { background: #d1fae5; color: #065f46; }
-.badge-level.INTERMEDIATE { background: #fef3c7; color: #92400e; }
-.badge-level.ADVANCED { background: #fee2e2; color: #991b1b; }
+.badge-level.BEGINNER, .badge-level.INTERMEDIATE, .badge-level.ADVANCED { background: var(--gray-100); color: var(--dark); border: 1px solid var(--border); }
 
 /* ===== PROGRESS BAR ===== */
 .progress-custom {
@@ -137,7 +172,7 @@ body {
 }
 
 .progress-custom .progress-bar {
-  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  background: var(--primary);
   border-radius: 10px;
 }
 
@@ -181,38 +216,18 @@ body {
 
 /* ===== DASHBOARD STATS ===== */
 .stat-card {
-  border-radius: 16px;
-  padding: 24px;
-  border: none;
-  position: relative;
-  overflow: hidden;
+  border-radius: 14px;
+  padding: 20px 22px;
+  background: #fff !important;
+  border: 1px solid var(--border);
+  display: flex; flex-direction: column;
 }
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: -20px; right: -20px;
-  width: 80px; height: 80px;
-  border-radius: 50%;
-  opacity: 0.1;
-  background: white;
-}
-
 .stat-card .stat-icon {
-  font-size: 2rem;
-  margin-bottom: 8px;
+  width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  background: var(--primary-soft); color: var(--primary); font-size: 1.25rem; margin-bottom: 12px;
 }
-
-.stat-card .stat-value {
-  font-size: 2rem;
-  font-weight: 800;
-  color: white;
-}
-
-.stat-card .stat-label {
-  font-size: 0.875rem;
-  color: rgba(255,255,255,.8);
-}
+.stat-card .stat-value { font-size: 1.9rem; font-weight: 800; color: var(--dark); line-height: 1.1; }
+.stat-card .stat-label { font-size: .85rem; color: var(--muted); }
 
 /* ===== AI ASSISTANT ===== */
 .ai-chat-container {
@@ -270,7 +285,7 @@ body {
 
 /* ===== BUTTONS ===== */
 .btn-primary-custom {
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  background: var(--primary);
   color: white;
   border: none;
   border-radius: 10px;
@@ -280,8 +295,7 @@ body {
 }
 
 .btn-primary-custom:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(99,102,241,.4);
+  background: var(--primary-dark);
   color: white;
 }
 

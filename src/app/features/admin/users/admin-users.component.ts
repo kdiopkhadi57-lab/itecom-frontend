@@ -38,7 +38,7 @@ interface AppUser {
           <h1 class="fw-bold mb-0">Membres de la plateforme</h1>
           <p class="text-muted mb-0">Gérez les apprenants et les partenaires (professeurs)</p>
         </div>
-        <button class="btn fw-semibold px-3" style="background:linear-gradient(135deg,#0b2a6f,#1d6ff2);color:#fff;border-radius:12px"
+        <button class="btn fw-semibold px-3" style="background:#1d6ff2;color:#fff;border-radius:12px"
                 (click)="openCreate()">
           <i class="bi bi-person-plus me-2"></i>Créer un compte
         </button>
@@ -140,7 +140,7 @@ interface AppUser {
         <div class="col-6 col-md-3">
           <div class="card border-0 shadow-sm text-center p-3" style="border-radius:14px">
             <div style="font-size:2rem"><i class="bi bi-mortarboard"></i></div>
-            <div class="fw-bold fs-4 mt-1" style="color:#6366f1">{{ students.length }}</div>
+            <div class="fw-bold fs-4 mt-1" style="color:#1d6ff2">{{ students.length }}</div>
             <div class="text-muted small">Apprenants</div>
           </div>
         </div>
@@ -177,13 +177,13 @@ interface AppUser {
             <!-- Onglets -->
             <div class="d-flex gap-2">
               <button class="btn fw-semibold px-4"
-                      [style.background]="activeTab === 'students' ? '#6366f1' : '#f3f4f6'"
+                      [style.background]="activeTab === 'students' ? '#1d6ff2' : '#f3f4f6'"
                       [style.color]="activeTab === 'students' ? 'white' : '#374151'"
                       style="border-radius:10px;border:none"
                       (click)="activeTab = 'students'; filterList()">
                 <i class="bi bi-mortarboard me-1"></i>Apprenants
                 <span class="badge ms-1 rounded-pill"
-                      [style.background]="activeTab === 'students' ? 'rgba(255,255,255,.3)' : '#6366f1'"
+                      [style.background]="activeTab === 'students' ? 'rgba(255,255,255,.3)' : '#1d6ff2'"
                       style="color:white">{{ students.length }}</span>
               </button>
               <button class="btn fw-semibold px-4"
@@ -233,7 +233,7 @@ interface AppUser {
 
             <!-- Bandeau coloré selon le rôle -->
             <div style="height:5px"
-                 [style.background]="activeTab === 'students' ? 'linear-gradient(90deg,#6366f1,#4f46e5)' : 'linear-gradient(90deg,#10b981,#059669)'">
+                 [style.background]="activeTab === 'students' ? '#1d6ff2' : '#1d6ff2'">
             </div>
 
             <div class="card-body p-4">
@@ -241,7 +241,7 @@ interface AppUser {
 
                 <!-- Avatar -->
                 <div style="width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.1rem;flex-shrink:0"
-                     [style.background]="activeTab === 'students' ? 'linear-gradient(135deg,#6366f1,#4f46e5)' : 'linear-gradient(135deg,#10b981,#059669)'">
+                     [style.background]="activeTab === 'students' ? '#1d6ff2' : '#1d6ff2'">
                   {{ u.firstName.charAt(0) }}{{ u.lastName.charAt(0) }}
                 </div>
 
@@ -252,7 +252,7 @@ interface AppUser {
                   <!-- Niveau, filière, naissance (apprenants) -->
                   <div *ngIf="activeTab === 'students'" class="d-flex flex-wrap gap-1 mt-1">
                     <span *ngIf="u.level" class="badge" style="background:#dbeafe;color:#1d4ed8;font-size:.72rem">{{ u.level }}</span>
-                    <span *ngIf="u.specialization" class="badge" style="background:#ede9fe;color:#6d28d9;font-size:.72rem">
+                    <span *ngIf="u.specialization" class="badge" style="background:#eef4ff;color:#1658c4;font-size:.72rem">
                       {{ getSpecialization(u.specialization) }}
                     </span>
                   </div>

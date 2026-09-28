@@ -348,7 +348,7 @@ interface DiscoveredBook {
                   <i class="bi bi-book-half me-1"></i>Lire le livre
                 </a>
                 <a *ngIf="selectedBook.hasFile && selectedBook.fileUrl"
-                   [href]="selectedBook.fileUrl" target="_blank"
+                   [href]="selectedBook.fileUrl" download
                    class="btn btn-outline-secondary">
                   <i class="bi bi-download me-1"></i>Télécharger PDF
                 </a>

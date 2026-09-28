@@ -118,7 +118,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
 
     <div class="vr mx-1"></div>
 
-    <a *ngIf="book?.fileUrl" [href]="book?.fileUrl" target="_blank"
+    <a *ngIf="book?.fileUrl" [href]="book?.fileUrl" download
        class="btn btn-sm btn-ghost" title="Télécharger le PDF">
       <i class="bi bi-download"></i>
     </a>
@@ -300,7 +300,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
   <div *ngIf="showNoteDialog" class="modal-overlay" (click)="showNoteDialog=false">
     <div class="note-dialog" (click)="$event.stopPropagation()">
       <h6 class="fw-bold mb-3"><i class="bi bi-sticky me-2"></i>Ajouter une note</h6>
-      <div class="mb-2 p-2 bg-light rounded small text-muted" *ngIf="pendingText" style="border-left:3px solid #6366f1">
+      <div class="mb-2 p-2 bg-light rounded small text-muted" *ngIf="pendingText" style="border-left:3px solid #1d6ff2">
         "{{ pendingText | slice:0:120 }}{{ pendingText.length > 120 ? '…' : '' }}"
       </div>
       <textarea class="form-control form-control-sm mb-3" rows="4"
@@ -377,7 +377,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
       position: relative;
     }
     .btn-ghost:hover { background: #f1f5f9; color: #1e293b; }
-    .btn-ghost.active-panel, .btn-ghost.active { background: #e0e7ff; color: #4f46e5; }
+    .btn-ghost.active-panel, .btn-ghost.active { background: #eef4ff; color: #1658c4; }
     [data-mode="night"] .btn-ghost { color: #94a3b8; }
     [data-mode="night"] .btn-ghost:hover { background: #2d3748; }
     .mode-btn { font-size: .85rem; }
@@ -403,7 +403,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
       height: 3px; background: #e2e8f0; flex-shrink: 0;
     }
     .reading-progress-fill {
-      height: 100%; background: linear-gradient(90deg,#6366f1,#818cf8);
+      height: 100%; background: #1d6ff2;
       transition: width .3s ease;
     }
 
@@ -428,7 +428,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
       background: #f8fafc; border: 1px solid #e2e8f0; cursor: pointer;
       transition: border-color .15s;
     }
-    .annotation-card:hover { border-color: #6366f1; }
+    .annotation-card:hover { border-color: #1d6ff2; }
     [data-mode="night"] .annotation-card { background: #2d3748; border-color: #4a5568; }
     .note-card { border-left: 3px solid #f59e0b; }
     .ann-color-dot {
@@ -439,7 +439,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
       display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
     }
     [data-mode="night"] .ann-text { color: #94a3b8; }
-    .ann-note { font-size: .75rem; color: #6366f1; margin: 0; }
+    .ann-note { font-size: .75rem; color: #1d6ff2; margin: 0; }
     .btn-xs { padding: 1px 4px; font-size: .7rem; }
 
     .bookmark-item {

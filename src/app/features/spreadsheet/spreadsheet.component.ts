@@ -163,9 +163,9 @@ type Token = { type: 'num' | 'ref' | 'ident' | 'op' | 'lparen' | 'rparen' | 'com
     .sheet-table th { background: #f1f5f9; border: 1px solid #d1d5db; padding: 4px; text-align: center; min-width: 130px; font-size: 0.8rem; font-weight: 600; color: #475569; position: sticky; top: 0; z-index: 1; }
     .sheet-table th.row-header { min-width: 40px; position: sticky; left: 0; z-index: 2; }
     .sheet-table th.corner { min-width: 40px; position: sticky; left: 0; top: 0; z-index: 3; }
-    .sheet-table th.selected-header { background: #c7d2fe; color: #1e1b4b; }
+    .sheet-table th.selected-header { background: #c8dbfd; color: #1e1b4b; }
     .sheet-table td { border: 1px solid #e2e8f0; padding: 0; min-width: 130px; }
-    .sheet-table td.selected { outline: 2px solid #6366f1; outline-offset: -2px; }
+    .sheet-table td.selected { outline: 2px solid #1d6ff2; outline-offset: -2px; }
     .cell-input { width: 100%; height: 30px; border: none; outline: none; padding: 2px 6px; font-size: 0.85rem; background: transparent; }
     .cell-input:focus { background: #eef2ff; }
     @media(max-width: 992px) { .d-flex.gap-3 { flex-direction: column; } .exercise-panel { width: 100%; } }

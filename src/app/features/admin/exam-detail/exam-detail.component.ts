@@ -6,6 +6,8 @@ import { HttpClient } from '@angular/common/http';
 import { ExamService } from '../../../core/services/exam.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Exam, ExamStudent, ExamSubmissionDetail } from '../../../core/models/exam.model';
+import { FileViewerComponent } from '../../../shared/components/file-viewer.component';
+import { DialogService } from '../../../core/services/dialog.service';
 
 interface StudentPreview { name: string; email: string; }
 
@@ -96,11 +98,11 @@ interface StudentPreview { name: string; email: string; }
         </div>
 
         <!-- ── Ajouter des étudiants ──────────────────────────────── -->
-        <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #c7d2fe!important">
+        <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #c8dbfd!important">
           <div class="card-body p-4">
             <div class="d-flex align-items-center gap-3">
               <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                   style="width:44px;height:44px;background:#ede9fe;color:#6366f1;font-size:1.3rem"><i class="bi bi-people"></i></div>
+                   style="width:44px;height:44px;background:#eef4ff;color:#1d6ff2;font-size:1.3rem"><i class="bi bi-people"></i></div>
               <div class="flex-grow-1">
                 <h6 class="fw-bold mb-0">Ajouter des étudiants</h6>
                 <p class="text-muted mb-0 small">Excel (.xlsx), PDF ou Word (.docx) — col. A = Nom, col. B = Email</p>
@@ -136,7 +138,7 @@ interface StudentPreview { name: string; email: string; }
                   <button class="btn btn-sm btn-outline-secondary" (click)="addStudentPreview=[]">Annuler</button>
                   <button class="btn btn-sm fw-semibold" (click)="confirmAddStudents()"
                           [disabled]="addStudentSaving"
-                          style="background:#6366f1;color:white;border-radius:8px">
+                          style="background:#1d6ff2;color:white;border-radius:8px">
                     <span *ngIf="addStudentSaving" class="spinner-border spinner-border-sm me-1"></span>
                     <i *ngIf="!addStudentSaving" class="bi bi-check2 me-1"></i>
                     {{ addStudentSaving ? 'Ajout...' : 'Confirmer l\'ajout' }}
@@ -281,9 +283,9 @@ interface StudentPreview { name: string; email: string; }
                   <div class="d-flex flex-column gap-2" style="max-height:75vh;overflow-y:auto">
                     <div *ngFor="let url of comparisonDetail.scannedFileUrls; let i = index" class="border rounded p-1">
                       <img *ngIf="!isPdf(url)" [src]="url" class="img-fluid w-100" [alt]="'Page ' + (i+1)">
-                      <a *ngIf="isPdf(url)" [href]="url" target="_blank" class="btn btn-outline-secondary btn-sm w-100">
+                      <button *ngIf="isPdf(url)" type="button" (click)="viewFile(url, null, 'Copie scannée — page ' + (i + 1))" class="btn btn-outline-secondary btn-sm w-100">
                         <i class="bi bi-file-earmark-pdf me-1"></i>Voir le PDF (page {{ i+1 }})
-                      </a>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -345,7 +347,7 @@ export class ExamDetailComponent implements OnInit {
   addStudentError = '';
   addStudentSuccess = '';
 
-  constructor(
+  constructor(private dialogs: DialogService, 
     private route: ActivatedRoute,
     private examService: ExamService,
     public authService: AuthService,
@@ -507,5 +509,11 @@ export class ExamDetailComponent implements OnInit {
         this.addStudentError = err.error?.message || 'Erreur lors de l\'ajout des étudiants.';
       }
     });
+  }
+
+  /** Affiche un fichier (copie scannée, sujet…) dans une popup, sans quitter la page. */
+  viewFile(url: string | null | undefined, name?: string | null, title = 'Aperçu du fichier') {
+    if (!url) return;
+    this.dialogs.open(FileViewerComponent, { title, icon: 'bi-file-earmark-richtext', size: 'xl', data: { url, name: name || undefined } });
   }
 }

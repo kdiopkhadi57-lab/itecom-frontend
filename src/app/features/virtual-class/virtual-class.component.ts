@@ -343,7 +343,7 @@ export class VirtualClassComponent implements OnInit {
 
   getTabLabel() { return { upcoming: 'à venir', ongoing: 'en cours', past: 'passée' }[this.activeTab] || ''; }
   getStatusLabel(s: string) { return { SCHEDULED: 'Planifiée', ONGOING: 'En direct', COMPLETED: 'Terminée', CANCELLED: 'Annulée' }[s] || s; }
-  getStatusColor(s: string) { return { SCHEDULED: '#6366f1', ONGOING: '#ef4444', COMPLETED: '#10b981', CANCELLED: '#94a3b8' }[s] || '#6366f1'; }
+  getStatusColor(s: string) { return { SCHEDULED: '#1d6ff2', ONGOING: '#ef4444', COMPLETED: '#10b981', CANCELLED: '#94a3b8' }[s] || '#1d6ff2'; }
 
   joinRoom(id: number) { this.router.navigate(['/virtual-class', id, 'room']); }
 

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { FileViewerComponent } from '../../shared/components/file-viewer.component';
+import { DialogService } from '../../core/services/dialog.service';
 
 interface ReponseDetail { questionText: string; points: number; choiceSelected: string; isCorrect: boolean; correctChoice: string; questionType?: string; textAnswer?: string; }
 interface GridRowResult { id: string; label: string; question?: string; expectedRaw: string; studentValue?: string | null; source?: string | null; correct: boolean; points: number; maxPoints: number; }
@@ -149,10 +151,10 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
             </div>
             <div *ngIf="detail.status === 'NON_COMMENCE'" class="alert alert-light border">L'étudiant n'a pas encore commencé ce devoir.</div>
 
-            <a *ngIf="detail.paperCorrectionUrl" class="btn btn-sm btn-outline-primary mb-3"
-               [href]="detail.paperCorrectionUrl" target="_blank" rel="noopener">
+            <button *ngIf="detail.paperCorrectionUrl" type="button" class="btn btn-sm btn-outline-primary mb-3"
+                    (click)="viewFile(detail.paperCorrectionUrl, detail.paperCorrectionFilename, 'Copie scannée')">
               <i class="bi bi-file-earmark-image me-1"></i>Voir la copie scannée
-            </a>
+            </button>
 
             <div *ngFor="let grid of detail.correctionDetail || []" class="mb-3">
               <div class="d-flex justify-content-between align-items-center mb-2">
@@ -280,7 +282,7 @@ export class QcmResultatsComponent implements OnInit {
   editError = '';
   saving = false;
 
-  constructor(private http: HttpClient, private route: ActivatedRoute) {}
+  constructor(private dialogs: DialogService, private http: HttpClient, private route: ActivatedRoute) {}
 
   ngOnInit() {
     this.qcmId = +this.route.snapshot.paramMap.get('id')!;
@@ -401,5 +403,11 @@ export class QcmResultatsComponent implements OnInit {
       },
       error: () => { this.downloading = false; }
     });
+  }
+
+  /** Affiche un fichier (copie scannée, sujet…) dans une popup, sans quitter la page. */
+  viewFile(url: string | null | undefined, name?: string | null, title = 'Aperçu du fichier') {
+    if (!url) return;
+    this.dialogs.open(FileViewerComponent, { title, icon: 'bi-file-earmark-richtext', size: 'xl', data: { url, name: name || undefined } });
   }
 }

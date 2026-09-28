@@ -196,7 +196,7 @@ interface Template {
       outline: none;
       tab-size: 2;
     }
-    .code-editor:focus { border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,.15); }
+    .code-editor:focus { border-color: #1d6ff2; box-shadow: 0 0 0 2px rgba(29,111,242,.15); }
     .preview-container {
       flex: 1;
       border: 1px solid #d1d5db;

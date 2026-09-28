@@ -147,7 +147,7 @@ export class TeacherCoursesComponent implements OnInit {
   getCategoryIcon(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.icon || 'bi-journal-bookmark'; }
   getCategoryLabel(cat: string) { return COURSE_CATEGORIES.find(c => c.key === cat)?.label || cat; }
   getCategoryGradient(cat: string) {
-    let color = COURSE_CATEGORIES.find(c => c.key === cat)?.color || '#6366f1';
+    let color = COURSE_CATEGORIES.find(c => c.key === cat)?.color || '#1d6ff2';
     return `linear-gradient(135deg, ${color}, ${color}bb)`;
   }
   getLevelLabel(lvl: string) { return { BEGINNER: 'Débutant', INTERMEDIATE: 'Intermédiaire', ADVANCED: 'Avancé' }[lvl] || lvl; }

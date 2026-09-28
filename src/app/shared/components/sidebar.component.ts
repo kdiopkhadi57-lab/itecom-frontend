@@ -14,19 +14,16 @@ import { CreateCourseComponent } from '../../features/admin/create-course/create
   template: `
     <div class="sidebar pt-3">
       <div class="px-3 mb-4">
-        <div class="d-flex align-items-center gap-2 p-3 rounded-3" style="background:rgba(255,255,255,.07)">
-          <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold"
-               style="width:40px;height:40px;font-size:0.9rem;flex-shrink:0">
+        <div class="d-flex align-items-center gap-2 p-3 rounded-3" style="background:var(--gray-50);border:1px solid var(--border)">
+          <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold" style="background:var(--dark)"
+               [style.width.px]="40" [style.height.px]="40" [style.fontSize.rem]="0.9" [style.flexShrink]="0">
             {{ authService.currentUser?.firstName?.charAt(0) }}{{ authService.currentUser?.lastName?.charAt(0) }}
           </div>
           <div class="overflow-hidden">
-            <div class="text-white fw-semibold text-truncate" style="font-size:0.85rem">
+            <div class="fw-semibold text-truncate" style="font-size:0.85rem;color:var(--dark)">
               {{ authService.currentUser?.firstName }} {{ authService.currentUser?.lastName }}
             </div>
-            <span class="badge" style="font-size:.6rem"
-                  [class.bg-primary]="authService.isStudent"
-                  [class.bg-success]="authService.isTeacher"
-                  [class.bg-danger]="authService.isAdmin">
+            <span class="d-block small" style="color:var(--muted)">
               {{ authService.isAdmin ? 'Admin' : authService.isTeacher ? 'Professeur' : 'Étudiant' }}
             </span>
           </div>
@@ -55,7 +52,7 @@ import { CreateCourseComponent } from '../../features/admin/create-course/create
 
         <ng-container *ngIf="authService.isTeacher || authService.isAdmin">
           <li class="mt-3 px-2">
-            <span class="text-secondary" style="font-size:.65rem;text-transform:uppercase;letter-spacing:1px;font-weight:600">
+            <span class="sidebar-section">
               Espace Professeur
             </span>
           </li>
@@ -71,7 +68,7 @@ import { CreateCourseComponent } from '../../features/admin/create-course/create
 
         <ng-container *ngIf="authService.isAdmin">
           <li class="mt-3 px-2">
-            <span class="text-secondary" style="font-size:.65rem;text-transform:uppercase;letter-spacing:1px;font-weight:600">
+            <span class="sidebar-section">
               Administration
             </span>
           </li>
@@ -81,7 +78,7 @@ import { CreateCourseComponent } from '../../features/admin/create-course/create
               <span><i class="bi bi-person-check me-2"></i>Inscriptions</span>
               <span *ngIf="pendingCount > 0"
                     class="badge rounded-pill"
-                    style="background:#f59e0b;color:white;font-size:.65rem;min-width:20px;text-align:center">
+                    style="background:var(--primary);color:white;font-size:.65rem;min-width:20px;text-align:center">
                 {{ pendingCount }}
               </span>
             </a>

@@ -40,20 +40,20 @@ export interface Progress {
 }
 
 export const COURSE_CATEGORIES = [
-  { key: 'algorithms', label: 'Algorithms', icon: 'bi-123', color: '#6366f1' },
-  { key: 'java', label: 'Java', icon: 'bi-cup-hot', color: '#f59e0b' },
-  { key: 'python', label: 'Python', icon: 'bi-filetype-py', color: '#10b981' },
-  { key: 'javascript', label: 'JavaScript', icon: 'bi-filetype-js', color: '#eab308' },
-  { key: 'angular', label: 'Angular', icon: '🅰️', color: '#ef4444' },
-  { key: 'springboot', label: 'Spring Boot', icon: 'bi-tree', color: '#10b981' },
-  { key: 'sql', label: 'SQL', icon: 'bi-database', color: '#06b6d4' },
-  { key: 'django', label: 'Django', icon: 'bi-filetype-py', color: '#0f172a' },
-  { key: 'fastapi', label: 'FastAPI', icon: 'bi-lightning-charge', color: '#22c55e' },
-  { key: 'comptabilite', label: 'Comptabilité & Gestion', icon: 'bi-bar-chart', color: '#0ea5e9' },
-  { key: 'sage-femme', label: 'Sage-Femme d\'État', icon: 'bi-heart-pulse', color: '#ec4899' },
-  { key: 'marketing-digital', label: 'Marketing Digital', icon: 'bi-megaphone', color: '#f97316' },
-  { key: 'developpement-personnel', label: 'Développement Personnel', icon: 'bi-flower2', color: '#14b8a6' },
-  { key: 'virtual', label: 'Classes Virtuelles', icon: 'bi-camera-video', color: '#8b5cf6' }
+  { key: 'algorithms', label: 'Algorithms', icon: 'bi-123', color: '#1d6ff2' },
+  { key: 'java', label: 'Java', icon: 'bi-cup-hot', color: '#1d6ff2' },
+  { key: 'python', label: 'Python', icon: 'bi-filetype-py', color: '#1d6ff2' },
+  { key: 'javascript', label: 'JavaScript', icon: 'bi-filetype-js', color: '#1d6ff2' },
+  { key: 'angular', label: 'Angular', icon: '🅰️', color: '#1d6ff2' },
+  { key: 'springboot', label: 'Spring Boot', icon: 'bi-tree', color: '#1d6ff2' },
+  { key: 'sql', label: 'SQL', icon: 'bi-database', color: '#1d6ff2' },
+  { key: 'django', label: 'Django', icon: 'bi-filetype-py', color: '#1d6ff2' },
+  { key: 'fastapi', label: 'FastAPI', icon: 'bi-lightning-charge', color: '#1d6ff2' },
+  { key: 'comptabilite', label: 'Comptabilité & Gestion', icon: 'bi-bar-chart', color: '#1d6ff2' },
+  { key: 'sage-femme', label: 'Sage-Femme d\'État', icon: 'bi-heart-pulse', color: '#1d6ff2' },
+  { key: 'marketing-digital', label: 'Marketing Digital', icon: 'bi-megaphone', color: '#1d6ff2' },
+  { key: 'developpement-personnel', label: 'Développement Personnel', icon: 'bi-flower2', color: '#1d6ff2' },
+  { key: 'virtual', label: 'Classes Virtuelles', icon: 'bi-camera-video', color: '#1d6ff2' }
 ];
 
 // Catégories qui ne relèvent pas d'une filière "informatique/programmation"

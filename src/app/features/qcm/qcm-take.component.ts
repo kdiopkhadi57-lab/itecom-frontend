@@ -5,6 +5,8 @@ import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { UiChromeService } from '../../core/services/ui-chrome.service';
+import { FileViewerComponent } from '../../shared/components/file-viewer.component';
+import { DialogService } from '../../core/services/dialog.service';
 
 interface Choice   { id: number; choiceText: string; orderIndex: number; }
 interface Question {
@@ -106,7 +108,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
           Vous avez <strong>{{ fullscreenRemainingTime }} secondes</strong> pour revenir en plein écran,
           sinon vos réponses seront automatiquement soumises.
         </p>
-        <button class="btn btn-lg" style="background:#6366f1;color:#fff;border-radius:12px" (click)="resumeFullscreen()">
+        <button class="btn btn-lg" style="background:#1d6ff2;color:#fff;border-radius:12px" (click)="resumeFullscreen()">
           <i class="bi bi-arrows-fullscreen me-1"></i>Revenir en plein écran
         </button>
       </div>
@@ -142,9 +144,9 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
           <h2 class="fw-bold mt-2">{{ resultat.mention }}</h2>
           <p class="text-muted">{{ resultat.qcmTitle }}</p>
           <div class="d-inline-flex align-items-center gap-4 p-4 rounded-4 mb-3"
-               style="background:linear-gradient(135deg,#f8f9ff,#ede9fe)">
+               style="background:linear-gradient(135deg,#f7f9fa,#eef4ff)">
             <div class="text-center">
-              <div class="fw-bold" style="font-size:2.5rem;color:#6366f1">{{ resultat.score }}</div>
+              <div class="fw-bold" style="font-size:2.5rem;color:#1d6ff2">{{ resultat.score }}</div>
               <div class="text-muted small">Points obtenus</div>
             </div>
             <div style="font-size:2rem;color:#9ca3af">/</div>
@@ -250,7 +252,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
             Le devoir démarre en plein écran. Le copier/coller et le clic droit sont désactivés pendant l'épreuve.
           </div>
           <div *ngIf="startError" class="alert alert-danger small">{{ startError }}</div>
-          <button class="btn btn-lg fw-semibold" style="background:#6366f1;color:#fff;border-radius:12px" (click)="startQcm()"
+          <button class="btn btn-lg fw-semibold" style="background:#1d6ff2;color:#fff;border-radius:12px" (click)="startQcm()"
                   [disabled]="starting">
             <span *ngIf="starting" class="spinner-border spinner-border-sm me-2"></span>
             ▶ Commencer le devoir
@@ -262,10 +264,10 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
       <div *ngIf="status === 'active' && qcm" style="flex:1 1 auto;min-height:0;overflow-y:auto">
         <div style="max-width:760px;margin:0 auto;padding:24px 16px">
           <div *ngIf="qcm.subjectFileUrl" class="d-flex justify-content-end mb-3">
-            <a [href]="qcm.subjectFileUrl" target="_blank" rel="noopener"
+            <button type="button" (click)="viewFile(qcm.subjectFileUrl, null, 'Sujet du devoir')"
                class="btn btn-outline-primary btn-sm">
               <i class="bi bi-file-earmark-text me-1"></i>Ouvrir le sujet
-            </a>
+            </button>
           </div>
           <div class="text-center mb-4">
             <h2 class="fw-bold">{{ qcm.title }}</h2>
@@ -279,7 +281,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
 
           <!-- Barre de progression -->
           <div *ngIf="qcm.questions.length" class="progress mb-4" style="height:6px;border-radius:4px">
-            <div class="progress-bar" style="background:#6366f1"
+            <div class="progress-bar" style="background:#1d6ff2"
                  [style.width.%]="(answered / qcm.questions.length) * 100"></div>
           </div>
 
@@ -319,7 +321,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
             <div style="height:4px" [style.background]="answers[q.id] ? '#10b981' : '#e5e7eb'"></div>
             <div class="card-body p-4">
               <div class="d-flex gap-2 mb-3">
-                <span class="badge rounded-pill" style="background:#ede9fe;color:#6d28d9">Q{{ qi + 1 }}</span>
+                <span class="badge rounded-pill" style="background:#eef4ff;color:#1658c4">Q{{ qi + 1 }}</span>
                 <span class="text-muted small" style="margin-top:2px">{{ q.points }} pt{{ q.points > 1 ? 's' : '' }}</span>
               </div>
               <p *ngIf="!isCaseQuestion(q)" class="fw-semibold mb-3">{{ q.questionText }}</p>
@@ -465,16 +467,16 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
               <ng-container *ngIf="q.questionType === 'QCM'">
               <div *ngFor="let c of q.choices; let ci = index"
                    class="d-flex align-items-center gap-3 p-3 mb-2 rounded-3"
-                   [style.background]="answers[q.id] === c.id ? '#ede9fe' : '#f9fafb'"
-                   [style.border]="answers[q.id] === c.id ? '2px solid #6366f1' : '2px solid transparent'"
+                   [style.background]="answers[q.id] === c.id ? '#eef4ff' : '#f9fafb'"
+                   [style.border]="answers[q.id] === c.id ? '2px solid #1d6ff2' : '2px solid transparent'"
                    (click)="select(q.id, c.id)"
                    style="cursor:pointer;transition:all .15s">
                 <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;flex-shrink:0"
-                     [style.background]="answers[q.id] === c.id ? '#6366f1' : '#e5e7eb'"
+                     [style.background]="answers[q.id] === c.id ? '#1d6ff2' : '#e5e7eb'"
                      [style.color]="answers[q.id] === c.id ? 'white' : '#6b7280'">
                   {{ labels[ci] }}
                 </div>
-                <span [style.color]="answers[q.id] === c.id ? '#4338ca' : '#374151'"
+                <span [style.color]="answers[q.id] === c.id ? '#1658c4' : '#374151'"
                       [style.font-weight]="answers[q.id] === c.id ? '600' : '400'">
                   {{ c.choiceText }}
                 </span>
@@ -484,7 +486,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
           </div>
 
           <!-- Soumettre -->
-          <div class="card border-0 shadow-sm mt-4" style="border-radius:16px;background:#f8f9ff">
+          <div class="card border-0 shadow-sm mt-4" style="border-radius:16px;background:#f7f9fa">
             <div class="card-body p-4">
               <div *ngIf="qcm.paperCorrectionRequired && !hasCaseQuestion" class="mb-4 p-3 rounded-3"
                    style="background:#fff8e1;border:1px solid #f5d06f">
@@ -511,7 +513,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
               <button class="btn fw-semibold px-5 py-2"
                       (click)="submit()"
                       [disabled]="submitting || paperCorrectionUploading || (requiresPaperCorrection && !paperCorrectionUrl)"
-                      style="background:linear-gradient(135deg,#10b981,#059669);color:white;border-radius:12px">
+                      style="background:#1d6ff2;color:white;border-radius:12px">
                 <span *ngIf="submitting" class="spinner-border spinner-border-sm me-2"></span>
                 {{ submitting ? 'Soumission...' : 'Soumettre mes réponses' }}
               </button>
@@ -534,14 +536,14 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
     .case-block { display: flex; flex-direction: column; gap: 14px; }
     .case-banner {
       display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px;
-      background: linear-gradient(135deg, #6366f1, #4f46e5); color: #fff;
+      background: #1d6ff2; color: #fff;
     }
     .case-banner > i { font-size: 1.5rem; }
     .case-section { padding: 16px 18px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
-    .case-section-statement { background: #eef2ff; border-color: #c7d2fe; }
+    .case-section-statement { background: #eef2ff; border-color: #c8dbfd; }
     .case-section-title {
       font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
-      color: #4338ca; margin-bottom: 10px;
+      color: #1658c4; margin-bottom: 10px;
     }
     .case-text { font-size: .98rem; line-height: 1.7; color: #1f2937; word-break: break-word; }
     .case-line { white-space: pre-wrap; min-height: 1.7em; }
@@ -667,7 +669,7 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
     this.attachStreamToVideo();
   }
 
-  constructor(
+  constructor(private dialogs: DialogService, 
     private http: HttpClient,
     private route: ActivatedRoute,
     private router: Router,
@@ -885,7 +887,7 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   }
 
   get pctColor() {
-    if (!this.resultat) return '#6366f1';
+    if (!this.resultat) return '#1d6ff2';
     const p = parseInt(this.resultat.percentage);
     return p >= 80 ? '#10b981' : p >= 60 ? '#3b82f6' : p >= 50 ? '#f59e0b' : '#ef4444';
   }
@@ -1295,5 +1297,11 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
     }
     this.micLevel = 0;
     this.cameraError = '';
+  }
+
+  /** Affiche un fichier (copie scannée, sujet…) dans une popup, sans quitter la page. */
+  viewFile(url: string | null | undefined, name?: string | null, title = 'Aperçu du fichier') {
+    if (!url) return;
+    this.dialogs.open(FileViewerComponent, { title, icon: 'bi-file-earmark-richtext', size: 'xl', data: { url, name: name || undefined } });
   }
 }

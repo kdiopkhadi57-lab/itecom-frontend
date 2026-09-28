@@ -15,12 +15,17 @@ import { UserScopeService } from '../../core/services/user-scope.service';
   selector: 'app-dashboard',
   standalone: true,
   imports: [CommonModule, RouterLink, DecimalPipe],
+  styles: [`
+    .pending-alert { background: #fff; border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 12px; cursor: pointer; transition: box-shadow .2s; }
+    .pending-alert:hover { box-shadow: 0 6px 18px rgba(28, 29, 31, .08); }
+    .pending-icon { width: 42px; height: 42px; flex-shrink: 0; border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--primary-soft); color: var(--primary); font-size: 1.2rem; }
+  `],
   template: `
     <div class="fade-in-up">
       <!-- Header -->
       <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h1 class="fw-bold mb-1">Bonjour, {{ authService.currentUser?.firstName }} <i class="bi bi-emoji-smile"></i></h1>
+          <h1 class="fw-bold mb-1">Bonjour, {{ authService.currentUser?.firstName }}</h1>
           <p class="text-muted">Continuez votre apprentissage aujourd'hui !</p>
         </div>
         <a routerLink="/courses" class="btn btn-primary-custom">
@@ -32,24 +37,21 @@ import { UserScopeService } from '../../core/services/user-scope.service';
       <a *ngIf="authService.isAdmin && pendingCount > 0"
          routerLink="/admin/registrations"
          class="d-block text-decoration-none mb-4">
-        <div class="alert d-flex align-items-center gap-3 mb-0"
-             style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:2px solid #f59e0b;border-radius:14px;cursor:pointer;transition:box-shadow .2s"
-             onmouseenter="this.style.boxShadow='0 4px 20px rgba(245,158,11,.35)'"
-             onmouseleave="this.style.boxShadow='none'">
-          <div style="font-size:2rem;flex-shrink:0"><i class="bi bi-bell"></i></div>
+        <div class="alert d-flex align-items-center gap-3 mb-0 pending-alert">
+          <div class="pending-icon"><i class="bi bi-bell"></i></div>
           <div class="flex-grow-1">
-            <div class="fw-bold" style="color:#92400e;font-size:1rem">
+            <div class="fw-bold" style="color:var(--dark);font-size:1rem">
               {{ pendingCount }} inscription{{ pendingCount > 1 ? 's' : '' }} en attente de validation
             </div>
-            <div class="small" style="color:#b45309">
+            <div class="small" style="color:var(--muted)">
               Des étudiants ont soumis leur paiement et attendent votre validation. Cliquez pour accéder à la liste.
             </div>
           </div>
           <div style="flex-shrink:0">
-            <span class="badge rounded-pill" style="background:#f59e0b;color:white;font-size:.95rem;padding:6px 14px">
+            <span class="badge rounded-pill" style="background:var(--primary);color:white;font-size:.9rem;padding:6px 14px">
               {{ pendingCount }} en attente
             </span>
-            <i class="bi bi-chevron-right ms-2" style="color:#92400e"></i>
+            <i class="bi bi-chevron-right ms-2" style="color:var(--muted)"></i>
           </div>
         </div>
       </a>
@@ -57,21 +59,21 @@ import { UserScopeService } from '../../core/services/user-scope.service';
       <!-- Stats Row -->
       <div class="row g-3 mb-4">
         <div class="col-6 col-xl-3">
-          <div class="stat-card" style="background: linear-gradient(135deg, #6366f1, #4f46e5)">
+          <div class="stat-card">
             <div class="stat-icon"><i class="bi bi-journal-bookmark"></i></div>
             <div class="stat-value">{{ enrolledCourses.length }}</div>
             <div class="stat-label">Cours inscrits</div>
           </div>
         </div>
         <div class="col-6 col-xl-3">
-          <div class="stat-card" style="background: linear-gradient(135deg, #10b981, #059669)">
+          <div class="stat-card">
             <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
             <div class="stat-value">{{ completedLessons }}</div>
             <div class="stat-label">Leçons complétées</div>
           </div>
         </div>
         <div class="col-6 col-xl-3">
-          <div class="stat-card" style="background: linear-gradient(135deg, #f59e0b, #d97706)">
+          <div class="stat-card">
             <div class="stat-icon"><i class="bi bi-fire"></i></div>
             <div class="stat-value">{{ avgProgress }}%</div>
             <div class="stat-label">Progression moyenne</div>
@@ -82,7 +84,7 @@ import { UserScopeService } from '../../core/services/user-scope.service';
       <div class="row g-4">
         <!-- My Courses Progress -->
         <div class="col-12 col-xl-8">
-          <div class="card border-0 shadow-sm" style="border-radius:16px;">
+          <div class="card" style="border-radius:14px;">
             <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center p-4">
               <h5 class="fw-bold mb-0"><i class="bi bi-graph-up-arrow me-1"></i>Ma progression</h5>
               <a routerLink="/courses/my-learning" class="btn btn-sm btn-outline-primary">Tout voir</a>
@@ -99,7 +101,7 @@ import { UserScopeService } from '../../core/services/user-scope.service';
                     <div class="fw-semibold">{{ p.courseTitle }}</div>
                     <div class="text-muted small">{{ p.completedLessons }}/{{ p.totalLessons }} leçons</div>
                   </div>
-                  <span class="badge bg-primary rounded-pill">{{ p.overallPercentage | number:'1.0-0' }}%</span>
+                  <span class="fw-semibold small">{{ p.overallPercentage | number:'1.0-0' }} %</span>
                 </div>
                 <div class="progress-custom">
                   <div class="progress-bar" [style.width.%]="p.overallPercentage"></div>
@@ -111,7 +113,7 @@ import { UserScopeService } from '../../core/services/user-scope.service';
 
         <!-- Quick Actions -->
         <div class="col-12 col-xl-4">
-          <div class="card border-0 shadow-sm mb-3" style="border-radius:16px;">
+          <div class="card mb-3" style="border-radius:14px;">
             <div class="card-body p-4">
               <h5 class="fw-bold mb-3"><i class="bi bi-rocket-takeoff me-1"></i>Accès rapide</h5>
               <div class="d-grid gap-2">
@@ -122,12 +124,12 @@ import { UserScopeService } from '../../core/services/user-scope.service';
             </div>
           </div>
 
-          <div class="card border-0 shadow-sm" style="border-radius:16px;">
+          <div class="card" style="border-radius:14px;">
             <div class="card-body p-4">
               <h5 class="fw-bold mb-3"><i class="bi bi-folder2-open me-1"></i>Catégories</h5>
               <div class="d-flex flex-wrap gap-2">
                 <a *ngFor="let cat of visibleCategories" [routerLink]="['/courses']" [queryParams]="{category: cat.key}"
-                   class="btn btn-sm btn-outline-secondary rounded-pill">
+                   class="btn btn-sm btn-light border rounded-pill">
                   <i class="bi me-1" [ngClass]="cat.icon"></i>{{ cat.label }}
                 </a>
               </div>

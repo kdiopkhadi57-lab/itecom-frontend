@@ -21,7 +21,7 @@ import { HttpClient } from '@angular/common/http';
           </div>
 
           <!-- Frais -->
-          <div class="alert mb-4" style="background:linear-gradient(135deg,#f59e0b22,#d9770622);border:1px solid #f59e0b;border-radius:12px">
+          <div class="alert mb-4" style="background:#1d6ff2;border:1px solid #f59e0b;border-radius:12px">
             <div class="d-flex align-items-center gap-3">
               <span style="font-size:2rem"><i class="bi bi-tag"></i></span>
               <div>
@@ -105,7 +105,7 @@ import { HttpClient } from '@angular/common/http';
           <div class="alert alert-danger" *ngIf="error">{{ error }}</div>
 
           <button class="btn w-100 fw-semibold py-2" [disabled]="loading || !canSubmit"
-                  style="background:linear-gradient(135deg,#6366f1,#4f46e5);color:white;border-radius:10px"
+                  style="background:#1d6ff2;color:white;border-radius:10px"
                   (click)="submit()">
             <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
             {{ loading ? 'Envoi...' : 'Confirmer le paiement' }}

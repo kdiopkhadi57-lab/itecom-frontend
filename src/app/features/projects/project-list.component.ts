@@ -83,7 +83,7 @@ import { DialogService } from '../../core/services/dialog.service';
 
       <div class="row g-3" *ngIf="!loading">
         <div *ngFor="let p of projects" class="col-md-6 col-xl-4">
-          <div class="card border-0 shadow-sm h-100" style="border-radius:14px;border-left:4px solid #6366f1">
+          <div class="card border-0 shadow-sm h-100" style="border-radius:14px;border-left:4px solid #1d6ff2">
             <div class="card-body p-4 d-flex flex-column">
               <div class="d-flex align-items-center gap-2 mb-2">
                 <span class="badge bg-primary"><i class="bi bi-box-seam me-1"></i>{{ p.artifactId }}</span>

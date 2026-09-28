@@ -43,7 +43,7 @@ interface Message {
               <!-- Messages -->
               <div *ngFor="let msg of messages" class="ai-message" [class.user]="msg.role === 'user'">
                 <div class="ai-avatar"
-                     [style.background]="msg.role === 'bot' ? 'linear-gradient(135deg,#6366f1,#06b6d4)' : '#e2e8f0'">
+                     [style.background]="msg.role === 'bot' ? '#1d6ff2' : '#e2e8f0'">
                   <i class="bi" [ngClass]="msg.role === 'bot' ? 'bi-robot' : (authService.currentUser?.firstName?.charAt(0) || 'bi-person')"></i>
                 </div>
                 <div class="ai-bubble" [class.bot]="msg.role === 'bot'" [class.user]="msg.role === 'user'">

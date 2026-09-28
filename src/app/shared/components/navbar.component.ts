@@ -8,14 +8,14 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [CommonModule, RouterLink],
   template: `
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top shadow-sm" style="height: var(--navbar-height);">
+    <nav class="navbar navbar-expand-lg app-navbar fixed-top" style="height: var(--navbar-height);">
       <div class="container-fluid px-4">
         <a class="navbar-brand" routerLink="/dashboard">
-          <i class="bi bi-mortarboard me-1"></i>ELearning
+          <i class="bi bi-mortarboard-fill me-1 text-primary"></i>ITE<span class="com">COM</span>
         </a>
         <div class="d-flex align-items-center ms-auto gap-3">
           <div class="dropdown">
-            <button class="btn btn-sm btn-outline-light dropdown-toggle" data-bs-toggle="dropdown">
+            <button class="btn btn-sm btn-light border dropdown-toggle" data-bs-toggle="dropdown">
               <i class="bi bi-person-circle me-1"></i>
               {{ authService.currentUser?.firstName }}
             </button>

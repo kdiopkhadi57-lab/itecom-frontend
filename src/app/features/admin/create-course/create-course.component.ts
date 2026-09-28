@@ -32,7 +32,7 @@ interface PendingUpload {
       background: #f8fafc;
     }
     .upload-dropzone:hover, .upload-dropzone.dragover {
-      border-color: #6366f1;
+      border-color: #1d6ff2;
       background: #eef2ff;
     }
   `],

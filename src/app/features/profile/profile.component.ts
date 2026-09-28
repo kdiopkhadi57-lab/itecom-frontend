@@ -19,7 +19,7 @@ import { HttpClient } from '@angular/common/http';
           <div class="card border-0 shadow-sm text-center p-4" style="border-radius:20px">
             <div class="position-relative d-inline-block mx-auto mb-3">
               <div class="rounded-circle d-flex align-items-center justify-content-center mx-auto"
-                   style="width:100px;height:100px;font-size:2.5rem;font-weight:800;background:linear-gradient(135deg,#6366f1,#06b6d4);color:white">
+                   style="width:100px;height:100px;font-size:2.5rem;font-weight:800;background:#1d6ff2;color:white">
                 {{ user?.firstName?.charAt(0) }}{{ user?.lastName?.charAt(0) }}
               </div>
             </div>

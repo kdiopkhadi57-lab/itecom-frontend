@@ -496,7 +496,7 @@ type View = 'list' | 'form' | 'citation';
       transition: background .12s; cursor: pointer;
     }
     .sidebar-item:hover { background: #f1f5f9; }
-    .sidebar-item.active { background: #e0e7ff; color: #4f46e5; font-weight: 600; }
+    .sidebar-item.active { background: #eef4ff; color: #1658c4; font-weight: 600; }
 
     /* ── Ref cards ──────────────────────────── */
     .ref-card {
@@ -513,7 +513,7 @@ type View = 'list' | 'form' | 'citation';
     .ref-meta { font-size: .78rem; color: #64748b; margin: 3px 0; }
     .ref-authors { font-style: italic; }
     .ref-year { margin-left: 6px; color: #94a3b8; }
-    .ref-journal { color: #6366f1; }
+    .ref-journal { color: #1d6ff2; }
     .btn-xs { padding: 2px 7px; font-size: .72rem; }
     .btn-ghost { background: transparent; border: none; color: #64748b; }
 
@@ -532,7 +532,7 @@ type View = 'list' | 'form' | 'citation';
     /* ── Citation ─────────────────────────────── */
     .citation-box {
       background: #f8fafc; border-radius: 10px; padding: 16px;
-      border-left: 4px solid #6366f1;
+      border-left: 4px solid #1d6ff2;
     }
     .citation-text { font-size: .88rem; line-height: 1.7; color: #1e293b; }
     .citation-text em { font-style: italic; }

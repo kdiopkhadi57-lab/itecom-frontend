@@ -10,6 +10,10 @@ export const teacherRoutes: Routes = [
     loadComponent: () => import('./create-course/create-course.component').then(m => m.CreateCourseComponent)
   },
   {
+    path: 'courses/:id/progress',
+    loadComponent: () => import('./course-progress/course-progress.component').then(m => m.CourseProgressComponent)
+  },
+  {
     path: 'courses/:id/edit',
     loadComponent: () => import('./edit-course/edit-course.component').then(m => m.EditCourseComponent)
   },

@@ -18,6 +18,7 @@ const PAGE_TITLES: [string, PageTitle][] = [
   ['/virtual-class', { title: 'Classes virtuelles', subtitle: 'Sessions en direct' }],
   ['/profile', { title: 'Mon profil', subtitle: 'Informations personnelles' }],
   ['/teacher/courses', { title: 'Mes cours', subtitle: 'Espace professeur' }],
+  ['/teacher/courses/*/progress', { title: 'Suivi des étudiants', subtitle: 'Mes cours' }],
   ['/teacher/create-course', { title: 'Créer un cours', subtitle: 'Espace professeur' }],
   ['/teacher/exams', { title: 'Devoirs et examens', subtitle: 'Espace professeur' }],
   ['/teacher/qcms', { title: 'Devoirs et examens', subtitle: 'Espace professeur' }],
@@ -27,6 +28,13 @@ const PAGE_TITLES: [string, PageTitle][] = [
   ['/library', { title: 'Bibliothèque', subtitle: 'Ressources' }],
   ['/references', { title: 'Références', subtitle: 'Ressources' }]
 ];
+
+/** Préfixe d'URL, « * » remplaçant un segment (ex. un identifiant). */
+function matchesPrefix(path: string, prefix: string): boolean {
+  const p = path.split('/'), q = prefix.split('/');
+  if (p.length < q.length) return false;
+  return q.every((seg, i) => seg === '*' || seg === p[i]);
+}
 
 @Component({
   selector: 'app-navbar',
@@ -115,7 +123,7 @@ export class NavbarComponent implements OnInit {
   private updateTitle(url: string) {
     const path = url.split(/[?#]/)[0];
     const match = [...PAGE_TITLES].sort((a, b) => b[0].length - a[0].length)
-      .find(([prefix]) => path === prefix || path.startsWith(prefix + '/'));
+      .find(([prefix]) => matchesPrefix(path, prefix));
     this.page = match ? match[1] : { title: 'ITECOM', subtitle: 'E-learning' };
   }
 

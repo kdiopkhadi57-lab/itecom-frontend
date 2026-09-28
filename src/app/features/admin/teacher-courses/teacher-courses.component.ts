@@ -85,6 +85,10 @@ import { EditCourseComponent } from '../edit-course/edit-course.component';
                    class="btn btn-outline-primary btn-sm flex-grow-1">
                   <i class="bi bi-pencil me-1"></i>Modifier
                 </button>
+                <a [routerLink]="['/teacher/courses', course.id, 'progress']"
+                   class="btn btn-outline-primary btn-sm" title="Progression et temps passé des étudiants">
+                  <i class="bi bi-graph-up me-1"></i>Suivi
+                </a>
                 <a [routerLink]="['/courses', course.id]"
                    class="btn btn-outline-secondary btn-sm">
                   <i class="bi bi-eye"></i>

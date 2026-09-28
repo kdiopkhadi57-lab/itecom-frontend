@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -16,7 +16,7 @@ type CoursePlayerTab = 'cours' | 'pratique';
   templateUrl: './course-player.component.html',
   styleUrl: './course-player.component.scss'
 })
-export class CoursePlayerComponent implements OnInit {
+export class CoursePlayerComponent implements OnInit, OnDestroy {
 
   // ─── État ────────────────────────────────────────────────────────────────
 
@@ -36,6 +36,11 @@ export class CoursePlayerComponent implements OnInit {
   private lastSentScrollPercentage = 0;
   private scrollUpdatePending = false;
 
+  // Temps passé : compté seconde par seconde tant que l'onglet est visible, envoyé par paquets
+  private static readonly TIME_FLUSH_SECONDS = 30;
+  private pendingSeconds = 0;
+  private timeTicker: ReturnType<typeof setInterval> | null = null;
+
   constructor(
     private route: ActivatedRoute,
     private courseService: CourseService,
@@ -52,6 +57,25 @@ export class CoursePlayerComponent implements OnInit {
       }
       this.refreshProgress();
     });
+    this.timeTicker = setInterval(() => this.tickTime(), 1000);
+  }
+
+  ngOnDestroy(): void {
+    if (this.timeTicker) clearInterval(this.timeTicker);
+    this.flushTime();
+  }
+
+  private tickTime(): void {
+    if (!this.currentLesson || document.hidden) return;
+    this.pendingSeconds++;
+    if (this.pendingSeconds >= CoursePlayerComponent.TIME_FLUSH_SECONDS) this.flushTime();
+  }
+
+  private flushTime(): void {
+    if (!this.currentLesson || this.pendingSeconds <= 0) return;
+    const seconds = this.pendingSeconds;
+    this.pendingSeconds = 0;
+    this.progressService.addTimeSpent(this.currentLesson.id, seconds).subscribe({ error: () => {} });
   }
 
   // ─── Getters dérivés ───────────────────────────────────────────────────────
@@ -95,6 +119,7 @@ export class CoursePlayerComponent implements OnInit {
   // ─── Navigation entre leçons ────────────────────────────────────────────
 
   selectLesson(lesson: Lesson): void {
+    if (this.currentLesson && this.currentLesson.id !== lesson.id) this.flushTime();
     this.currentLesson = lesson;
     this.selectedQuiz = null;
     this.lastSentScrollPercentage = lesson.completed ? 100 : 0;

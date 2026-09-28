@@ -15,7 +15,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'submitted' | 'error' | 'al
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="min-vh-100 d-flex flex-column" style="background:#f8f9fa"
+    <div class="min-vh-100 d-flex flex-column" style="background:var(--surface-muted)"
          [style.height]="status === 'active' ? '100vh' : null"
          [style.overflow]="status === 'active' ? 'hidden' : null">
       <nav class="navbar navbar-light bg-white border-bottom shadow-sm px-4 py-3">

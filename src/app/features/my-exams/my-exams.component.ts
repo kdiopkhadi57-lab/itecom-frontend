@@ -60,7 +60,6 @@ interface QcmSummary {
         <div class="row g-3" *ngIf="!loading && exams.length > 0">
           <div class="col-md-6 col-lg-4" *ngFor="let exam of exams">
             <div class="card h-100 border-0 shadow-sm" style="border-radius:16px;overflow:hidden">
-              <div style="height:4px;background:#2b3ea8"></div>
               <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                   <h5 class="card-title fw-bold mb-0">{{ exam.examTitle }}</h5>
@@ -108,9 +107,6 @@ interface QcmSummary {
         <div class="row g-3" *ngIf="!loadingQcm && qcms.length > 0">
           <div class="col-md-6 col-lg-4" *ngFor="let q of qcms">
             <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden">
-              <div style="height:4px"
-                   [style.background]="q.alreadyTaken ? '#2b3ea8' : '#2b3ea8'">
-              </div>
               <div class="card-body p-4">
                 <div class="d-flex align-items-start justify-content-between mb-2">
                   <h6 class="fw-bold mb-0 flex-grow-1 me-2">{{ q.title }}</h6>

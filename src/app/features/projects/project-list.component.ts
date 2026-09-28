@@ -202,9 +202,10 @@ export class ProjectListComponent implements OnInit {
   }
 
   onSubmit() {
-    if (!this.form || this.form.invalid) return;
-    this.saving = true;
+    if (!this.form) return;
     this.formError = '';
+    if (this.form.invalid) { this.formError = 'Renseignez le titre, le Group ID, l\'Artifact ID et le package racine.'; return; }
+    this.saving = true;
     const value = this.form.value;
 
     const request$ = this.editingId

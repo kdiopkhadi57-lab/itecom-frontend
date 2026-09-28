@@ -84,6 +84,7 @@ interface ProjectFile {
                 <label class="form-label fw-semibold small">Description</label>
                 <textarea class="form-control form-control-sm" rows="2" formControlName="description"></textarea>
               </div>
+              <div *ngIf="formError" class="alert alert-danger py-2 small">{{ formError }}</div>
               <div class="d-flex gap-2">
                 <button type="submit" class="btn btn-primary btn-sm" [disabled]="saving">
                   {{ editingId ? 'Enregistrer' : 'Créer' }}
@@ -262,7 +263,7 @@ interface ProjectFile {
                 </div>
 
                 <!-- Bottom actions -->
-                <div class="bg-light p-2 d-flex gap-2 border-top" style="background:#f8f9fa!important">
+                <div class="bg-light p-2 d-flex gap-2 border-top" style="background:var(--surface-muted)!important">
                   <button class="btn btn-sm btn-outline-secondary" (click)="markComplete()" [disabled]="markingComplete">
                     <i class="bi bi-check-circle me-1"></i>{{ selectedExercise.completed ? 'Complété' : 'Marquer terminé' }}
                   </button>
@@ -280,7 +281,7 @@ interface ProjectFile {
   styles: [`
     .exercise-list-panel { 
       border-radius: 12px;
-      background: #f8f9fa;
+      background: var(--surface-muted);
       padding: 8px;
       font-size: 0.86rem;
     }
@@ -331,6 +332,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
   form: FormGroup | null = null;
   editingId: number | null = null;
   saving = false;
+  formError = '';
   deletingId: number | null = null;
 
   // IDE state
@@ -802,10 +804,13 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
   cancelForm() {
     this.form = null;
     this.editingId = null;
+    this.formError = '';
   }
 
   onSubmit() {
-    if (!this.form || this.form.invalid) return;
+    if (!this.form) return;
+    this.formError = '';
+    if (this.form.invalid) { this.formError = 'Le titre est obligatoire.'; return; }
     this.saving = true;
     const value = this.form.value;
     const request$ = this.editingId
@@ -822,7 +827,7 @@ export class ExerciseListComponent implements OnInit, OnDestroy {
         this.saving = false;
         this.cancelForm();
       },
-      error: () => { this.saving = false; }
+      error: (err) => { this.formError = err.error?.message || 'Impossible d\'enregistrer l\'exercice.'; this.saving = false; }
     });
   }
 

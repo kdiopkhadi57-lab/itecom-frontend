@@ -38,15 +38,10 @@ interface Qcm { id: number; title: string; description: string; status: string; 
       <div class="row g-3" *ngIf="!loading && qcms.length > 0">
         <div class="col-12 col-md-6 col-xl-4" *ngFor="let q of qcms">
           <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden">
-            <div style="height:5px"
-                 [style.background]="q.status === 'PUBLISHED' ? '#2b3ea8' : '#2b3ea8'">
-            </div>
             <div class="card-body p-4">
               <div class="d-flex align-items-start justify-content-between mb-2">
                 <h6 class="fw-bold mb-0 flex-grow-1 me-2">{{ q.title }}</h6>
-                <span class="badge rounded-pill flex-shrink-0"
-                      [style.background]="q.status === 'PUBLISHED' ? '#d1fae5' : '#eef0fb'"
-                      [style.color]="q.status === 'PUBLISHED' ? '#065f46' : '#3730a3'">
+                <span class="status-badge" [class.status-published]="q.status === 'PUBLISHED'" [class.status-draft]="q.status !== 'PUBLISHED'">
                   {{ q.status === 'PUBLISHED' ? 'Publié' : 'Brouillon' }}
                 </span>
               </div>

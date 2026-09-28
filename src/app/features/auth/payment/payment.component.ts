@@ -37,12 +37,12 @@ import { HttpClient } from '@angular/common/http';
             <div class="row g-3">
               <div class="col-6">
                 <div class="p-3 border rounded-3 text-center"
-                     [style.border-color]="method === 'WAVE' ? '#3b82f6' : '#dee2e6'"
-                     [style.background]="method === 'WAVE' ? '#eff6ff' : 'white'"
+                     [style.border-color]="method === 'WAVE' ? '#2b3ea8' : '#dee2e6'"
+                     [style.background]="method === 'WAVE' ? '#eef0fb' : 'white'"
                      style="cursor:pointer; transition:all .2s"
                      (click)="method = 'WAVE'">
                   <div style="font-size:1.8rem"><i class="bi bi-water"></i></div>
-                  <div class="fw-bold mt-1" [style.color]="method === 'WAVE' ? '#1d4ed8' : '#333'">Wave</div>
+                  <div class="fw-bold mt-1" [style.color]="method === 'WAVE' ? '#1f2d7a' : '#333'">Wave</div>
                   <div class="small text-muted">+221 70 000 0000</div>
                 </div>
               </div>

@@ -49,10 +49,24 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.clear();
-    this.currentUserSubject.next(null);
+    this.clearSession();
     this.router.navigate(['/auth/login']);
   }
 
+  /** Efface la session (stockage et utilisateur en mémoire) sans naviguer. */
+  clearSession(): void {
+    localStorage.clear();
+    this.currentUserSubject.next(null);
+  }
+
   getToken(): string | null { return localStorage.getItem('token'); }
+
+  /** Met à jour l'utilisateur connecté (en mémoire et en stockage) après une modification de profil. */
+  updateCurrentUser(changes: Partial<User>): void {
+    const current = this.currentUserSubject.value;
+    if (!current) return;
+    const updated = { ...current, ...changes };
+    localStorage.setItem('user', JSON.stringify(updated));
+    this.currentUserSubject.next(updated);
+  }
 }

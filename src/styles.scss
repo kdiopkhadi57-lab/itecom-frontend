@@ -217,6 +217,12 @@ body.sidebar-collapsed .main-content.main-content-full {
   overflow: hidden;
 }
 
+/* ===== BADGES DE STATUT (sobres : accent pour « publié », gris sinon) ===== */
+.status-badge { display: inline-block; padding: .3em .75em; border-radius: 999px; font-size: .75rem; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+.status-published { background: var(--primary-soft); color: var(--primary-dark); }
+.status-draft { background: var(--surface-muted); color: var(--muted); border: 1px solid var(--surface-border); }
+.status-closed { background: #dcdde1; color: var(--gray-800); }
+
 /* ===== CARDS ===== */
 .course-card {
   border: 1px solid var(--border);

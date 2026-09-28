@@ -1,21 +1,41 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
+import { AuthService } from '../services/auth.service';
+import { DialogService } from '../services/dialog.service';
+
+// Évite d'empiler le même message quand plusieurs requêtes échouent en même temps
+let lastToast = { message: '', at: 0 };
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   let router = inject(Router);
+  let authService = inject(AuthService);
+  let dialogs = inject(DialogService);
   return next(req).pipe(
-    catchError(error => {
-      // Un 401 sur /api/auth (mauvais identifiants) est géré par le formulaire lui-même
-      if (error.status === 401 && !req.url.includes('/api/auth/')) {
-        localStorage.clear();
-        const current = router.url;
+    catchError((error: HttpErrorResponse) => {
+      if (error.status === 401) {
+        authService.clearSession();
         router.navigate(['/auth/login'], {
-          queryParams: current.startsWith('/auth') ? {} : { returnUrl: current }
+          queryParams: { returnUrl: router.url }
         });
+      } else {
+        // Les erreurs 400/404/409 sont affichées par les formulaires eux-mêmes ;
+        // les autres échouaient souvent sans aucun message (page vide).
+        const message = globalErrorMessage(error);
+        if (message && (message !== lastToast.message || Date.now() - lastToast.at > 4000)) {
+          lastToast = { message, at: Date.now() };
+          dialogs.toast(message, 'danger', 5000);
+        }
       }
       return throwError(() => error);
     })
   );
 };
+
+function globalErrorMessage(error: HttpErrorResponse): string | null {
+  if (error.status === 0) return 'Serveur injoignable. Vérifiez votre connexion internet puis réessayez.';
+  if (error.status === 403) return 'Accès refusé : vous n\'avez pas les droits pour cette action.';
+  if (error.status >= 500) return 'Le serveur a rencontré une erreur. Réessayez dans un instant.';
+  return null;
+}

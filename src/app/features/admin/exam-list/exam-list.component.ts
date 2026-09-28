@@ -74,11 +74,10 @@ interface Qcm { id: number; title: string; description: string; status: string; 
         <div class="row g-3" *ngIf="!loadingExams && exams.length > 0">
           <div class="col-md-6 col-lg-4" *ngFor="let exam of exams">
             <div class="card h-100 border-0 shadow-sm" style="border-radius:16px;overflow:hidden">
-              <div style="height:5px;background:#2b3ea8"></div>
               <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                   <h6 class="card-title fw-bold mb-0 flex-grow-1 me-2">{{ exam.title }}</h6>
-                  <span class="badge rounded-pill" [ngClass]="getStatusClass(exam.status)">
+                  <span class="status-badge" [ngClass]="getStatusClass(exam.status)">
                     {{ getStatusLabel(exam.status) }}
                   </span>
                 </div>
@@ -132,15 +131,10 @@ interface Qcm { id: number; title: string; description: string; status: string; 
         <div class="row g-3" *ngIf="!loadingQcm && qcms.length > 0">
           <div class="col-12 col-md-6 col-xl-4" *ngFor="let q of qcms">
             <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden">
-              <div style="height:5px"
-                   [style.background]="q.status === 'PUBLISHED' ? '#2b3ea8' : '#2b3ea8'">
-              </div>
               <div class="card-body p-4">
                 <div class="d-flex align-items-start justify-content-between mb-2">
                   <h6 class="fw-bold mb-0 flex-grow-1 me-2">{{ q.title }}</h6>
-                  <span class="badge rounded-pill"
-                        [style.background]="q.status === 'PUBLISHED' ? '#d1fae5' : '#eef0fb'"
-                        [style.color]="q.status === 'PUBLISHED' ? '#065f46' : '#3730a3'">
+                  <span class="status-badge" [class.status-published]="q.status === 'PUBLISHED'" [class.status-draft]="q.status !== 'PUBLISHED'">
                     {{ q.status === 'PUBLISHED' ? 'Publié' : 'Brouillon' }}
                   </span>
                 </div>
@@ -238,7 +232,7 @@ export class ExamListComponent implements OnInit {
     this.http.delete(`/api/teacher/qcms/${q.id}`).subscribe(() => this.qcms = this.qcms.filter(x => x.id !== q.id));
   }
 
-  getStatusClass(s: string) { return { DRAFT: 'bg-secondary', PUBLISHED: 'bg-success', CLOSED: 'bg-dark' }[s] || 'bg-secondary'; }
+  getStatusClass(s: string) { return { DRAFT: 'status-draft', PUBLISHED: 'status-published', CLOSED: 'status-closed' }[s] || 'status-draft'; }
   getStatusLabel(s: string) { return { DRAFT: 'Brouillon', PUBLISHED: 'Publié', CLOSED: 'Clôturé' }[s] || s; }
 
   /** Création / modification d'un devoir dans une popup, sans quitter la page. */

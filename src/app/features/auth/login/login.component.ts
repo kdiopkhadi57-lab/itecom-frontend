@@ -121,7 +121,7 @@ import { CommonModule } from '@angular/common';
     .glow { position: absolute; border-radius: 50%; filter: blur(80px); opacity: .55; animation: drift 18s ease-in-out infinite alternate; }
     .glow-1 { width: 520px; height: 520px; background: #2b3ea8; top: -140px; right: 8%; }
     .glow-2 { width: 420px; height: 420px; background: #06b6d4; bottom: -160px; left: 18%; opacity: .35; animation-delay: -6s; }
-    .glow-3 { width: 360px; height: 360px; background: #6366f1; top: 35%; left: -120px; opacity: .35; animation-delay: -12s; }
+    .glow-3 { width: 360px; height: 360px; background: #2b3ea8; top: 35%; left: -120px; opacity: .35; animation-delay: -12s; }
     .grid { position: absolute; inset: 0; opacity: .12;
       background-image: linear-gradient(rgba(255,255,255,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.35) 1px, transparent 1px);
       background-size: 56px 56px; mask-image: radial-gradient(ellipse at 60% 40%, #000 20%, transparent 75%); }
@@ -133,12 +133,12 @@ import { CommonModule } from '@angular/common';
     .brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; }
     .brand-mark {
       width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center;
-      background: linear-gradient(135deg, #3b82f6, var(--blue)); color: #fff; font-size: 1.2rem;
+      background: linear-gradient(135deg, #2b3ea8, var(--blue)); color: #fff; font-size: 1.2rem;
       box-shadow: 0 6px 16px rgba(43, 62, 168, .45);
     }
     .brand-name { font-size: 1.5rem; font-weight: 800; letter-spacing: .02em; }
     .brand-name .ite { color: #fff; }
-    .brand-name .com { color: #60a5fa; }
+    .brand-name .com { color: #5567cc; }
     .topnav { gap: 8px; }
     .link-btn { border: 0; background: transparent; color: rgba(255, 255, 255, .82); font-weight: 500; font-size: .9rem; padding: 6px 10px; border-radius: 10px; }
     .link-btn:hover { color: #fff; background: rgba(255, 255, 255, .1); }
@@ -152,14 +152,14 @@ import { CommonModule } from '@angular/common';
     }
     .eyebrow {
       display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px; font-size: .8rem; font-weight: 600;
-      background: rgba(96, 165, 250, .18); color: #dbeafe; border: 1px solid rgba(147, 197, 253, .35);
+      background: rgba(96, 165, 250, .18); color: #eef0fb; border: 1px solid rgba(147, 197, 253, .35);
       backdrop-filter: blur(6px);
     }
     .hero h1 {
       font-size: clamp(2rem, 3.8vw, 3.3rem); font-weight: 800; line-height: 1.1; margin: 18px 0 14px;
       letter-spacing: -.01em; max-width: 640px; text-shadow: 0 2px 18px rgba(0, 0, 0, .35);
     }
-    .hero h1 .accent { background: linear-gradient(90deg, #60a5fa, #a5f3fc); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .hero h1 .accent { background: linear-gradient(90deg, #5567cc, #a5f3fc); -webkit-background-clip: text; background-clip: text; color: transparent; }
     .lead-text { color: rgba(241, 245, 249, .9); font-size: 1.05rem; line-height: 1.6; max-width: 520px; margin-bottom: 22px; text-shadow: 0 1px 10px rgba(0, 0, 0, .3); }
     .subject-list { display: flex; flex-wrap: wrap; gap: 8px; max-width: 600px; }
     .subject {
@@ -244,7 +244,7 @@ import { CommonModule } from '@angular/common';
 })
 export class LoginComponent {
   readonly subjects = [
-    { name: 'Comptabilité analytique', icon: 'bi-calculator', color: '#60a5fa',
+    { name: 'Comptabilité analytique', icon: 'bi-calculator', color: '#5567cc',
       text: 'Coûts complets et partiels, coût de revient, seuil de rentabilité et analyse des écarts, avec des cas pratiques corrigés ligne par ligne.' },
     { name: 'Droit', icon: 'bi-bank', color: '#a5b4fc',
       text: 'Droit des affaires et des sociétés : formes juridiques, contrats et obligations, illustrés par des cas concrets.' },

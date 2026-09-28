@@ -359,7 +359,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
     :host { display:block; }
     .reader-shell {
       height: 100vh; display: flex; flex-direction: column;
-      overflow: hidden; margin: -24px; background: #f8fafc;
+      overflow: hidden; margin: -24px; background: var(--surface-muted);
     }
     .reader-shell[data-mode="sepia"] { background: #f4ede3; }
     .reader-shell[data-mode="night"] { background: #1a1a2e; color: #e2e8f0; }
@@ -425,7 +425,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
 
     .annotation-card {
       padding: 10px; border-radius: 8px; margin-bottom: 8px;
-      background: #f8fafc; border: 1px solid #e2e8f0; cursor: pointer;
+      background: var(--surface-muted); border: 1px solid #e2e8f0; cursor: pointer;
       transition: border-color .15s;
     }
     .annotation-card:hover { border-color: #2b3ea8; }
@@ -473,7 +473,7 @@ type SidePanel   = 'none' | 'toc' | 'annotations' | 'bookmarks' | 'search';
       filter: invert(1) hue-rotate(180deg) brightness(.85);
     }
     .book-info-card {
-      background: #f8fafc; border-radius: 12px; padding: 16px;
+      background: var(--surface-muted); border-radius: 12px; padding: 16px;
       display: inline-block; text-align: left; min-width: 280px;
     }
     .book-info-card > div { padding: 4px 0; font-size: .88rem; }

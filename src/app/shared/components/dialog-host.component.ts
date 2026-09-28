@@ -96,7 +96,7 @@ import { DIALOG_DATA, DialogRef, DialogService, DialogState } from '../../core/s
       width: 60px; height: 60px; border-radius: 18px; margin: 0 auto; display: flex; align-items: center; justify-content: center;
       font-size: 1.7rem;
     }
-    .tone-primary { background: #e0ebff; color: #2b3ea8; }
+    .tone-primary { background: #eef0fb; color: #2b3ea8; }
     .tone-info { background: #e0f2fe; color: #0284c7; }
     .tone-success { background: #dcfce7; color: #16a34a; }
     .tone-warning { background: #fef3c7; color: #d97706; }
@@ -109,7 +109,7 @@ import { DIALOG_DATA, DialogRef, DialogService, DialogState } from '../../core/s
     .toast-item.tone-success { background: #f0fdf4; border: 1px solid #bbf7d0; }
     .toast-item.tone-danger { background: #fef2f2; border: 1px solid #fecaca; }
     .toast-item.tone-warning { background: #fffbeb; border: 1px solid #fde68a; }
-    .toast-item.tone-info, .toast-item.tone-primary { background: #eff6ff; border: 1px solid #bfdbfe; }
+    .toast-item.tone-info, .toast-item.tone-primary { background: #eef0fb; border: 1px solid #d5d9ef; }
     .toast-item > i { font-size: 1.1rem; }
     .toast-item.tone-success > i { color: #16a34a; }
     .toast-item.tone-danger > i { color: #dc2626; }

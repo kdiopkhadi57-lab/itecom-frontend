@@ -486,7 +486,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
           </div>
 
           <!-- Soumettre -->
-          <div class="card border-0 shadow-sm mt-4" style="border-radius:16px;background:#f7f9fa">
+          <div class="card border-0 shadow-sm mt-4" style="border-radius:16px;background:var(--surface-muted)">
             <div class="card-body p-4">
               <div *ngIf="qcm.paperCorrectionRequired && !hasCaseQuestion" class="mb-4 p-3 rounded-3"
                    style="background:#fff8e1;border:1px solid #f5d06f">
@@ -532,15 +532,15 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
     </div>
   `,
   styles: [`
-    .identity-box { padding: 18px; border-radius: 14px; background: #f8faff; border: 1px solid #dbe4ff; }
+    .identity-box { padding: 18px; border-radius: 14px; background: var(--surface-muted); border: 1px solid #dbe4ff; }
     .case-block { display: flex; flex-direction: column; gap: 14px; }
     .case-banner {
       display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px;
       background: #2b3ea8; color: #fff;
     }
     .case-banner > i { font-size: 1.5rem; }
-    .case-section { padding: 16px 18px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
-    .case-section-statement { background: #eef2ff; border-color: #c8dbfd; }
+    .case-section { padding: 16px 18px; border-radius: 12px; background: var(--surface-muted); border: 1px solid #e2e8f0; }
+    .case-section-statement { background: #eef0fb; border-color: #d5d9ef; }
     .case-section-title {
       font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
       color: #1f2d7a; margin-bottom: 10px;
@@ -554,7 +554,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
     .case-textarea { min-height: 280px; font-size: .98rem; line-height: 1.6; resize: vertical; border-radius: 10px; }
     .answer-cell { min-width: 190px; background: #f0f7ff; }
     .case-grid { padding: 16px 18px; border-radius: 12px; background: var(--surface); border: 2px solid #2b3ea8; }
-    .grid-table thead th { font-size: .75rem; text-transform: uppercase; color: #64748b; background: #f8fafc; }
+    .grid-table thead th { font-size: .75rem; text-transform: uppercase; color: #64748b; background: var(--surface-muted); }
     .case-paper { padding: 14px 16px; border-radius: 12px; background: #fff8e1; border: 1px solid #f5d06f; }
 
     .proctor-widget {
@@ -889,7 +889,7 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   get pctColor() {
     if (!this.resultat) return '#2b3ea8';
     const p = parseInt(this.resultat.percentage);
-    return p >= 80 ? '#10b981' : p >= 60 ? '#3b82f6' : p >= 50 ? '#f59e0b' : '#ef4444';
+    return p >= 80 ? '#10b981' : p >= 60 ? '#2b3ea8' : p >= 50 ? '#f59e0b' : '#ef4444';
   }
 
   get identityComplete(): boolean {

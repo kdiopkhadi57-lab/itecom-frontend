@@ -42,7 +42,7 @@ export interface FileViewerData {
   `,
   styles: [`
     .viewer-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
-    .viewer-body { border-radius: 12px; overflow: auto; background: #f8fafc; height: 70vh; display: flex; align-items: flex-start; justify-content: center; }
+    .viewer-body { border-radius: 12px; overflow: auto; background: var(--surface-muted); height: 70vh; display: flex; align-items: flex-start; justify-content: center; }
     .viewer-body.dark { background: #1f2937; align-items: center; }
     .viewer-body img { max-width: 100%; max-height: 100%; object-fit: contain; transition: transform .2s ease; transform-origin: center; }
     .viewer-body iframe { width: 100%; height: 100%; border: 0; background: var(--surface); }

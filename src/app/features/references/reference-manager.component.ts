@@ -531,7 +531,7 @@ type View = 'list' | 'form' | 'citation';
 
     /* ── Citation ─────────────────────────────── */
     .citation-box {
-      background: #f8fafc; border-radius: 10px; padding: 16px;
+      background: var(--surface-muted); border-radius: 10px; padding: 16px;
       border-left: 4px solid #2b3ea8;
     }
     .citation-text { font-size: .88rem; line-height: 1.7; color: #1e293b; }
@@ -654,7 +654,7 @@ export class ReferenceManagerComponent implements OnInit {
   }
   typeColor(t: string): string {
     const m: Record<string, string> = {
-      book: '#dbeafe', article: '#dcfce7', journal: '#fef9c3',
+      book: '#eef0fb', article: '#dcfce7', journal: '#fef9c3',
       website: '#fce7f3', thesis: '#f3e8ff', conference: '#ffedd5'
     };
     return m[t] ?? '#f1f5f9';

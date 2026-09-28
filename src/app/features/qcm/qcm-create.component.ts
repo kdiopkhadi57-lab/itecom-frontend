@@ -47,7 +47,7 @@ interface StudentEntry {
       </div>
 
       <!-- ═══ Import depuis Word ════════════════════════════════════════════ -->
-      <div *ngIf="!isEdit" class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #c8dbfd!important">
+      <div *ngIf="!isEdit" class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #d5d9ef!important">
         <div class="card-body p-4">
           <div class="d-flex align-items-center gap-3 mb-3">
             <div class="rounded-circle d-flex align-items-center justify-content-center"
@@ -74,7 +74,7 @@ interface StudentEntry {
           </div>
 
           <!-- Format attendu -->
-          <div *ngIf="!wordError && !wordPreview" class="p-3 rounded-3" style="background:#f8faff;font-size:.82rem">
+          <div *ngIf="!wordError && !wordPreview" class="p-3 rounded-3" style="background:var(--surface-muted);font-size:.82rem">
             <p class="fw-semibold mb-2 text-muted">Format attendu dans le fichier Word :</p>
             <code style="display:block;white-space:pre;color:#1f2d7a;font-size:.78rem">Titre: Examen Java Chapitre 3
 Description: Durée 30 minutes
@@ -114,7 +114,7 @@ Bonne réponse: C</code>
 
             <!-- Questions preview -->
             <div *ngFor="let q of wordPreview.questions; let qi = index"
-                 class="p-3 rounded-3 mb-2" style="background:#f8faff;border:1px solid #eef0fb">
+                 class="p-3 rounded-3 mb-2" style="background:var(--surface-muted);border:1px solid #eef0fb">
               <div class="d-flex gap-2 mb-2">
                 <span class="fw-bold" style="color:#2b3ea8;min-width:24px">Q{{ qi + 1 }}</span>
                 <span class="fw-semibold">{{ q.questionText || '(sans texte)' }}</span>
@@ -165,7 +165,7 @@ Bonne réponse: C</code>
         </div>
       </div>
 
-      <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #c8dbfd!important">
+      <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #d5d9ef!important">
         <div class="card-body p-4">
           <h5 class="fw-bold mb-1">Sujet et correction de référence</h5>
           <p class="text-muted small mb-3">
@@ -285,11 +285,11 @@ Bonne réponse: C</code>
       </button>
 
       <!-- ═══ Grille de correction ligne par ligne ══════════════════════════ -->
-      <div *ngIf="isEdit && grids.length" class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px solid #bfdbfe!important">
+      <div *ngIf="isEdit && grids.length" class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px solid #d5d9ef!important">
         <div class="card-body p-4">
           <div class="d-flex align-items-start gap-3 mb-3">
             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:44px;height:44px;background:#dbeafe;color:#1d4ed8;font-size:1.2rem"><i class="bi bi-table"></i></div>
+                 style="width:44px;height:44px;background:#eef0fb;color:#1f2d7a;font-size:1.2rem"><i class="bi bi-table"></i></div>
             <div>
               <h6 class="fw-bold mb-0">Grille de correction</h6>
               <p class="text-muted small mb-0">
@@ -345,7 +345,7 @@ Bonne réponse: C</code>
       </div>
 
       <!-- ═══ Étudiants concernés ══════════════════════════════════════════ -->
-      <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #c8dbfd!important">
+      <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #d5d9ef!important">
         <div class="card-body p-4">
           <div class="d-flex align-items-center gap-3 flex-wrap">
             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
@@ -446,7 +446,7 @@ Bonne réponse: C</code>
       </div>
 
       <!-- Résumé + actions -->
-      <div class="card border-0 shadow-sm" style="border-radius:16px;background:#f7f9fa">
+      <div class="card border-0 shadow-sm" style="border-radius:16px;background:var(--surface-muted)">
         <div class="card-body p-4 d-flex align-items-center justify-content-between gap-3 flex-wrap">
           <div class="text-muted small">
             <strong>{{ questions.length }}</strong> question(s) ·

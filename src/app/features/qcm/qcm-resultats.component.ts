@@ -178,7 +178,7 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
             <div *ngFor="let grid of detail.correctionDetail || []" class="mb-3">
               <div class="d-flex justify-content-between align-items-center mb-2">
                 <h6 class="fw-bold mb-0"><i class="bi bi-table me-1"></i>Correction ligne par ligne</h6>
-                <span class="badge" style="background:#e0ebff;color:#1d4ed8">{{ grid.earned }} / {{ grid.total }} pt(s) de la grille</span>
+                <span class="badge" style="background:#eef0fb;color:#1f2d7a">{{ grid.earned }} / {{ grid.total }} pt(s) de la grille</span>
               </div>
               <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0 grid-result">
@@ -196,7 +196,7 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
               </div>
             </div>
 
-            <div *ngIf="detail.ocrCorrectionNote && !detail.correctionDetail?.length" class="section-box mb-3" style="background:#eff6ff">
+            <div *ngIf="detail.ocrCorrectionNote && !detail.correctionDetail?.length" class="section-box mb-3" style="background:#eef0fb">
               <div class="fw-semibold small mb-1"><i class="bi bi-calculator me-1"></i>Correction automatique</div>
               <div class="small" style="white-space:pre-wrap">{{ detail.ocrCorrectionNote }}</div>
             </div>
@@ -270,29 +270,29 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
     .stat { background: var(--surface); border-radius: 14px; padding: 16px; border: 1px solid var(--border); text-align: center; }
     .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--dark); }
     .stat-label { font-size: .8rem; color: #64748b; }
-    .results-table thead th { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; background: #f8fafc; white-space: nowrap; }
+    .results-table thead th { font-size: .75rem; text-transform: uppercase; letter-spacing: .04em; color: #64748b; background: var(--surface-muted); white-space: nowrap; }
     .results-table td { white-space: nowrap; }
     .status-badge { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: .75rem; font-weight: 600; }
     .status-badge.done { background: #d1fae5; color: #065f46; }
     .status-badge.progress { background: #fef3c7; color: #92400e; }
     .status-badge.todo { background: #e5e7eb; color: #374151; }
     .action-btn { width: 34px; height: 34px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; }
-    .action-btn:hover:not(:disabled) { background: #e0ebff; color: #2b3ea8; }
+    .action-btn:hover:not(:disabled) { background: #eef0fb; color: #2b3ea8; }
     .modal-backdrop-custom { position: fixed; inset: 0; background: rgba(15, 23, 42, .5); z-index: 1060; display: flex; align-items: flex-start; justify-content: center; padding: 5vh 16px; overflow-y: auto; }
     .modal-panel { background: var(--surface); border-radius: 18px; width: 100%; max-width: 480px; box-shadow: 0 30px 60px rgba(15, 23, 42, .3); animation: pop .18s ease-out; }
     .modal-lg-panel { max-width: 860px; }
     .modal-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 24px; border-bottom: 1px solid #e5e7eb; }
     .modal-body-scroll { padding: 20px 24px; max-height: 75vh; overflow-y: auto; }
-    .info-cell { background: #f8fafc; border-radius: 10px; padding: 10px 12px; font-weight: 600; font-size: .9rem; }
+    .info-cell { background: var(--surface-muted); border-radius: 10px; padding: 10px 12px; font-weight: 600; font-size: .9rem; }
     .info-cell span { display: block; font-size: .72rem; font-weight: 500; color: #64748b; }
-    .grade-banner { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 14px; border-left: 5px solid; background: #f8fafc; }
-    .grid-result thead th { font-size: .72rem; text-transform: uppercase; color: #64748b; background: #f8fafc; }
+    .grade-banner { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 14px; border-left: 5px solid; background: var(--surface-muted); }
+    .grid-result thead th { font-size: .72rem; text-transform: uppercase; color: #64748b; background: var(--surface-muted); }
     .section-box { padding: 12px 14px; border-radius: 12px; }
     .answer-row { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #f1f5f9; }
     .answer-icon { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .8rem; background: #fee2e2; color: #991b1b; }
     .answer-icon.ok { background: #d1fae5; color: #065f46; }
     .question-preview { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-    .answer-pre { white-space: pre-wrap; background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: .85rem; max-height: 320px; overflow: auto; margin: 0; }
+    .answer-pre { white-space: pre-wrap; background: var(--surface-muted); border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: .85rem; max-height: 320px; overflow: auto; margin: 0; }
     .min-w-0 { min-width: 0; }
     @keyframes pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
   `]
@@ -406,7 +406,7 @@ export class QcmResultatsComponent implements OnInit {
   getPct(score?: number, max?: number) { return score != null && max != null && max > 0 ? Math.round((score / max) * 100) : 0; }
   getColor(score?: number, max?: number) {
     const p = this.getPct(score, max);
-    return p >= 80 ? '#10b981' : p >= 60 ? '#3b82f6' : p >= 50 ? '#f59e0b' : '#ef4444';
+    return p >= 80 ? '#10b981' : p >= 60 ? '#2b3ea8' : p >= 50 ? '#f59e0b' : '#ef4444';
   }
   getMention(score?: number, max?: number) {
     const p = this.getPct(score, max);

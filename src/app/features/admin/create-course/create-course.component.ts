@@ -29,11 +29,11 @@ interface PendingUpload {
       text-align: center;
       cursor: pointer;
       transition: all .2s;
-      background: #f8fafc;
+      background: var(--surface-muted);
     }
     .upload-dropzone:hover, .upload-dropzone.dragover {
       border-color: #2b3ea8;
-      background: #eef2ff;
+      background: #eef0fb;
     }
   `],
   template: `
@@ -107,7 +107,7 @@ interface PendingUpload {
 
               <div *ngIf="pendingUploads.length" class="mt-3 d-flex flex-column gap-2">
                 <div *ngFor="let u of pendingUploads; let i = index"
-                     class="d-flex align-items-center gap-2 p-2 border rounded-3" style="background:#f8fafc">
+                     class="d-flex align-items-center gap-2 p-2 border rounded-3" style="background:var(--surface-muted)">
                   <span style="font-size:1.3rem"><i class="bi" [ngClass]="u.kind === 'VIDEO' ? 'bi-camera-reels' : (u.kind === 'PDF' ? 'bi-file-earmark-text' : 'bi-paperclip')"></i></span>
                   <div class="flex-grow-1" style="min-width:0">
                     <div class="small fw-semibold text-truncate">{{ u.name }}</div>
@@ -147,7 +147,7 @@ interface PendingUpload {
 
               <div formArrayName="lessons">
                 <div *ngFor="let lesson of lessons.controls; let i = index" [formGroupName]="i"
-                     class="border rounded-3 p-3 mb-3" style="background:#f8fafc">
+                     class="border rounded-3 p-3 mb-3" style="background:var(--surface-muted)">
                   <div class="d-flex justify-content-between align-items-center mb-3">
                     <span class="fw-semibold">Leçon {{ i+1 }}</span>
                     <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeLesson(i)">

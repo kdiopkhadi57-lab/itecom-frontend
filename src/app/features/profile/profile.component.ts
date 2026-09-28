@@ -84,6 +84,7 @@ import { HttpClient } from '@angular/common/http';
                   placeholder="Parlez-nous de vous..."></textarea>
               </div>
               <div *ngIf="saveSuccess" class="alert alert-success py-2"><i class="bi bi-check-circle me-1"></i>Profil mis à jour !</div>
+              <div *ngIf="saveError" class="alert alert-danger py-2">{{ saveError }}</div>
               <button type="submit" class="btn btn-primary-custom" [disabled]="savingProfile">
                 <span *ngIf="savingProfile" class="spinner-border spinner-border-sm me-2"></span>
                 Sauvegarder
@@ -126,6 +127,7 @@ export class ProfileComponent implements OnInit {
   passwordForm: FormGroup;
   savingProfile = false;
   saveSuccess = false;
+  saveError = '';
   changingPwd = false;
   pwdSuccess = false;
   pwdError = '';
@@ -163,23 +165,23 @@ export class ProfileComponent implements OnInit {
   }
 
   saveProfile() {
-    if (this.profileForm.invalid) return;
+    this.saveError = '';
+    this.saveSuccess = false;
+    // Le formulaire invalide n'envoyait rien et n'affichait aucun message
+    if (this.profileForm.invalid) { this.saveError = 'Le prénom et le nom sont obligatoires.'; return; }
     this.savingProfile = true;
     this.http.put('/api/users/profile', this.profileForm.value).subscribe({
-      next: (updatedUser: any) => {
-        let updated = { ...this.user, ...this.profileForm.value };
-        localStorage.setItem('user', JSON.stringify(updated));
+      next: () => {
+        const { firstName, lastName, bio } = this.profileForm.value;
+        this.authService.updateCurrentUser({ firstName, lastName, bio });
         this.savingProfile = false;
         this.saveSuccess = true;
         setTimeout(() => this.saveSuccess = false, 3000);
       },
-      error: () => {
-        // Update locally for demo
-        let updated = { ...this.user, ...this.profileForm.value };
-        localStorage.setItem('user', JSON.stringify(updated));
+      error: (err) => {
+        // Auparavant l'erreur était masquée et affichée comme un succès
+        this.saveError = err.error?.message || 'Impossible d\'enregistrer le profil. Veuillez réessayer.';
         this.savingProfile = false;
-        this.saveSuccess = true;
-        setTimeout(() => this.saveSuccess = false, 3000);
       }
     });
   }

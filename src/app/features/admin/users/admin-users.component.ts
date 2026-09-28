@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { DialogService } from '../../../core/services/dialog.service';
+import { CreateAccountDialogComponent, CreatedAccount } from './create-account-dialog.component';
 
 interface AppUser {
   id: number;
@@ -22,6 +24,15 @@ interface AppUser {
   subjects?: string | null;
 }
 
+interface UserGroup {
+  key: string;
+  label: string;
+  users: AppUser[];
+}
+
+const NO_LEVEL = '__none__';
+const NO_SUBJECT = '__none__';
+
 @Component({
   selector: 'app-admin-users',
   standalone: true,
@@ -30,321 +41,185 @@ interface AppUser {
     <div class="fade-in-up">
 
       <!-- En-tête -->
-      <div class="d-flex align-items-center gap-3 mb-4">
-        <a routerLink="/dashboard" class="btn btn-outline-secondary btn-sm">
-          <i class="bi bi-arrow-left"></i>
-        </a>
+      <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+        <a routerLink="/dashboard" class="btn btn-outline-secondary btn-sm" aria-label="Retour"><i class="bi bi-arrow-left"></i></a>
         <div class="flex-grow-1">
           <h1 class="fw-bold mb-0">Membres de la plateforme</h1>
-          <p class="text-muted mb-0">Gérez les apprenants et les partenaires (professeurs)</p>
+          <p class="text-muted mb-0">Étudiants groupés par niveau, professeurs groupés par matière</p>
         </div>
-        <button class="btn fw-semibold px-3" style="background:#1d6ff2;color:#fff;border-radius:12px"
-                (click)="openCreate()">
+        <button class="btn btn-primary fw-semibold px-3" (click)="openCreate()">
           <i class="bi bi-person-plus me-2"></i>Créer un compte
         </button>
       </div>
 
-      <div *ngIf="createMessage" class="alert d-flex align-items-center gap-2"
-           [class.alert-success]="createEmailSent" [class.alert-warning]="!createEmailSent">
-        <i class="bi" [class.bi-envelope-check]="createEmailSent" [class.bi-exclamation-triangle]="!createEmailSent"></i>
-        <span class="flex-grow-1">{{ createMessage }}</span>
-        <button type="button" class="btn-close" (click)="createMessage = ''" aria-label="Fermer"></button>
-      </div>
-
-      <!-- Création d'un compte (étudiant ou professeur) -->
-      <div *ngIf="showCreate" class="card border-0 shadow-sm mb-4" style="border-radius:16px">
-        <div class="card-body p-4">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold mb-0"><i class="bi bi-person-plus me-2 text-primary"></i>Nouveau compte</h5>
-            <button type="button" class="btn-close" (click)="showCreate = false" aria-label="Fermer"></button>
-          </div>
-          <form (ngSubmit)="createAccount()" #createForm="ngForm">
-            <div class="row g-3">
-              <div class="col-12">
-                <div class="btn-group w-100" role="group" aria-label="Type de compte">
-                  <input type="radio" class="btn-check" name="role" id="roleStudent" value="STUDENT" [(ngModel)]="newUser.role">
-                  <label class="btn btn-outline-primary" for="roleStudent"><i class="bi bi-mortarboard me-1"></i>Étudiant</label>
-                  <input type="radio" class="btn-check" name="role" id="roleTeacher" value="TEACHER" [(ngModel)]="newUser.role">
-                  <label class="btn btn-outline-primary" for="roleTeacher"><i class="bi bi-person-video3 me-1"></i>Professeur</label>
-                </div>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-semibold small" for="newFirstName">Prénom</label>
-                <input id="newFirstName" class="form-control" name="firstName" [(ngModel)]="newUser.firstName" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-semibold small" for="newLastName">Nom</label>
-                <input id="newLastName" class="form-control" name="lastName" [(ngModel)]="newUser.lastName" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-semibold small" for="newEmail">Email</label>
-                <input id="newEmail" type="email" class="form-control" name="email" [(ngModel)]="newUser.email" required email>
-              </div>
-              <ng-container *ngIf="newUser.role === 'STUDENT'">
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold small" for="newBirthDate">Date de naissance</label>
-                  <input id="newBirthDate" type="date" class="form-control" name="birthDate" [(ngModel)]="newUser.birthDate"
-                         [max]="maxBirthDate" required>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold small" for="newBirthPlace">Lieu de naissance</label>
-                  <input id="newBirthPlace" class="form-control" name="birthPlace" [(ngModel)]="newUser.birthPlace"
-                         placeholder="Ex. Dakar" required>
-                </div>
-                <div class="col-md-6">
-                  <label class="form-label fw-semibold small" for="newLevel">Niveau</label>
-                  <select id="newLevel" class="form-select" name="level" [(ngModel)]="newUser.level" required>
-                    <option value="" disabled>— Choisir —</option>
-                    <option *ngFor="let l of levels" [value]="l">{{ l }}</option>
-                  </select>
-                </div>
-              </ng-container>
-              <div class="col-12" *ngIf="newUser.role === 'TEACHER'">
-                <label class="form-label fw-semibold small" for="newSubjects">Matières enseignées</label>
-                <input id="newSubjects" class="form-control" name="subjects" [(ngModel)]="newUser.subjects" required
-                       placeholder="Ex. Comptabilité analytique, Fiscalité, Mathématiques financières">
-                <div class="form-text">Séparez les matières par des virgules.</div>
-              </div>
-              <div class="col-md-6" *ngIf="newUser.role === 'STUDENT'">
-                <label class="form-label fw-semibold small" for="newSpecialization">Filière</label>
-                <select id="newSpecialization" class="form-select" name="specialization" [(ngModel)]="newUser.specialization">
-                  <option value="">— Aucune —</option>
-                  <option *ngFor="let f of specializations" [value]="f.value">{{ f.label }}</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label fw-semibold small" for="newPassword">Mot de passe</label>
-                <div class="input-group">
-                  <input id="newPassword" class="form-control font-monospace" name="password" [(ngModel)]="newUser.password"
-                         required minlength="6">
-                  <button type="button" class="btn btn-outline-secondary" (click)="newUser.password = generatePassword()"
-                          title="Générer un autre mot de passe"><i class="bi bi-arrow-repeat"></i></button>
-                </div>
-                <div class="form-text">Envoyé automatiquement par email à l'utilisateur.</div>
-              </div>
-            </div>
-            <div *ngIf="createError" class="alert alert-danger py-2 small mt-3 mb-0">{{ createError }}</div>
-            <div class="d-flex justify-content-end gap-2 mt-4">
-              <button type="button" class="btn btn-outline-secondary" (click)="showCreate = false">Annuler</button>
-              <button type="submit" class="btn btn-primary fw-semibold" [disabled]="creating || createForm.invalid">
-                <span *ngIf="creating" class="spinner-border spinner-border-sm me-2"></span>
-                <i *ngIf="!creating" class="bi bi-send me-2"></i>Créer et envoyer les identifiants
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- Stats -->
+      <!-- Chiffres clés -->
       <div class="row g-3 mb-4">
         <div class="col-6 col-md-3">
-          <div class="card border-0 shadow-sm text-center p-3" style="border-radius:14px">
-            <div style="font-size:2rem"><i class="bi bi-mortarboard"></i></div>
-            <div class="fw-bold fs-4 mt-1" style="color:#1d6ff2">{{ students.length }}</div>
-            <div class="text-muted small">Apprenants</div>
-          </div>
+          <div class="stat-card"><div class="stat-icon"><i class="bi bi-mortarboard"></i></div>
+            <div class="stat-value">{{ students.length }}</div><div class="stat-label">Étudiants</div></div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="card border-0 shadow-sm text-center p-3" style="border-radius:14px">
-            <div style="font-size:2rem"><i class="bi bi-person-video3"></i></div>
-            <div class="fw-bold fs-4 mt-1" style="color:#10b981">{{ teachers.length }}</div>
-            <div class="text-muted small">Partenaires</div>
-          </div>
+          <div class="stat-card"><div class="stat-icon"><i class="bi bi-person-video3"></i></div>
+            <div class="stat-value">{{ teachers.length }}</div><div class="stat-label">Professeurs</div></div>
         </div>
         <div class="col-6 col-md-3">
-          <div class="card border-0 shadow-sm text-center p-3" style="border-radius:14px">
-            <div style="font-size:2rem"><i class="bi bi-check-circle"></i></div>
-            <div class="fw-bold fs-4 mt-1" style="color:#059669">{{ students.length + teachers.length }}</div>
-            <div class="text-muted small">Total actifs</div>
-          </div>
+          <div class="stat-card"><div class="stat-icon"><i class="bi bi-diagram-3"></i></div>
+            <div class="stat-value">{{ subjectCount }}</div><div class="stat-label">Matières enseignées</div></div>
         </div>
         <div class="col-6 col-md-3">
           <a routerLink="/admin/registrations" class="text-decoration-none">
-            <div class="card border-0 shadow-sm text-center p-3" style="border-radius:14px;cursor:pointer"
-                 [style.background]="pendingCount > 0 ? '#fef3c7' : '#f9fafb'">
-              <div style="font-size:2rem"><i class="bi bi-hourglass-split"></i></div>
-              <div class="fw-bold fs-4 mt-1" [style.color]="pendingCount > 0 ? '#d97706' : '#6b7280'">{{ pendingCount }}</div>
-              <div class="text-muted small">En attente</div>
-            </div>
+            <div class="stat-card"><div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+              <div class="stat-value">{{ pendingCount }}</div><div class="stat-label">Inscriptions en attente</div></div>
           </a>
         </div>
       </div>
 
-      <!-- Barre de recherche + onglets -->
-      <div class="card border-0 shadow-sm mb-4" style="border-radius:16px">
+      <!-- Onglets, recherche et filtre de groupe -->
+      <div class="card mb-4" style="border-radius:14px">
         <div class="card-body p-3">
           <div class="d-flex align-items-center gap-3 flex-wrap">
-            <!-- Onglets -->
-            <div class="d-flex gap-2">
-              <button class="btn fw-semibold px-4"
-                      [style.background]="activeTab === 'students' ? '#1d6ff2' : '#f3f4f6'"
-                      [style.color]="activeTab === 'students' ? 'white' : '#374151'"
-                      style="border-radius:10px;border:none"
-                      (click)="activeTab = 'students'; filterList()">
-                <i class="bi bi-mortarboard me-1"></i>Apprenants
-                <span class="badge ms-1 rounded-pill"
-                      [style.background]="activeTab === 'students' ? 'rgba(255,255,255,.3)' : '#1d6ff2'"
-                      style="color:white">{{ students.length }}</span>
+            <div class="btn-group" role="tablist" aria-label="Type de membres">
+              <button type="button" class="btn" role="tab" [attr.aria-selected]="activeTab === 'students'"
+                      [class.btn-primary]="activeTab === 'students'" [class.btn-light]="activeTab !== 'students'"
+                      (click)="setTab('students')">
+                <i class="bi bi-mortarboard me-1"></i>Étudiants <span class="ms-1 opacity-75">{{ students.length }}</span>
               </button>
-              <button class="btn fw-semibold px-4"
-                      [style.background]="activeTab === 'teachers' ? '#10b981' : '#f3f4f6'"
-                      [style.color]="activeTab === 'teachers' ? 'white' : '#374151'"
-                      style="border-radius:10px;border:none"
-                      (click)="activeTab = 'teachers'; filterList()">
-                <i class="bi bi-person-video3 me-1"></i>Partenaires
-                <span class="badge ms-1 rounded-pill"
-                      [style.background]="activeTab === 'teachers' ? 'rgba(255,255,255,.3)' : '#10b981'"
-                      style="color:white">{{ teachers.length }}</span>
+              <button type="button" class="btn" role="tab" [attr.aria-selected]="activeTab === 'teachers'"
+                      [class.btn-primary]="activeTab === 'teachers'" [class.btn-light]="activeTab !== 'teachers'"
+                      (click)="setTab('teachers')">
+                <i class="bi bi-person-video3 me-1"></i>Professeurs <span class="ms-1 opacity-75">{{ teachers.length }}</span>
               </button>
             </div>
-
-            <!-- Recherche -->
-            <div class="flex-grow-1" style="min-width:200px">
+            <div class="flex-grow-1" style="min-width:220px">
               <div class="input-group">
-                <span class="input-group-text bg-white border-end-0">
-                  <i class="bi bi-search text-muted"></i>
-                </span>
-                <input type="text" class="form-control border-start-0 ps-0"
-                       placeholder="Rechercher par nom ou email..."
-                       [(ngModel)]="searchQuery" (input)="filterList()">
+                <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                <input type="search" class="form-control" [(ngModel)]="searchQuery"
+                       [placeholder]="activeTab === 'students' ? 'Rechercher un étudiant (nom, email, lieu de naissance…)' : 'Rechercher un professeur (nom, email, matière…)'"
+                       aria-label="Rechercher">
               </div>
             </div>
+          </div>
+
+          <!-- Filtre rapide : un niveau ou une matière -->
+          <div class="d-flex flex-wrap gap-2 mt-3" role="group" [attr.aria-label]="activeTab === 'students' ? 'Filtrer par niveau' : 'Filtrer par matière'">
+            <button type="button" class="chip" [class.active]="!groupFilter" (click)="groupFilter = ''">Tous</button>
+            <button type="button" *ngFor="let g of allGroups" class="chip" [class.active]="groupFilter === g.key" (click)="groupFilter = g.key">
+              {{ g.label }} <span class="chip-count">{{ g.users.length }}</span>
+            </button>
           </div>
         </div>
       </div>
 
-      <!-- Loading -->
-      <div *ngIf="loading" class="text-center py-5">
-        <div class="spinner-border text-primary"></div>
-        <p class="mt-3 text-muted">Chargement...</p>
+      <div *ngIf="loading" class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+
+      <div *ngIf="!loading && visibleGroups.length === 0" class="text-center py-5">
+        <div style="font-size:3rem" class="text-muted"><i class="bi" [ngClass]="activeTab === 'students' ? 'bi-mortarboard' : 'bi-person-video3'"></i></div>
+        <h5 class="mt-3 fw-bold">Aucun {{ activeTab === 'students' ? 'étudiant' : 'professeur' }} trouvé</h5>
+        <p class="text-muted">{{ searchQuery ? 'Aucun résultat pour « ' + searchQuery + ' ».' : 'Créez un premier compte avec le bouton « Créer un compte ».' }}</p>
       </div>
 
-      <!-- Liste vide -->
-      <div *ngIf="!loading && filtered.length === 0" class="text-center py-5">
-        <div style="font-size:3.5rem"><i class="bi" [ngClass]="activeTab === 'students' ? 'bi-mortarboard' : 'bi-person-video3'"></i></div>
-        <h5 class="mt-3 fw-bold">Aucun {{ activeTab === 'students' ? 'apprenant' : 'partenaire' }} trouvé</h5>
-        <p class="text-muted">{{ searchQuery ? 'Aucun résultat pour "' + searchQuery + '"' : 'Aucun compte validé pour l\'instant.' }}</p>
-      </div>
+      <!-- Groupes -->
+      <div *ngFor="let g of visibleGroups" class="card mb-3 group-card">
+        <button type="button" class="group-head" (click)="toggleGroup(g.key)" [attr.aria-expanded]="!collapsed[g.key]">
+          <i class="bi" [ngClass]="collapsed[g.key] ? 'bi-chevron-right' : 'bi-chevron-down'"></i>
+          <span class="group-title">{{ g.label }}</span>
+          <span class="group-count">{{ g.users.length }} {{ activeTab === 'students' ? 'étudiant' : 'professeur' }}{{ g.users.length > 1 ? 's' : '' }}</span>
+        </button>
 
-      <!-- Grille de cartes -->
-      <div class="row g-3" *ngIf="!loading && filtered.length > 0">
-        <div class="col-12 col-md-6 col-xl-4" *ngFor="let u of filtered">
-          <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden">
-
-            <!-- Bandeau coloré selon le rôle -->
-            <div style="height:5px"
-                 [style.background]="activeTab === 'students' ? '#1d6ff2' : '#1d6ff2'">
-            </div>
-
-            <div class="card-body p-4">
-              <div class="d-flex align-items-start gap-3">
-
-                <!-- Avatar -->
-                <div style="width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:1.1rem;flex-shrink:0"
-                     [style.background]="activeTab === 'students' ? '#1d6ff2' : '#1d6ff2'">
-                  {{ u.firstName.charAt(0) }}{{ u.lastName.charAt(0) }}
-                </div>
-
-                <div class="flex-grow-1 overflow-hidden">
-                  <div class="fw-bold text-truncate">{{ u.firstName }} {{ u.lastName }}</div>
-                  <div class="text-muted small text-truncate">{{ u.email }}</div>
-
-                  <!-- Niveau, filière, naissance (apprenants) -->
-                  <div *ngIf="activeTab === 'students'" class="d-flex flex-wrap gap-1 mt-1">
-                    <span *ngIf="u.level" class="badge" style="background:#dbeafe;color:#1d4ed8;font-size:.72rem">{{ u.level }}</span>
-                    <span *ngIf="u.specialization" class="badge" style="background:#eef4ff;color:#1658c4;font-size:.72rem">
-                      {{ getSpecialization(u.specialization) }}
-                    </span>
+        <div *ngIf="!collapsed[g.key]" class="table-responsive">
+          <table class="table align-middle mb-0 members-table" [class.students]="activeTab === 'students'" [class.teachers]="activeTab === 'teachers'">
+            <thead>
+              <tr *ngIf="activeTab === 'students'">
+                <th>Nom et prénom</th><th>Email</th><th>Naissance</th><th>Filière</th><th>Statut</th><th class="text-end">Action</th>
+              </tr>
+              <tr *ngIf="activeTab === 'teachers'">
+                <th>Nom et prénom</th><th>Email</th><th>Matières</th><th>Statut</th><th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let u of g.users">
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="avatar">{{ u.firstName.charAt(0) }}{{ u.lastName.charAt(0) }}</span>
+                    <span class="fw-semibold">{{ u.lastName }} {{ u.firstName }}</span>
                   </div>
-                  <div *ngIf="activeTab === 'students' && (u.birthDate || u.birthPlace)" class="text-muted small mt-1">
-                    <i class="bi bi-calendar-event me-1"></i>Né(e) {{ u.birthDate ? ('le ' + (u.birthDate | date:'dd/MM/yyyy')) : '' }}{{ u.birthPlace ? ' à ' + u.birthPlace : '' }}
-                  </div>
-
-                  <!-- Matières (partenaires) -->
-                  <div *ngIf="activeTab === 'teachers' && u.subjects" class="d-flex flex-wrap gap-1 mt-1">
-                    <span *ngFor="let m of subjectList(u.subjects)" class="badge" style="background:#d1fae5;color:#047857;font-size:.72rem">{{ m }}</span>
-                  </div>
-
-                  <!-- Bio (partenaires) -->
-                  <p *ngIf="activeTab === 'teachers' && u.bio"
-                     class="text-muted small mt-1 mb-0"
-                     style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">
-                    {{ u.bio }}
-                  </p>
-                </div>
-              </div>
-
-              <hr class="my-3" style="opacity:.08">
-
-              <!-- Infos bas de carte -->
-              <div class="d-flex align-items-center justify-content-between">
-                <div class="small text-muted">
-                  <i class="bi bi-calendar3 me-1"></i>
-                  {{ u.createdAt | date:'dd/MM/yyyy' }}
-                </div>
-
-                <div class="d-flex align-items-center gap-2">
-                  <!-- Badge statut -->
-                  <span class="badge rounded-pill"
-                        [style.background]="u.enabled ? '#d1fae5' : '#fee2e2'"
-                        [style.color]="u.enabled ? '#065f46' : '#991b1b'"
-                        style="font-size:.7rem">
-                    {{ u.enabled ? '● Actif' : '● Désactivé' }}
-                  </span>
-
-                  <!-- Bouton activer/désactiver -->
-                  <button *ngIf="u.enabled"
-                          class="btn btn-sm btn-outline-danger py-0 px-2"
-                          style="font-size:.75rem;border-radius:8px"
-                          [disabled]="processing[u.id]"
-                          (click)="toggleAccount(u)">
+                </td>
+                <td class="text-muted small">{{ u.email }}</td>
+                <td *ngIf="activeTab === 'students'" class="small">
+                  {{ u.birthDate ? (u.birthDate | date:'dd/MM/yyyy') : '—' }}<span *ngIf="u.birthPlace" class="text-muted"> · {{ u.birthPlace }}</span>
+                </td>
+                <td *ngIf="activeTab === 'students'" class="small">{{ getSpecialization(u.specialization) || '—' }}</td>
+                <td *ngIf="activeTab === 'teachers'">
+                  <span *ngFor="let m of subjectList(u.subjects)" class="subject-tag">{{ m }}</span>
+                  <span *ngIf="!subjectList(u.subjects).length" class="text-muted small">—</span>
+                </td>
+                <td>
+                  <span class="status" [class.off]="!u.enabled"><i class="bi bi-circle-fill me-1"></i>{{ u.enabled ? 'Actif' : 'Désactivé' }}</span>
+                </td>
+                <td class="text-end">
+                  <button type="button" class="btn btn-sm" [class.btn-outline-danger]="u.enabled" [class.btn-outline-primary]="!u.enabled"
+                          [disabled]="processing[u.id]" (click)="toggleAccount(u)">
                     <span *ngIf="processing[u.id]" class="spinner-border spinner-border-sm me-1"></span>
-                    Désactiver
+                    {{ u.enabled ? 'Désactiver' : 'Réactiver' }}
                   </button>
-                  <button *ngIf="!u.enabled"
-                          class="btn btn-sm btn-outline-success py-0 px-2"
-                          style="font-size:.75rem;border-radius:8px"
-                          [disabled]="processing[u.id]"
-                          (click)="toggleAccount(u)">
-                    <span *ngIf="processing[u.id]" class="spinner-border spinner-border-sm me-1"></span>
-                    Réactiver
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
-
     </div>
-  `
+  `,
+  styles: [`
+    .chip { border: 1px solid var(--border); background: #fff; color: var(--dark); border-radius: 999px; padding: 4px 12px; font-size: .85rem; font-weight: 500; }
+    .chip:hover { border-color: var(--dark); }
+    .chip.active { background: var(--dark); border-color: var(--dark); color: #fff; }
+    .chip-count { opacity: .65; margin-left: 2px; }
+    .group-card { border-radius: 14px; overflow: hidden; }
+    .group-head {
+      width: 100%; display: flex; align-items: center; gap: 10px; padding: 14px 18px; border: 0; background: var(--gray-50);
+      border-bottom: 1px solid var(--border); text-align: left;
+    }
+    .group-title { font-weight: 700; font-size: 1rem; color: var(--dark); }
+    .group-count { margin-left: auto; color: var(--muted); font-size: .85rem; }
+    .members-table thead th { font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); background: #fff; white-space: nowrap; }
+    .members-table { table-layout: fixed; min-width: 860px; }
+    .members-table td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .members-table.teachers td:nth-child(3) { white-space: normal; }
+    /* Colonnes identiques d'un groupe à l'autre */
+    .members-table.students th:nth-child(1) { width: 26%; } .members-table.students th:nth-child(2) { width: 24%; }
+    .members-table.students th:nth-child(3) { width: 20%; } .members-table.students th:nth-child(4) { width: 13%; }
+    .members-table.students th:nth-child(5) { width: 9%; }  .members-table.students th:nth-child(6) { width: 8%; }
+    .members-table.teachers th:nth-child(1) { width: 26%; } .members-table.teachers th:nth-child(2) { width: 24%; }
+    .members-table.teachers th:nth-child(3) { width: 33%; } .members-table.teachers th:nth-child(4) { width: 9%; }
+    .members-table.teachers th:nth-child(5) { width: 8%; }
+    .avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--dark); color: #fff; font-size: .75rem; font-weight: 700;
+      display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .subject-tag { display: inline-block; margin: 2px 4px 2px 0; padding: 2px 8px; border-radius: 6px; font-size: .75rem;
+      background: var(--gray-100); border: 1px solid var(--border); color: var(--dark); }
+    .status { font-size: .8rem; color: var(--success); }
+    .status.off { color: var(--danger); }
+    .status i { font-size: .5rem; vertical-align: middle; }
+  `]
 })
 export class AdminUsersComponent implements OnInit {
   activeTab: 'students' | 'teachers' = 'students';
   students: AppUser[] = [];
   teachers: AppUser[] = [];
-  filtered: AppUser[] = [];
   searchQuery = '';
+  groupFilter = '';
   loading = true;
   pendingCount = 0;
   processing: Record<number, boolean> = {};
+  collapsed: Record<string, boolean> = {};
 
-  showCreate = false;
-  creating = false;
-  createError = '';
-  createMessage = '';
-  createEmailSent = true;
-  newUser = this.emptyUser();
   readonly levels = ['L1', 'L2', 'L3', 'M1', 'M2'];
-  readonly maxBirthDate = new Date(new Date().getFullYear() - 10, 11, 31).toISOString().substring(0, 10);
-  readonly specializations = [
-    { value: 'genie-logiciel', label: 'Génie Logiciel' }, { value: 'reseau', label: 'Réseaux' },
-    { value: 'comptabilite', label: 'Comptabilité' }, { value: 'sante', label: 'Santé' },
-    { value: 'marketing-digital', label: 'Marketing Digital' },
-    { value: 'developpement-personnel', label: 'Développement Personnel' }
-  ];
+  private readonly specializationLabels: Record<string, string> = {
+    'genie-logiciel': 'Génie Logiciel', 'reseau': 'Réseaux', 'comptabilite': 'Comptabilité', 'sante': 'Santé',
+    'marketing-digital': 'Marketing Digital', 'developpement-personnel': 'Développement Personnel'
+  };
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private dialogs: DialogService) {}
 
   ngOnInit() {
     this.loadAll();
@@ -353,85 +228,89 @@ export class AdminUsersComponent implements OnInit {
   loadAll() {
     this.loading = true;
     let done = 0;
-    const check = () => { if (++done === 3) { this.loading = false; this.filterList(); } };
-
-    this.http.get<AppUser[]>('/api/admin/users/students').subscribe({
-      next: (d) => { this.students = d; check(); },
-      error: () => check()
-    });
-    this.http.get<AppUser[]>('/api/admin/users/teachers').subscribe({
-      next: (d) => { this.teachers = d; check(); },
-      error: () => check()
-    });
-    this.http.get<{pending: number}>('/api/admin/users/stats').subscribe({
-      next: (d) => { this.pendingCount = d.pending; check(); },
-      error: () => check()
-    });
+    const check = () => { if (++done === 3) this.loading = false; };
+    this.http.get<AppUser[]>('/api/admin/users/students').subscribe({ next: d => { this.students = d; check(); }, error: () => check() });
+    this.http.get<AppUser[]>('/api/admin/users/teachers').subscribe({ next: d => { this.teachers = d; check(); }, error: () => check() });
+    this.http.get<{ pending: number }>('/api/admin/users/stats').subscribe({ next: d => { this.pendingCount = d.pending; check(); }, error: () => check() });
   }
 
-  private emptyUser() {
-    return {
-      role: 'STUDENT', firstName: '', lastName: '', email: '', specialization: '', password: this.generatePassword(),
-      birthDate: '', birthPlace: '', level: '', subjects: ''
-    };
+  setTab(tab: 'students' | 'teachers') {
+    this.activeTab = tab;
+    this.groupFilter = '';
   }
+
+  // ── Groupes ─────────────────────────────────────────────────────────────
+
+  /** Tous les groupes de l'onglet (niveaux ou matières), après la recherche. */
+  get allGroups(): UserGroup[] {
+    const q = this.searchQuery.trim().toLowerCase();
+    const matches = (u: AppUser) => !q || [u.firstName, u.lastName, u.email, u.birthPlace, u.level, u.subjects,
+      this.getSpecialization(u.specialization)].some(v => (v || '').toLowerCase().includes(q));
+    return this.activeTab === 'students'
+      ? this.groupStudents(this.students.filter(matches))
+      : this.groupTeachers(this.teachers.filter(matches));
+  }
+
+  get visibleGroups(): UserGroup[] {
+    return this.allGroups.filter(g => !this.groupFilter || g.key === this.groupFilter);
+  }
+
+  get subjectCount(): number {
+    return new Set(this.teachers.flatMap(t => this.subjectList(t.subjects).map(s => s.toLowerCase()))).size;
+  }
+
+  /** Étudiants par niveau, dans l'ordre L1 → M2, puis ceux sans niveau. */
+  private groupStudents(list: AppUser[]): UserGroup[] {
+    const groups: UserGroup[] = this.levels.map(l => ({ key: l, label: this.levelLabel(l), users: [] as AppUser[] }));
+    const none: UserGroup = { key: NO_LEVEL, label: 'Niveau non renseigné', users: [] };
+    for (const u of list) {
+      const g = groups.find(x => x.key === (u.level || '').toUpperCase());
+      (g || none).users.push(u);
+    }
+    return [...groups, none].filter(g => g.users.length).map(g => ({ ...g, users: this.sortByName(g.users) }));
+  }
+
+  /** Professeurs par matière (un professeur apparaît dans chacune de ses matières), par ordre alphabétique. */
+  private groupTeachers(list: AppUser[]): UserGroup[] {
+    const map = new Map<string, UserGroup>();
+    const none: UserGroup = { key: NO_SUBJECT, label: 'Matière non renseignée', users: [] };
+    for (const t of list) {
+      const subjects = this.subjectList(t.subjects);
+      if (!subjects.length) { none.users.push(t); continue; }
+      for (const s of subjects) {
+        const key = s.toLowerCase();
+        if (!map.has(key)) map.set(key, { key, label: s, users: [] });
+        map.get(key)!.users.push(t);
+      }
+    }
+    const groups = [...map.values()].sort((a, b) => a.label.localeCompare(b.label, 'fr'));
+    return [...groups, none].filter(g => g.users.length).map(g => ({ ...g, users: this.sortByName(g.users) }));
+  }
+
+  private sortByName(users: AppUser[]): AppUser[] {
+    return [...users].sort((a, b) => (a.lastName + ' ' + a.firstName).localeCompare(b.lastName + ' ' + b.firstName, 'fr'));
+  }
+
+  levelLabel(level: string): string {
+    return ({ L1: 'Licence 1 (L1)', L2: 'Licence 2 (L2)', L3: 'Licence 3 (L3)', M1: 'Master 1 (M1)', M2: 'Master 2 (M2)' } as Record<string, string>)[level] || level;
+  }
+
+  toggleGroup(key: string) {
+    this.collapsed[key] = !this.collapsed[key];
+  }
+
+  // ── Actions ─────────────────────────────────────────────────────────────
 
   openCreate() {
-    this.newUser = this.emptyUser();
-    this.newUser.role = this.activeTab === 'teachers' ? 'TEACHER' : 'STUDENT';
-    this.createError = '';
-    this.showCreate = true;
-  }
-
-  generatePassword(): string {
-    // Sans caractères ambigus (0/O, 1/l/I) pour faciliter la saisie
-    const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-    return Array.from(crypto.getRandomValues(new Uint32Array(10)), b => alphabet[b % alphabet.length]).join('');
-  }
-
-  createAccount() {
-    if (this.creating) return;
-    this.creating = true;
-    this.createError = '';
-    const student = this.newUser.role === 'STUDENT';
-    const body = {
-      ...this.newUser,
-      specialization: student ? this.newUser.specialization : '',
-      birthDate: student ? this.newUser.birthDate : '',
-      birthPlace: student ? this.newUser.birthPlace : '',
-      level: student ? this.newUser.level : '',
-      subjects: student ? '' : this.newUser.subjects
-    };
-    this.http.post<{ user: AppUser; emailSent: boolean; message: string }>('/api/admin/users', body).subscribe({
-      next: res => {
-        this.creating = false;
-        this.showCreate = false;
-        this.createEmailSent = res.emailSent;
-        this.createMessage = res.message;
-        if (res.user.role === 'ROLE_TEACHER') {
-          this.teachers = [res.user, ...this.teachers];
-          this.activeTab = 'teachers';
-        } else {
-          this.students = [res.user, ...this.students];
-          this.activeTab = 'students';
-        }
-        this.filterList();
-      },
-      error: err => {
-        this.creating = false;
-        this.createError = err.error?.message || 'Impossible de créer le compte.';
-      }
-    });
-  }
-
-  filterList() {
-    const source = this.activeTab === 'students' ? this.students : this.teachers;
-    const q = this.searchQuery.toLowerCase().trim();
-    this.filtered = q
-      ? source.filter(u =>
-          (u.firstName + ' ' + u.lastName).toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q))
-      : [...source];
+    this.dialogs.open<CreatedAccount>(CreateAccountDialogComponent, { title: 'Créer un compte', icon: 'bi-person-plus', size: 'md' })
+      .afterClosed.then(res => {
+        if (!res) return;
+        const user = res.user as AppUser;
+        if (user.role === 'ROLE_TEACHER') { this.teachers = [user, ...this.teachers]; this.setTab('teachers'); }
+        else { this.students = [user, ...this.students]; this.setTab('students'); }
+        if (res.emailSent) this.dialogs.toast(res.message);
+        else this.dialogs.alert({ title: 'Compte créé', message: res.message, icon: 'bi-envelope-exclamation', tone: 'warning' });
+      });
   }
 
   toggleAccount(u: AppUser) {
@@ -441,8 +320,9 @@ export class AdminUsersComponent implements OnInit {
       next: () => {
         u.enabled = !u.enabled;
         this.processing[u.id] = false;
+        this.dialogs.toast(u.enabled ? 'Compte réactivé' : 'Compte désactivé', u.enabled ? 'success' : 'info');
       },
-      error: () => { this.processing[u.id] = false; }
+      error: () => { this.processing[u.id] = false; this.dialogs.toast('Action impossible pour le moment.', 'danger'); }
     });
   }
 
@@ -451,11 +331,6 @@ export class AdminUsersComponent implements OnInit {
   }
 
   getSpecialization(s: string | null): string {
-    const map: Record<string, string> = {
-      'genie-logiciel': 'Génie Logiciel', 'reseau': 'Réseaux',
-      'comptabilite': 'Comptabilité', 'sante': 'Santé',
-      'marketing-digital': 'Marketing Digital', 'developpement-personnel': 'Développement Personnel'
-    };
-    return s ? (map[s] || s) : '';
+    return s ? (this.specializationLabels[s] || s) : '';
   }
 }

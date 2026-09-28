@@ -85,7 +85,7 @@ import { CreateCourseComponent } from '../../features/admin/create-course/create
           </li>
           <li>
             <a class="nav-link" routerLink="/admin/users" routerLinkActive="active">
-              <i class="bi bi-people me-2"></i>Apprenants & Partenaires
+              <i class="bi bi-people me-2"></i>Étudiants et professeurs
             </a>
           </li>
         </ng-container>

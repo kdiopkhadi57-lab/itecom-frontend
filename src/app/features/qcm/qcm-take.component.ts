@@ -223,7 +223,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
               </div>
               <div class="col-sm-6">
                 <label class="form-label small fw-semibold" for="idBirthDate">Date de naissance *</label>
-                <input id="idBirthDate" type="date" class="form-control" [(ngModel)]="identity.birthDate" [max]="maxBirthDate"
+                <input id="idBirthDate" type="date" class="form-control" [(ngModel)]="identity.birthDate"
                        autocomplete="bday" [class.is-invalid]="identityTouched && !identity.birthDate">
               </div>
               <div class="col-sm-6">
@@ -626,7 +626,6 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   private draftInterval: ReturnType<typeof setInterval> | null = null;
   identity = { lastName: '', firstName: '', birthDate: '', level: '' };
   identityTouched = false;
-  readonly maxBirthDate = new Date(new Date().getFullYear() - 10, 11, 31).toISOString().substring(0, 10);
   resultat: Resultat | null = null;
   answers: Record<number, number> = {};
   practicalAnswers: Record<number, Record<string, string>> = {};

@@ -417,7 +417,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                   <div class="fw-semibold mb-1"><i class="bi bi-upload me-2"></i>Copie papier{{ qcm.paperCorrectionRequired ? '' : ' (facultatif)' }}</div>
                   <div class="small text-muted mb-2">Si vous avez traité tout ou partie du cas sur papier, joignez une photo ou un PDF avant de soumettre.</div>
                   <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <input type="file" class="form-control form-control-sm" accept="image/*,.pdf" style="max-width:420px"
+                    <input type="file" class="form-control form-control-sm" accept="image/jpeg,image/png,image/webp,.pdf" style="max-width:420px"
                            (change)="onPaperCorrectionSelected($event)" [disabled]="paperCorrectionUploading">
                     <span *ngIf="paperCorrectionUploading" class="spinner-border spinner-border-sm text-primary"></span>
                   </div>
@@ -493,7 +493,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                 <div class="fw-semibold mb-1"><i class="bi bi-file-earmark-image me-2"></i>Correction papier</div>
                 <div class="small text-muted mb-2">Joignez la photo ou le scan de votre correction avant de soumettre le devoir.</div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <input type="file" class="form-control form-control-sm" accept="image/*,.pdf" style="max-width:420px"
+                  <input type="file" class="form-control form-control-sm" accept="image/jpeg,image/png,image/webp,.pdf" style="max-width:420px"
                          (change)="onPaperCorrectionSelected($event)" [disabled]="paperCorrectionUploading">
                   <span *ngIf="paperCorrectionUploading" class="spinner-border spinner-border-sm text-primary"></span>
                 </div>
@@ -851,13 +851,14 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
     this.paperCorrectionError = '';
     const form = new FormData();
     form.append('file', file);
-    this.http.post<{ url: string; filename: string; readValues?: Record<string, Record<string, string>> }>(
+    this.http.post<{ url: string; filename: string; readValues?: Record<string, Record<string, string>>; ocrWarning?: string }>(
       `/api/qcm/${this.qcmId}/passage/${this.qcm.passageId}/paper-correction`, form
     ).subscribe({
       next: response => {
         this.paperCorrectionUrl = response.url;
         this.paperCorrectionFilename = response.filename;
         this.paperCorrectionUploading = false;
+        this.paperCorrectionError = response.ocrWarning || '';
         // Valeurs lues sur la copie : pré-remplissage des lignes encore vides, à vérifier par l'étudiant
         Object.entries(response.readValues || {}).forEach(([questionId, values]) => {
           const qid = Number(questionId);

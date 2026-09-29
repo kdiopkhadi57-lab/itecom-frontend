@@ -2,6 +2,7 @@ import { Component, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { FileViewerComponent } from '../../shared/components/file-viewer.component';
 import { DialogService } from '../../core/services/dialog.service';
@@ -9,7 +10,7 @@ import { DialogService } from '../../core/services/dialog.service';
 interface ReponseDetail { questionText: string; points: number; choiceSelected: string; isCorrect: boolean; correctChoice: string; questionType?: string; textAnswer?: string; }
 interface GridRowResult { id: string; label: string; question?: string; expectedRaw: string; studentValue?: string | null; source?: string | null; correct: boolean; points: number; maxPoints: number; }
 interface CorrectionDetail { questionId: number; earned: number; total: number; rows: GridRowResult[]; }
-interface PassageResult  { passageId?: number; studentName: string; studentEmail: string; studentLevel?: string; lastName?: string; firstName?: string; birthDate?: string; score?: number; maxScore?: number; manualScore?: number; manualCorrectionNote?: string; ocrScore?: number; ocrCorrectionNote?: string; percentage?: string; submittedAt?: string; status: string; paperCorrectionUrl?: string; paperCorrectionFilename?: string; documentAnswer?: string; correctionText?: string; correctionDetail?: CorrectionDetail[] | null; reponses: ReponseDetail[]; }
+interface PassageResult  { passageId?: number; studentName: string; studentEmail: string; studentLevel?: string; lastName?: string; firstName?: string; birthDate?: string; score?: number; maxScore?: number; manualScore?: number; manualCorrectionNote?: string; ocrScore?: number; ocrCorrectionNote?: string; percentage?: string; submittedAt?: string; status: string; paperCorrectionUrl?: string; paperCorrectionFilename?: string; documentAnswer?: string; correctionText?: string; correctionDetail?: CorrectionDetail[] | null; ocrExtractedText?: string | null; reponses: ReponseDetail[]; }
 
 @Component({
   selector: 'app-qcm-resultats',
@@ -95,7 +96,7 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
                   <th>Email</th>
                   <th style="width:12%">Statut</th>
                   <th class="text-end" style="width:11%">Note</th>
-                  <th class="text-end" style="width:110px">Actions</th>
+                  <th class="text-end" style="width:150px">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -116,6 +117,11 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
                   <td class="text-end text-nowrap">
                     <button class="btn btn-sm btn-light action-btn" (click)="openDetail(r)" title="Voir le détail" aria-label="Voir le détail">
                       <i class="bi bi-eye"></i>
+                    </button>
+                    <button *ngIf="r.paperCorrectionUrl" class="btn btn-sm btn-light action-btn ms-1"
+                            (click)="viewFile(r.paperCorrectionUrl, r.paperCorrectionFilename, 'Copie de l’étudiant')"
+                            title="Voir la copie envoyée" aria-label="Voir la copie envoyée">
+                      <i class="bi bi-paperclip"></i>
                     </button>
                     <button class="btn btn-sm btn-light action-btn ms-1" (click)="openEdit(r)"
                             [disabled]="r.status !== 'SOUMIS' || !r.passageId"
@@ -170,10 +176,44 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
             </div>
             <div *ngIf="detail.status === 'NON_COMMENCE'" class="alert alert-light border">L'étudiant n'a pas encore commencé ce devoir.</div>
 
-            <button *ngIf="detail.paperCorrectionUrl" type="button" class="btn btn-sm btn-outline-primary mb-3"
-                    (click)="viewFile(detail.paperCorrectionUrl, detail.paperCorrectionFilename, 'Copie scannée')">
-              <i class="bi bi-file-earmark-image me-1"></i>Voir la copie scannée
-            </button>
+            <div *ngIf="detail.paperCorrectionUrl" class="copy-box mb-3">
+              <div class="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
+                <h6 class="fw-bold mb-0 text-truncate">
+                  <i class="bi me-1" [ngClass]="fileKind(detail.paperCorrectionUrl) === 'pdf' ? 'bi-file-earmark-pdf' : 'bi-file-earmark-image'"></i>Copie envoyée par l'étudiant
+                  <span class="fw-normal text-muted small ms-1">{{ detail.paperCorrectionFilename }}</span>
+                </h6>
+                <div class="d-flex gap-2">
+                  <button type="button" class="btn btn-sm btn-outline-primary"
+                          (click)="viewFile(detail.paperCorrectionUrl, detail.paperCorrectionFilename, 'Copie de l’étudiant')">
+                    <i class="bi bi-arrows-fullscreen me-1"></i>Agrandir
+                  </button>
+                  <a class="btn btn-sm btn-outline-secondary" [href]="detail.paperCorrectionUrl" [attr.download]="detail.paperCorrectionFilename || ''">
+                    <i class="bi bi-download me-1"></i>Télécharger
+                  </a>
+                </div>
+              </div>
+              <div class="row g-3">
+                <div [class]="detail.ocrExtractedText ? 'col-md-7' : 'col-12'">
+                  <button *ngIf="fileKind(detail.paperCorrectionUrl) === 'image'" type="button" class="copy-preview"
+                          (click)="viewFile(detail.paperCorrectionUrl, detail.paperCorrectionFilename, 'Copie de l’étudiant')"
+                          title="Agrandir la copie">
+                    <img [src]="detail.paperCorrectionUrl" [alt]="'Copie de ' + (detail.lastName || detail.studentName)">
+                  </button>
+                  <iframe *ngIf="fileKind(detail.paperCorrectionUrl) === 'pdf'" class="copy-pdf" [src]="safeUrl(detail.paperCorrectionUrl)"
+                          [title]="detail.paperCorrectionFilename || 'Copie de l’étudiant'"></iframe>
+                  <div *ngIf="fileKind(detail.paperCorrectionUrl) === 'other'" class="text-muted small py-3">
+                    <i class="bi bi-file-earmark me-1"></i>Aperçu indisponible pour ce type de fichier : téléchargez-le.
+                  </div>
+                </div>
+                <div *ngIf="detail.ocrExtractedText" class="col-md-5">
+                  <div class="fw-semibold small mb-1"><i class="bi bi-eye me-1"></i>Texte lu sur la copie (OCR)</div>
+                  <pre class="answer-pre ocr-pre">{{ detail.ocrExtractedText }}</pre>
+                </div>
+              </div>
+              <div *ngIf="!detail.ocrExtractedText && detail.status === 'SOUMIS'" class="small text-warning mt-2">
+                <i class="bi bi-exclamation-triangle me-1"></i>La copie n'a pas pu être lue automatiquement : vérifiez-la et ajustez la note si besoin.
+              </div>
+            </div>
 
             <div *ngFor="let grid of detail.correctionDetail || []" class="mb-3">
               <div class="d-flex justify-content-between align-items-center mb-2">
@@ -294,6 +334,11 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
     .question-preview { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
     .answer-pre { white-space: pre-wrap; background: var(--surface-muted); border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: .85rem; max-height: 320px; overflow: auto; margin: 0; }
     .min-w-0 { min-width: 0; }
+    .copy-box { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+    .copy-preview { display: block; width: 100%; padding: 0; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-muted); cursor: zoom-in; overflow: hidden; }
+    .copy-preview img { display: block; width: 100%; max-height: 420px; object-fit: contain; }
+    .copy-pdf { width: 100%; height: 420px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
+    .ocr-pre { max-height: 420px; font-size: .8rem; }
     @keyframes pop { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
   `]
 })
@@ -312,7 +357,9 @@ export class QcmResultatsComponent implements OnInit {
   editError = '';
   saving = false;
 
-  constructor(private dialogs: DialogService, private http: HttpClient, private route: ActivatedRoute) {}
+  private safeUrls = new Map<string, SafeResourceUrl>();
+
+  constructor(private dialogs: DialogService, private http: HttpClient, private route: ActivatedRoute, private sanitizer: DomSanitizer) {}
 
   ngOnInit() {
     this.qcmId = +this.route.snapshot.paramMap.get('id')!;
@@ -475,6 +522,21 @@ export class QcmResultatsComponent implements OnInit {
       },
       error: () => { this.downloading = false; }
     });
+  }
+
+  fileKind(url?: string | null): 'image' | 'pdf' | 'other' {
+    const path = (url || '').split('?')[0].toLowerCase();
+    return /\.(png|jpe?g|gif|webp|bmp)$/.test(path) ? 'image' : path.endsWith('.pdf') ? 'pdf' : 'other';
+  }
+
+  /** URL de la copie PDF pour l'aperçu intégré (mise en cache pour ne pas recharger l'iframe). */
+  safeUrl(url: string): SafeResourceUrl {
+    let safe = this.safeUrls.get(url);
+    if (!safe) {
+      safe = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      this.safeUrls.set(url, safe);
+    }
+    return safe;
   }
 
   /** Affiche un fichier (copie scannée, sujet…) dans une popup, sans quitter la page. */

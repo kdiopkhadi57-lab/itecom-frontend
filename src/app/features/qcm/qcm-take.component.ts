@@ -1,8 +1,9 @@
 import { Component, ElementRef, HostListener, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { UiChromeService } from '../../core/services/ui-chrome.service';
 import { FileViewerComponent } from '../../shared/components/file-viewer.component';
@@ -21,6 +22,8 @@ interface Question {
   choices: Choice[];
   gridRows?: { id: string; label: string; question?: string }[];
 }
+interface PaperPage { url: string; filename?: string | null; contentType?: string | null; }
+interface PaperCopyResponse { url?: string | null; filename?: string | null; pages?: PaperPage[]; readValues?: Record<string, Record<string, string>>; ocrWarning?: string; }
 interface QcmTake  {
   id: number;
   title: string;
@@ -32,6 +35,7 @@ interface QcmTake  {
   paperCorrectionRequired?: boolean;
   paperCorrectionUrl?: string | null;
   paperCorrectionFilename?: string | null;
+  paperPages?: PaperPage[] | null;
   startedAt?: string | null;
   draftAnswers?: string | null;
   questions: Question[];
@@ -57,7 +61,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
 @Component({
   selector: 'app-qcm-take',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, NgTemplateOutlet],
   template: `
     <div class="fade-in-up"
          [style.height]="isFullscreenMode ? '100vh' : null"
@@ -346,6 +350,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                   <div class="case-section-title"><i class="bi bi-list-check me-1"></i>Énoncé / travail à faire</div>
                   <div *ngIf="hasAnswerTable(q) && scanReadNotice[q.id]" class="alert alert-info small py-2">
                     <i class="bi bi-magic me-1"></i>Valeurs lues sur votre copie : vérifiez-les et corrigez si nécessaire.
+                    Quand votre copie indique une autre valeur que celle saisie, c'est la valeur saisie qui est notée.
                   </div>
                   <div class="case-text">
                     <ng-container *ngFor="let block of caseBlocks(q.questionText)">
@@ -360,6 +365,10 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                                      [attr.aria-label]="'Réponse ligne ' + row[0]"
                                      [ngModel]="getPracticalAnswer(q.id, tableRowId(row, ri))"
                                      (ngModelChange)="setPracticalAnswer(q.id, tableRowId(row, ri), $event)">
+                              <div *ngIf="ri > 0 && ci === answerColumn(block.table) && scanConflict(q.id, tableRowId(row, ri)) as copyValue" class="scan-conflict">
+                                <i class="bi bi-exclamation-triangle me-1"></i>Votre copie indique <strong>{{ copyValue }}</strong>
+                                <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" (click)="setPracticalAnswer(q.id, tableRowId(row, ri), copyValue)">Utiliser</button>
+                              </div>
                               <ng-template #plainCell>{{ cell }}</ng-template>
                             </td>
                           </tr>
@@ -378,6 +387,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                   </div>
                   <div *ngIf="scanReadNotice[q.id]" class="alert alert-info small py-2">
                     <i class="bi bi-magic me-1"></i>Valeurs lues sur votre copie : vérifiez-les et corrigez si nécessaire.
+                    Quand votre copie indique une autre valeur que celle saisie, c'est la valeur saisie qui est notée.
                   </div>
                   <div class="table-responsive">
                     <table class="table table-sm align-middle mb-0 grid-table">
@@ -390,6 +400,10 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                                    placeholder="Ex. 5 280 000"
                                    [ngModel]="getPracticalAnswer(q.id, row.id)"
                                    (ngModelChange)="setPracticalAnswer(q.id, row.id, $event)">
+                            <div *ngIf="scanConflict(q.id, row.id) as copyValue" class="scan-conflict">
+                              <i class="bi bi-exclamation-triangle me-1"></i>Votre copie indique <strong>{{ copyValue }}</strong>
+                              <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" (click)="setPracticalAnswer(q.id, row.id, copyValue)">Utiliser</button>
+                            </div>
                           </td>
                         </tr>
                       </tbody>
@@ -415,16 +429,8 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
 
                 <div class="case-paper">
                   <div class="fw-semibold mb-1"><i class="bi bi-upload me-2"></i>Copie papier{{ qcm.paperCorrectionRequired ? '' : ' (facultatif)' }}</div>
-                  <div class="small text-muted mb-2">Si vous avez traité tout ou partie du cas sur papier, joignez une photo ou un PDF avant de soumettre.</div>
-                  <div class="d-flex align-items-center gap-2 flex-wrap">
-                    <input type="file" class="form-control form-control-sm" accept="image/jpeg,image/png,image/webp,.pdf" style="max-width:420px"
-                           (change)="onPaperCorrectionSelected($event)" [disabled]="paperCorrectionUploading">
-                    <span *ngIf="paperCorrectionUploading" class="spinner-border spinner-border-sm text-primary"></span>
-                  </div>
-                  <div *ngIf="paperCorrectionUrl" class="small text-success mt-2">
-                    <i class="bi bi-check-circle me-1"></i>Fichier joint : {{ paperCorrectionFilename }}
-                  </div>
-                  <div *ngIf="paperCorrectionError" class="small text-danger mt-2">{{ paperCorrectionError }}</div>
+                  <div class="small text-muted mb-2">Si vous avez traité tout ou partie du cas sur papier, joignez une photo par page (ou un PDF) avant de soumettre.</div>
+                  <ng-container *ngTemplateOutlet="paperUpload"></ng-container>
                 </div>
               </div>
 
@@ -485,22 +491,47 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
             </div>
           </div>
 
+          <!-- Envoi de la copie papier : une ou plusieurs pages, lues ensemble -->
+          <ng-template #paperUpload>
+            <div *ngIf="paperPages.length" class="paper-pages mb-2">
+              <div *ngFor="let page of paperPages; let i = index" class="paper-page">
+                <button type="button" class="paper-page-open" (click)="viewFile(page.url, page.filename, 'Page ' + (i + 1) + ' de ma copie')"
+                        [title]="'Voir la page ' + (i + 1)">
+                  <img *ngIf="isImage(page.url); else pdfIcon" [src]="page.url" [alt]="'Page ' + (i + 1)">
+                  <ng-template #pdfIcon><i class="bi bi-file-earmark-pdf"></i></ng-template>
+                </button>
+                <div class="paper-page-meta">
+                  <span class="fw-semibold">Page {{ i + 1 }}</span>
+                  <span class="text-muted text-truncate">{{ page.filename }}</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-light paper-page-remove" (click)="removePaperPage(i)"
+                        [disabled]="paperCorrectionUploading" [attr.aria-label]="'Retirer la page ' + (i + 1)" title="Retirer cette page">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <label class="btn btn-sm btn-outline-primary mb-0" [class.disabled]="paperCorrectionUploading || paperPages.length >= maxPaperPages">
+                <i class="bi bi-plus-lg me-1"></i>{{ paperPages.length ? 'Ajouter des pages' : 'Joindre ma copie' }}
+                <input type="file" class="d-none" multiple accept="image/jpeg,image/png,image/webp,.pdf"
+                       (change)="onPaperCorrectionSelected($event)" [disabled]="paperCorrectionUploading || paperPages.length >= maxPaperPages">
+              </label>
+              <span class="small text-muted">{{ paperPages.length }}/{{ maxPaperPages }} page(s) · JPG, PNG, WEBP ou PDF</span>
+              <span *ngIf="paperCorrectionUploading" class="small text-primary">
+                <span class="spinner-border spinner-border-sm me-1"></span>Lecture de la copie…
+              </span>
+            </div>
+            <div *ngIf="paperCorrectionError" class="small text-danger mt-2">{{ paperCorrectionError }}</div>
+          </ng-template>
+
           <!-- Soumettre -->
           <div class="card border-0 shadow-sm mt-4" style="border-radius:16px;background:var(--surface-muted)">
             <div class="card-body p-4">
               <div *ngIf="qcm.paperCorrectionRequired && !hasCaseQuestion" class="mb-4 p-3 rounded-3"
                    style="background:#fff8e1;border:1px solid #f5d06f">
                 <div class="fw-semibold mb-1"><i class="bi bi-file-earmark-image me-2"></i>Correction papier</div>
-                <div class="small text-muted mb-2">Joignez la photo ou le scan de votre correction avant de soumettre le devoir.</div>
-                <div class="d-flex align-items-center gap-2 flex-wrap">
-                  <input type="file" class="form-control form-control-sm" accept="image/jpeg,image/png,image/webp,.pdf" style="max-width:420px"
-                         (change)="onPaperCorrectionSelected($event)" [disabled]="paperCorrectionUploading">
-                  <span *ngIf="paperCorrectionUploading" class="spinner-border spinner-border-sm text-primary"></span>
-                </div>
-                <div *ngIf="paperCorrectionUrl" class="small text-success mt-2">
-                  <i class="bi bi-check-circle me-1"></i>Copie jointe : {{ paperCorrectionFilename }}
-                </div>
-                <div *ngIf="paperCorrectionError" class="small text-danger mt-2">{{ paperCorrectionError }}</div>
+                <div class="small text-muted mb-2">Joignez une photo par page (ou le scan PDF) de votre correction avant de soumettre le devoir.</div>
+                <ng-container *ngTemplateOutlet="paperUpload"></ng-container>
               </div>
               <div class="d-flex align-items-center justify-content-between gap-3 flex-wrap">
               <div class="text-muted small">
@@ -556,6 +587,14 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
     .case-grid { padding: 16px 18px; border-radius: 12px; background: var(--surface); border: 2px solid #2b3ea8; }
     .grid-table thead th { font-size: .75rem; text-transform: uppercase; color: #64748b; background: var(--surface-muted); }
     .case-paper { padding: 14px 16px; border-radius: 12px; background: #fff8e1; border: 1px solid #f5d06f; }
+    .paper-pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+    .paper-page { position: relative; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .paper-page-open { border: 0; padding: 0; height: 110px; background: var(--surface-muted); display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
+    .paper-page-open img { width: 100%; height: 100%; object-fit: cover; }
+    .paper-page-open .bi { font-size: 2rem; color: var(--muted); }
+    .paper-page-meta { display: flex; flex-direction: column; padding: 6px 8px; font-size: .78rem; min-width: 0; }
+    .paper-page-remove { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; padding: 0; border-radius: 8px; }
+    .scan-conflict { margin-top: 4px; font-size: .78rem; color: #92400e; }
 
     .proctor-widget {
       position: fixed;
@@ -633,6 +672,10 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   paperCorrectionFilename = '';
   paperCorrectionUploading = false;
   paperCorrectionError = '';
+  paperPages: PaperPage[] = [];
+  readonly maxPaperPages = 10;
+  /** Valeurs lues sur la copie qui diffèrent de la saisie : idQuestion → idLigne → valeur de la copie. */
+  scanConflicts: Record<number, Record<string, string>> = {};
   safeSubjectUrl: SafeResourceUrl | null = null;
   tableRows: Record<number, number> = {};
   tableCols: Record<number, number> = {};
@@ -845,39 +888,84 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   }
 
   onPaperCorrectionSelected(event: Event) {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file || !this.qcm) return;
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files || []);
+    input.value = '';
+    if (!files.length || !this.qcm) return;
+    if (this.paperPages.length + files.length > this.maxPaperPages) {
+      this.paperCorrectionError = `Une copie compte au plus ${this.maxPaperPages} pages.`;
+      return;
+    }
+    const form = new FormData();
+    files.forEach(file => form.append('file', file));
+    this.sendPaperCopy(this.http.post<PaperCopyResponse>(
+      `/api/qcm/${this.qcmId}/passage/${this.qcm.passageId}/paper-correction`, form), 'Impossible de joindre la copie papier.');
+  }
+
+  async removePaperPage(index: number) {
+    if (!this.qcm || this.paperCorrectionUploading) return;
+    if (!await this.dialogs.confirmDelete(`la page ${index + 1}`, 'La copie sera relue sans cette page.')) return;
+    this.sendPaperCopy(this.http.delete<PaperCopyResponse>(
+      `/api/qcm/${this.qcmId}/passage/${this.qcm.passageId}/paper-correction/${index}`), 'Impossible de retirer la page.');
+  }
+
+  private sendPaperCopy(request: Observable<PaperCopyResponse>, errorMessage: string) {
     this.paperCorrectionUploading = true;
     this.paperCorrectionError = '';
-    const form = new FormData();
-    form.append('file', file);
-    this.http.post<{ url: string; filename: string; readValues?: Record<string, Record<string, string>>; ocrWarning?: string }>(
-      `/api/qcm/${this.qcmId}/passage/${this.qcm.passageId}/paper-correction`, form
-    ).subscribe({
+    request.subscribe({
       next: response => {
-        this.paperCorrectionUrl = response.url;
-        this.paperCorrectionFilename = response.filename;
+        this.paperPages = response.pages || [];
+        this.paperCorrectionUrl = response.url || '';
+        this.paperCorrectionFilename = response.filename || '';
         this.paperCorrectionUploading = false;
         this.paperCorrectionError = response.ocrWarning || '';
-        // Valeurs lues sur la copie : pré-remplissage des lignes encore vides, à vérifier par l'étudiant
-        Object.entries(response.readValues || {}).forEach(([questionId, values]) => {
-          const qid = Number(questionId);
-          let filled = false;
-          Object.entries(values).forEach(([rowId, value]) => {
-            if (!this.getPracticalAnswer(qid, rowId).trim() && value) {
-              this.setPracticalAnswer(qid, rowId, value);
-              filled = true;
-            }
-          });
-          if (filled) this.scanReadNotice[qid] = true;
-        });
+        this.applyReadValues(response.readValues || {});
       },
       error: error => {
-        this.paperCorrectionError = error.error?.message || 'Impossible de joindre la copie papier.';
+        this.paperCorrectionError = error.error?.message || errorMessage;
         this.paperCorrectionUploading = false;
       }
     });
   }
+
+  /**
+   * Valeurs lues sur toute la copie : pré-remplissage des lignes encore vides (à vérifier par l'étudiant) ;
+   * quand une ligne est déjà saisie avec une autre valeur, la valeur de la copie est proposée à côté.
+   */
+  private applyReadValues(readValues: Record<string, Record<string, string>>) {
+    this.scanConflicts = {};
+    Object.entries(readValues).forEach(([questionId, values]) => {
+      const qid = Number(questionId);
+      let filled = false;
+      Object.entries(values).forEach(([rowId, value]) => {
+        if (!value) return;
+        const typed = this.getPracticalAnswer(qid, rowId).trim();
+        if (!typed) {
+          this.setPracticalAnswer(qid, rowId, value);
+          filled = true;
+        } else if (this.normalizeValue(typed) !== this.normalizeValue(value)) {
+          this.scanConflicts[qid] = { ...(this.scanConflicts[qid] || {}), [rowId]: value };
+        }
+      });
+      if (filled || this.scanConflicts[qid]) this.scanReadNotice[qid] = true;
+    });
+  }
+
+  /** Valeur lue sur la copie, tant qu'elle diffère de la valeur saisie pour cette ligne. */
+  scanConflict(questionId: number, rowId: string): string | null {
+    const value = this.scanConflicts[questionId]?.[rowId];
+    if (!value) return null;
+    return this.normalizeValue(this.getPracticalAnswer(questionId, rowId)) === this.normalizeValue(value) ? null : value;
+  }
+
+  private normalizeValue(value: string): string {
+    return (value || '').replace(/[\s\u00a0\u202f]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.').toLowerCase();
+  }
+
+  isImage(url: string | null | undefined): boolean {
+    return /\.(png|jpe?g|gif|webp)$/i.test((url || '').split('?')[0]);
+  }
+
 
   get answered() {
     if (!this.qcm) return 0;
@@ -931,6 +1019,8 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
     setTimeout(() => this.restoreDraft(q.draftAnswers));
     this.paperCorrectionUrl = q.paperCorrectionUrl || '';
     this.paperCorrectionFilename = q.paperCorrectionFilename || '';
+    this.paperPages = q.paperPages?.length ? q.paperPages
+      : q.paperCorrectionUrl ? [{ url: q.paperCorrectionUrl, filename: q.paperCorrectionFilename }] : [];
     this.safeSubjectUrl = q.subjectFileUrl
       ? this.sanitizer.bypassSecurityTrustResourceUrl(q.subjectFileUrl)
       : null;

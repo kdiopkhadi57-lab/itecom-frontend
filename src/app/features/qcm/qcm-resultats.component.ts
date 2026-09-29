@@ -8,9 +8,10 @@ import { FileViewerComponent } from '../../shared/components/file-viewer.compone
 import { DialogService } from '../../core/services/dialog.service';
 
 interface ReponseDetail { questionText: string; points: number; choiceSelected: string; isCorrect: boolean; correctChoice: string; questionType?: string; textAnswer?: string; }
-interface GridRowResult { id: string; label: string; question?: string; expectedRaw: string; studentValue?: string | null; source?: string | null; correct: boolean; points: number; maxPoints: number; }
+interface GridRowResult { id: string; label: string; question?: string; expectedRaw: string; studentValue?: string | null; source?: string | null; correct: boolean; points: number; maxPoints: number; scannedValue?: string | null; conflict?: boolean; }
 interface CorrectionDetail { questionId: number; earned: number; total: number; rows: GridRowResult[]; }
-interface PassageResult  { passageId?: number; studentName: string; studentEmail: string; studentLevel?: string; lastName?: string; firstName?: string; birthDate?: string; score?: number; maxScore?: number; manualScore?: number; manualCorrectionNote?: string; ocrScore?: number; ocrCorrectionNote?: string; percentage?: string; submittedAt?: string; status: string; paperCorrectionUrl?: string; paperCorrectionFilename?: string; documentAnswer?: string; correctionText?: string; correctionDetail?: CorrectionDetail[] | null; ocrExtractedText?: string | null; reponses: ReponseDetail[]; }
+interface PaperPage { url: string; filename?: string | null; }
+interface PassageResult  { passageId?: number; studentName: string; studentEmail: string; studentLevel?: string; lastName?: string; firstName?: string; birthDate?: string; score?: number; maxScore?: number; manualScore?: number; manualCorrectionNote?: string; ocrScore?: number; ocrCorrectionNote?: string; percentage?: string; submittedAt?: string; status: string; paperCorrectionUrl?: string; paperCorrectionFilename?: string; documentAnswer?: string; correctionText?: string; correctionDetail?: CorrectionDetail[] | null; ocrExtractedText?: string | null; paperPages?: PaperPage[] | null; reponses: ReponseDetail[]; }
 
 @Component({
   selector: 'app-qcm-resultats',
@@ -118,9 +119,8 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
                     <button class="btn btn-sm btn-light action-btn" (click)="openDetail(r)" title="Voir le détail" aria-label="Voir le détail">
                       <i class="bi bi-eye"></i>
                     </button>
-                    <button *ngIf="r.paperCorrectionUrl" class="btn btn-sm btn-light action-btn ms-1"
-                            (click)="viewFile(r.paperCorrectionUrl, r.paperCorrectionFilename, 'Copie de l’étudiant')"
-                            title="Voir la copie envoyée" aria-label="Voir la copie envoyée">
+                    <button *ngIf="pagesOf(r).length" class="btn btn-sm btn-light action-btn ms-1" (click)="openDetail(r)"
+                            [title]="'Voir la copie envoyée (' + pagesOf(r).length + ' page(s))'" aria-label="Voir la copie envoyée">
                       <i class="bi bi-paperclip"></i>
                     </button>
                     <button class="btn btn-sm btn-light action-btn ms-1" (click)="openEdit(r)"
@@ -176,33 +176,34 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
             </div>
             <div *ngIf="detail.status === 'NON_COMMENCE'" class="alert alert-light border">L'étudiant n'a pas encore commencé ce devoir.</div>
 
-            <div *ngIf="detail.paperCorrectionUrl" class="copy-box mb-3">
+            <div *ngIf="pagesOf(detail).length" class="copy-box mb-3">
               <div class="d-flex justify-content-between align-items-center gap-2 mb-2 flex-wrap">
-                <h6 class="fw-bold mb-0 text-truncate">
-                  <i class="bi me-1" [ngClass]="fileKind(detail.paperCorrectionUrl) === 'pdf' ? 'bi-file-earmark-pdf' : 'bi-file-earmark-image'"></i>Copie envoyée par l'étudiant
-                  <span class="fw-normal text-muted small ms-1">{{ detail.paperCorrectionFilename }}</span>
+                <h6 class="fw-bold mb-0">
+                  <i class="bi bi-file-earmark-image me-1"></i>Copie envoyée par l'étudiant
+                  <span class="fw-normal text-muted small ms-1">{{ pagesOf(detail).length }} page(s)</span>
                 </h6>
-                <div class="d-flex gap-2">
-                  <button type="button" class="btn btn-sm btn-outline-primary"
-                          (click)="viewFile(detail.paperCorrectionUrl, detail.paperCorrectionFilename, 'Copie de l’étudiant')">
-                    <i class="bi bi-arrows-fullscreen me-1"></i>Agrandir
-                  </button>
-                  <a class="btn btn-sm btn-outline-secondary" [href]="detail.paperCorrectionUrl" [attr.download]="detail.paperCorrectionFilename || ''">
-                    <i class="bi bi-download me-1"></i>Télécharger
-                  </a>
-                </div>
               </div>
               <div class="row g-3">
                 <div [class]="detail.ocrExtractedText ? 'col-md-7' : 'col-12'">
-                  <button *ngIf="fileKind(detail.paperCorrectionUrl) === 'image'" type="button" class="copy-preview"
-                          (click)="viewFile(detail.paperCorrectionUrl, detail.paperCorrectionFilename, 'Copie de l’étudiant')"
-                          title="Agrandir la copie">
-                    <img [src]="detail.paperCorrectionUrl" [alt]="'Copie de ' + (detail.lastName || detail.studentName)">
-                  </button>
-                  <iframe *ngIf="fileKind(detail.paperCorrectionUrl) === 'pdf'" class="copy-pdf" [src]="safeUrl(detail.paperCorrectionUrl)"
-                          [title]="detail.paperCorrectionFilename || 'Copie de l’étudiant'"></iframe>
-                  <div *ngIf="fileKind(detail.paperCorrectionUrl) === 'other'" class="text-muted small py-3">
-                    <i class="bi bi-file-earmark me-1"></i>Aperçu indisponible pour ce type de fichier : téléchargez-le.
+                  <div *ngFor="let page of pagesOf(detail); let i = index" class="copy-page">
+                    <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+                      <span class="small fw-semibold text-truncate">Page {{ i + 1 }} <span class="fw-normal text-muted">· {{ page.filename }}</span></span>
+                      <span class="d-flex gap-1 flex-shrink-0">
+                        <button type="button" class="btn btn-sm btn-light action-btn" (click)="viewFile(page.url, page.filename, 'Page ' + (i + 1) + ' de la copie')"
+                                title="Agrandir" aria-label="Agrandir la page"><i class="bi bi-arrows-fullscreen"></i></button>
+                        <a class="btn btn-sm btn-light action-btn" [href]="page.url" [attr.download]="page.filename || ''"
+                           title="Télécharger" aria-label="Télécharger la page"><i class="bi bi-download"></i></a>
+                      </span>
+                    </div>
+                    <button *ngIf="fileKind(page.url) === 'image'" type="button" class="copy-preview"
+                            (click)="viewFile(page.url, page.filename, 'Page ' + (i + 1) + ' de la copie')" title="Agrandir la page">
+                      <img [src]="page.url" [alt]="'Page ' + (i + 1) + ' de la copie'" loading="lazy">
+                    </button>
+                    <iframe *ngIf="fileKind(page.url) === 'pdf'" class="copy-pdf" [src]="safeUrl(page.url)"
+                            [title]="page.filename || 'Copie de l’étudiant'"></iframe>
+                    <div *ngIf="fileKind(page.url) === 'other'" class="text-muted small py-3">
+                      <i class="bi bi-file-earmark me-1"></i>Aperçu indisponible pour ce type de fichier : téléchargez-le.
+                    </div>
                   </div>
                 </div>
                 <div *ngIf="detail.ocrExtractedText" class="col-md-5">
@@ -220,14 +221,21 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
                 <h6 class="fw-bold mb-0"><i class="bi bi-table me-1"></i>Correction ligne par ligne</h6>
                 <span class="badge" style="background:#eef0fb;color:#1f2d7a">{{ grid.earned }} / {{ grid.total }} pt(s) de la grille</span>
               </div>
+              <div *ngIf="conflictsOf(grid) as n" class="alert alert-warning small py-2 mb-2">
+                <i class="bi bi-exclamation-triangle me-1"></i>{{ n }} ligne(s) où la valeur saisie diffère de celle lue sur la copie.
+                La valeur saisie est notée : vérifiez la copie et ajustez la note si besoin.
+              </div>
               <div class="table-responsive">
                 <table class="table table-sm align-middle mb-0 grid-result">
-                  <thead><tr><th>Ligne</th><th>Attendu</th><th>Réponse de l'étudiant</th><th>Source</th><th class="text-end">Points</th></tr></thead>
+                  <thead><tr><th>Ligne</th><th>Attendu</th><th>Réponse de l'étudiant</th><th>Lu sur la copie</th><th>Source</th><th class="text-end">Points</th></tr></thead>
                   <tbody>
                     <tr *ngFor="let row of grid.rows" [class.table-success]="row.correct" [class.table-danger]="!row.correct">
                       <td class="fw-semibold" [title]="row.question || ''"><i class="bi" [ngClass]="row.correct ? 'bi-check-lg' : 'bi-x-lg'"></i> {{ row.label }}</td>
                       <td>{{ row.expectedRaw }}</td>
                       <td>{{ row.studentValue || '(aucune)' }}</td>
+                      <td [class.fw-semibold]="row.conflict" [style.color]="row.conflict ? '#92400e' : null">
+                        <i *ngIf="row.conflict" class="bi bi-exclamation-triangle me-1" title="Diffère de la valeur saisie"></i>{{ row.scannedValue || '—' }}
+                      </td>
                       <td class="small text-muted">{{ row.source || '—' }}</td>
                       <td class="text-end">{{ row.points }} / {{ row.maxPoints }}</td>
                     </tr>
@@ -335,6 +343,7 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
     .answer-pre { white-space: pre-wrap; background: var(--surface-muted); border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; font-size: .85rem; max-height: 320px; overflow: auto; margin: 0; }
     .min-w-0 { min-width: 0; }
     .copy-box { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+    .copy-page + .copy-page { margin-top: 12px; }
     .copy-preview { display: block; width: 100%; padding: 0; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-muted); cursor: zoom-in; overflow: hidden; }
     .copy-preview img { display: block; width: 100%; max-height: 420px; object-fit: contain; }
     .copy-pdf { width: 100%; height: 420px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); }
@@ -522,6 +531,15 @@ export class QcmResultatsComponent implements OnInit {
       },
       error: () => { this.downloading = false; }
     });
+  }
+
+  pagesOf(r: PassageResult): PaperPage[] {
+    if (r.paperPages?.length) return r.paperPages;
+    return r.paperCorrectionUrl ? [{ url: r.paperCorrectionUrl, filename: r.paperCorrectionFilename }] : [];
+  }
+
+  conflictsOf(grid: CorrectionDetail): number {
+    return grid.rows.filter(row => row.conflict).length;
   }
 
   fileKind(url?: string | null): 'image' | 'pdf' | 'other' {

@@ -8,8 +8,9 @@ import { FileViewerComponent } from '../../shared/components/file-viewer.compone
 import { DialogService } from '../../core/services/dialog.service';
 
 interface ReponseDetail { questionText: string; points: number; choiceSelected: string; isCorrect: boolean; correctChoice: string; questionType?: string; textAnswer?: string; }
-interface GridRowResult { id: string; label: string; question?: string; expectedRaw: string; studentValue?: string | null; source?: string | null; correct: boolean; points: number; maxPoints: number; scannedValue?: string | null; conflict?: boolean; }
-interface CorrectionDetail { questionId: number; earned: number; total: number; rows: GridRowResult[]; }
+/** Correction d'une question « cas pratique » (les copies corrigées avant ce format n'ont que earned / total). */
+interface CorrectionDetail { questionId: number; questionText?: string; points?: number; score?: number; source?: 'IA' | 'chiffres' | 'manuelle';
+  comment?: string | null; numbersFound?: number; numbersTotal?: number; numbersMissing?: string[]; earned?: number; total?: number; }
 interface PaperPage { url: string; filename?: string | null; }
 interface PassageResult  { passageId?: number; studentName: string; studentEmail: string; studentLevel?: string; lastName?: string; firstName?: string; birthDate?: string; score?: number; maxScore?: number; manualScore?: number; manualCorrectionNote?: string; ocrScore?: number; ocrCorrectionNote?: string; percentage?: string; submittedAt?: string; status: string; paperCorrectionUrl?: string; paperCorrectionFilename?: string; documentAnswer?: string; correctionText?: string; correctionDetail?: CorrectionDetail[] | null; ocrExtractedText?: string | null; paperPages?: PaperPage[] | null; reponses: ReponseDetail[]; }
 
@@ -216,35 +217,26 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
               </div>
             </div>
 
-            <div *ngFor="let grid of detail.correctionDetail || []" class="mb-3">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <h6 class="fw-bold mb-0"><i class="bi bi-table me-1"></i>Correction ligne par ligne</h6>
-                <span class="badge" style="background:#eef0fb;color:#1f2d7a">{{ grid.earned }} / {{ grid.total }} pt(s) de la grille</span>
-              </div>
-              <div *ngIf="conflictsOf(grid) as n" class="alert alert-warning small py-2 mb-2">
-                <i class="bi bi-exclamation-triangle me-1"></i>{{ n }} ligne(s) où la valeur saisie diffère de celle lue sur la copie.
-                La valeur saisie est notée : vérifiez la copie et ajustez la note si besoin.
-              </div>
-              <div class="table-responsive">
-                <table class="table table-sm align-middle mb-0 grid-result">
-                  <thead><tr><th>Ligne</th><th>Attendu</th><th>Réponse de l'étudiant</th><th>Lu sur la copie</th><th>Source</th><th class="text-end">Points</th></tr></thead>
-                  <tbody>
-                    <tr *ngFor="let row of grid.rows" [class.table-success]="row.correct" [class.table-danger]="!row.correct">
-                      <td class="fw-semibold" [title]="row.question || ''"><i class="bi" [ngClass]="row.correct ? 'bi-check-lg' : 'bi-x-lg'"></i> {{ row.label }}</td>
-                      <td>{{ row.expectedRaw }}</td>
-                      <td>{{ row.studentValue || '(aucune)' }}</td>
-                      <td [class.fw-semibold]="row.conflict" [style.color]="row.conflict ? '#92400e' : null">
-                        <i *ngIf="row.conflict" class="bi bi-exclamation-triangle me-1" title="Diffère de la valeur saisie"></i>{{ row.scannedValue || '—' }}
-                      </td>
-                      <td class="small text-muted">{{ row.source || '—' }}</td>
-                      <td class="text-end">{{ row.points }} / {{ row.maxPoints }}</td>
-                    </tr>
-                  </tbody>
-                </table>
+            <div *ngIf="detail.correctionDetail?.length" class="mb-3">
+              <h6 class="fw-bold mb-2"><i class="bi bi-clipboard-check me-1"></i>Correction du cas pratique</h6>
+              <div *ngIf="summaryOf(detail.ocrCorrectionNote) as summary" class="small text-muted mb-2" style="white-space:pre-wrap">{{ summary }}</div>
+              <div *ngFor="let c of detail.correctionDetail" class="case-grade">
+                <div class="d-flex justify-content-between align-items-start gap-2">
+                  <div class="small fw-semibold question-preview">{{ c.questionText || 'Cas pratique' }}</div>
+                  <div class="text-nowrap text-end">
+                    <span class="fw-bold">{{ c.score ?? c.earned ?? '—' }} / {{ c.points ?? c.total ?? '—' }}</span>
+                    <span class="source-badge ms-1" [ngClass]="'source-' + (c.source || 'IA')">{{ sourceLabel(c) }}</span>
+                  </div>
+                </div>
+                <div *ngIf="c.comment" class="small mt-1" style="white-space:pre-wrap">{{ c.comment }}</div>
+                <div *ngIf="c.numbersTotal" class="small text-muted mt-1">
+                  <i class="bi bi-123 me-1"></i>Chiffres du corrigé retrouvés : {{ c.numbersFound }}/{{ c.numbersTotal }}
+                  <span *ngIf="c.numbersMissing?.length"> · absents ou différents : {{ c.numbersMissing!.join(', ') }}</span>
+                </div>
               </div>
             </div>
 
-            <div *ngIf="detail.ocrCorrectionNote && !detail.correctionDetail?.length" class="section-box mb-3" style="background:#eef0fb">
+            <div *ngIf="detail.ocrCorrectionNote && !detail.correctionDetail?.length" class="section-box mb-3" style="background:var(--surface-muted)">
               <div class="fw-semibold small mb-1"><i class="bi bi-calculator me-1"></i>Correction automatique</div>
               <div class="small" style="white-space:pre-wrap">{{ detail.ocrCorrectionNote }}</div>
             </div>
@@ -334,7 +326,10 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
     .info-cell { background: var(--surface-muted); border-radius: 10px; padding: 10px 12px; font-weight: 600; font-size: .9rem; }
     .info-cell span { display: block; font-size: .72rem; font-weight: 500; color: #64748b; }
     .grade-banner { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 14px; border-left: 5px solid; background: var(--surface-muted); }
-    .grid-result thead th { font-size: .72rem; text-transform: uppercase; color: #64748b; background: var(--surface-muted); }
+    .case-grade { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; }
+    .case-grade + .case-grade { margin-top: 8px; }
+    .source-badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: .7rem; font-weight: 600; background: var(--surface-muted); color: var(--muted); }
+    .source-badge.source-chiffres, .source-badge.source-manuelle { background: #fef3c7; color: #92400e; }
     .section-box { padding: 12px 14px; border-radius: 12px; }
     .answer-row { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid #f1f5f9; }
     .answer-icon { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: .8rem; background: #fee2e2; color: #991b1b; }
@@ -538,8 +533,15 @@ export class QcmResultatsComponent implements OnInit {
     return r.paperCorrectionUrl ? [{ url: r.paperCorrectionUrl, filename: r.paperCorrectionFilename }] : [];
   }
 
-  conflictsOf(grid: CorrectionDetail): number {
-    return grid.rows.filter(row => row.conflict).length;
+  sourceLabel(c: CorrectionDetail): string {
+    if (c.source === 'chiffres') return 'Provisoire (chiffres)';
+    if (c.source === 'manuelle') return 'À corriger';
+    return c.source === 'IA' ? 'IA' : 'Grille';
+  }
+
+  /** Synthèse en tête de la note de correction (premier paragraphe). */
+  summaryOf(note?: string | null): string {
+    return (note || '').split('\n\n')[0].trim();
   }
 
   fileKind(url?: string | null): 'image' | 'pdf' | 'other' {

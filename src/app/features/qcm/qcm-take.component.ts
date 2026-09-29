@@ -20,10 +20,9 @@ interface Question {
   expectedAnswer?: string;
   valueLabels: string[];
   choices: Choice[];
-  gridRows?: { id: string; label: string; question?: string }[];
 }
 interface PaperPage { url: string; filename?: string | null; contentType?: string | null; }
-interface PaperCopyResponse { url?: string | null; filename?: string | null; pages?: PaperPage[]; readValues?: Record<string, Record<string, string>>; ocrWarning?: string; }
+interface PaperCopyResponse { url?: string | null; filename?: string | null; pages?: PaperPage[]; transcription?: string | null; ocrWarning?: string; }
 interface QcmTake  {
   id: number;
   title: string;
@@ -36,6 +35,7 @@ interface QcmTake  {
   paperCorrectionUrl?: string | null;
   paperCorrectionFilename?: string | null;
   paperPages?: PaperPage[] | null;
+  paperTranscription?: string | null;
   startedAt?: string | null;
   draftAnswers?: string | null;
   questions: Question[];
@@ -335,9 +335,8 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                   <i class="bi bi-briefcase-fill"></i>
                   <div>
                     <div class="fw-bold">Cas pratique</div>
-                    <div class="small opacity-75">{{ hasAnswerTable(q)
-                      ? 'Lisez l’énoncé et complétez la colonne réponse du tableau (un résultat par ligne).'
-                      : 'Lisez attentivement les données, puis répondez dans la zone prévue en dessous.' }}</div>
+                    <div class="small opacity-75">Répondez dans la zone de saisie{{ hasAnswerTable(q) ? ' (et dans le tableau du sujet)' : '' }},
+                      sur une copie papier que vous joignez, ou les deux.</div>
                   </div>
                 </div>
 
@@ -348,10 +347,6 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
 
                 <div class="case-section case-section-statement">
                   <div class="case-section-title"><i class="bi bi-list-check me-1"></i>Énoncé / travail à faire</div>
-                  <div *ngIf="hasAnswerTable(q) && scanReadNotice[q.id]" class="alert alert-info small py-2">
-                    <i class="bi bi-magic me-1"></i>Valeurs lues sur votre copie : vérifiez-les et corrigez si nécessaire.
-                    Quand votre copie indique une autre valeur que celle saisie, c'est la valeur saisie qui est notée.
-                  </div>
                   <div class="case-text">
                     <ng-container *ngFor="let block of caseBlocks(q.questionText)">
                       <div *ngIf="block.table" class="table-responsive">
@@ -365,10 +360,6 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                                      [attr.aria-label]="'Réponse ligne ' + row[0]"
                                      [ngModel]="getPracticalAnswer(q.id, tableRowId(row, ri))"
                                      (ngModelChange)="setPracticalAnswer(q.id, tableRowId(row, ri), $event)">
-                              <div *ngIf="ri > 0 && ci === answerColumn(block.table) && scanConflict(q.id, tableRowId(row, ri)) as copyValue" class="scan-conflict">
-                                <i class="bi bi-exclamation-triangle me-1"></i>Votre copie indique <strong>{{ copyValue }}</strong>
-                                <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" (click)="setPracticalAnswer(q.id, tableRowId(row, ri), copyValue)">Utiliser</button>
-                              </div>
                               <ng-template #plainCell>{{ cell }}</ng-template>
                             </td>
                           </tr>
@@ -380,38 +371,7 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
                   </div>
                 </div>
 
-                <div *ngIf="q.gridRows?.length && !hasAnswerTable(q)" class="case-grid">
-                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                    <div class="fw-semibold"><i class="bi bi-table me-1"></i>Vos résultats</div>
-                    <span class="small text-muted">Un résultat final par ligne — c'est cette valeur qui est comparée à la correction.</span>
-                  </div>
-                  <div *ngIf="scanReadNotice[q.id]" class="alert alert-info small py-2">
-                    <i class="bi bi-magic me-1"></i>Valeurs lues sur votre copie : vérifiez-les et corrigez si nécessaire.
-                    Quand votre copie indique une autre valeur que celle saisie, c'est la valeur saisie qui est notée.
-                  </div>
-                  <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0 grid-table">
-                      <thead><tr><th style="width:90px">Ligne</th><th>Votre résultat</th></tr></thead>
-                      <tbody>
-                        <tr *ngFor="let row of q.gridRows">
-                          <td class="fw-semibold">{{ row.label }}</td>
-                          <td>
-                            <input class="form-control form-control-sm" [attr.aria-label]="'Résultat ' + row.label"
-                                   placeholder="Ex. 5 280 000"
-                                   [ngModel]="getPracticalAnswer(q.id, row.id)"
-                                   (ngModelChange)="setPracticalAnswer(q.id, row.id, $event)">
-                            <div *ngIf="scanConflict(q.id, row.id) as copyValue" class="scan-conflict">
-                              <i class="bi bi-exclamation-triangle me-1"></i>Votre copie indique <strong>{{ copyValue }}</strong>
-                              <button type="button" class="btn btn-link btn-sm p-0 ms-1 align-baseline" (click)="setPracticalAnswer(q.id, row.id, copyValue)">Utiliser</button>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                <div *ngIf="!hasAnswerTable(q) && !q.gridRows?.length" class="case-answer">
+                <div class="case-answer">
                   <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
                     <label class="fw-semibold mb-0" [for]="'case-answer-' + q.id">
                       <i class="bi bi-pencil-square me-1"></i>Votre réponse
@@ -522,6 +482,12 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
               </span>
             </div>
             <div *ngIf="paperCorrectionError" class="small text-danger mt-2">{{ paperCorrectionError }}</div>
+            <details *ngIf="paperTranscription && !paperCorrectionUploading" class="copy-reading small mt-2">
+              <summary class="fw-semibold"><i class="bi bi-eye me-1"></i>Texte lu sur votre copie</summary>
+              <div class="text-muted mt-1">Vérifiez la lecture : c'est ce texte, avec la zone de saisie, qui est comparé à la correction.
+                Si un passage est mal lu, reprenez-le dans la zone de saisie ou renvoyez une photo plus nette.</div>
+              <pre>{{ paperTranscription }}</pre>
+            </details>
           </ng-template>
 
           <!-- Soumettre -->
@@ -584,8 +550,6 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
     .case-answer { padding: 16px 18px; border-radius: 12px; background: var(--surface); border: 2px solid #10b981; }
     .case-textarea { min-height: 280px; font-size: .98rem; line-height: 1.6; resize: vertical; border-radius: 10px; }
     .answer-cell { min-width: 190px; background: #f0f7ff; }
-    .case-grid { padding: 16px 18px; border-radius: 12px; background: var(--surface); border: 2px solid #2b3ea8; }
-    .grid-table thead th { font-size: .75rem; text-transform: uppercase; color: #64748b; background: var(--surface-muted); }
     .case-paper { padding: 14px 16px; border-radius: 12px; background: #fff8e1; border: 1px solid #f5d06f; }
     .paper-pages { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
     .paper-page { position: relative; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
@@ -594,7 +558,8 @@ type PageStatus = 'loading' | 'welcome' | 'active' | 'result' | 'terminated' | '
     .paper-page-open .bi { font-size: 2rem; color: var(--muted); }
     .paper-page-meta { display: flex; flex-direction: column; padding: 6px 8px; font-size: .78rem; min-width: 0; }
     .paper-page-remove { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; padding: 0; border-radius: 8px; }
-    .scan-conflict { margin-top: 4px; font-size: .78rem; color: #92400e; }
+    .copy-reading summary { cursor: pointer; }
+    .copy-reading pre { white-space: pre-wrap; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; font-size: .8rem; max-height: 260px; overflow: auto; margin: 6px 0 0; }
 
     .proctor-widget {
       position: fixed;
@@ -656,7 +621,6 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   starting = false;
   startError = '';
   submitError = '';
-  scanReadNotice: Record<number, boolean> = {};
   draftSavedLabel = '';
   private lastDraftSnapshot = '';
   private draftInterval: ReturnType<typeof setInterval> | null = null;
@@ -674,8 +638,8 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
   paperCorrectionError = '';
   paperPages: PaperPage[] = [];
   readonly maxPaperPages = 10;
-  /** Valeurs lues sur la copie qui diffèrent de la saisie : idQuestion → idLigne → valeur de la copie. */
-  scanConflicts: Record<number, Record<string, string>> = {};
+  /** Texte lu sur la copie par l'OCR, affiché à l'étudiant pour qu'il vérifie la lecture. */
+  paperTranscription = '';
   safeSubjectUrl: SafeResourceUrl | null = null;
   tableRows: Record<number, number> = {};
   tableCols: Record<number, number> = {};
@@ -919,47 +883,13 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
         this.paperCorrectionFilename = response.filename || '';
         this.paperCorrectionUploading = false;
         this.paperCorrectionError = response.ocrWarning || '';
-        this.applyReadValues(response.readValues || {});
+        this.paperTranscription = response.transcription || '';
       },
       error: error => {
         this.paperCorrectionError = error.error?.message || errorMessage;
         this.paperCorrectionUploading = false;
       }
     });
-  }
-
-  /**
-   * Valeurs lues sur toute la copie : pré-remplissage des lignes encore vides (à vérifier par l'étudiant) ;
-   * quand une ligne est déjà saisie avec une autre valeur, la valeur de la copie est proposée à côté.
-   */
-  private applyReadValues(readValues: Record<string, Record<string, string>>) {
-    this.scanConflicts = {};
-    Object.entries(readValues).forEach(([questionId, values]) => {
-      const qid = Number(questionId);
-      let filled = false;
-      Object.entries(values).forEach(([rowId, value]) => {
-        if (!value) return;
-        const typed = this.getPracticalAnswer(qid, rowId).trim();
-        if (!typed) {
-          this.setPracticalAnswer(qid, rowId, value);
-          filled = true;
-        } else if (this.normalizeValue(typed) !== this.normalizeValue(value)) {
-          this.scanConflicts[qid] = { ...(this.scanConflicts[qid] || {}), [rowId]: value };
-        }
-      });
-      if (filled || this.scanConflicts[qid]) this.scanReadNotice[qid] = true;
-    });
-  }
-
-  /** Valeur lue sur la copie, tant qu'elle diffère de la valeur saisie pour cette ligne. */
-  scanConflict(questionId: number, rowId: string): string | null {
-    const value = this.scanConflicts[questionId]?.[rowId];
-    if (!value) return null;
-    return this.normalizeValue(this.getPracticalAnswer(questionId, rowId)) === this.normalizeValue(value) ? null : value;
-  }
-
-  private normalizeValue(value: string): string {
-    return (value || '').replace(/[\s\u00a0\u202f]/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.').toLowerCase();
   }
 
   isImage(url: string | null | undefined): boolean {
@@ -1021,6 +951,7 @@ export class QcmTakeComponent implements OnInit, OnDestroy {
     this.paperCorrectionFilename = q.paperCorrectionFilename || '';
     this.paperPages = q.paperPages?.length ? q.paperPages
       : q.paperCorrectionUrl ? [{ url: q.paperCorrectionUrl, filename: q.paperCorrectionFilename }] : [];
+    this.paperTranscription = q.paperTranscription || '';
     this.safeSubjectUrl = q.subjectFileUrl
       ? this.sanitizer.bypassSecurityTrustResourceUrl(q.subjectFileUrl)
       : null;

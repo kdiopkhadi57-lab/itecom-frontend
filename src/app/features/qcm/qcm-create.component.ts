@@ -15,11 +15,6 @@ interface Question {
   expectedAnswer: string;
   choices: Choice[];
 }
-interface EditableGridRow { id: string; label: string; question: string; expectedRaw: string; tolerancePct: number; points: number; }
-interface EditableGrid {
-  questionId: number; questionText: string; points: number; validated: boolean; rows: EditableGridRow[];
-  saving?: boolean; message?: string; error?: boolean;
-}
 
 interface StudentEntry {
   name: string;
@@ -240,7 +235,7 @@ Bonne réponse: C</code>
           </div>
 
           <div *ngIf="q.questionType === 'LONG_TEXT'" class="alert alert-secondary small">
-            <label class="form-label fw-semibold">Réponse attendue / grille d’évaluation</label>
+            <label class="form-label fw-semibold">Réponse attendue (corrigé)</label>
             <textarea class="form-control" [(ngModel)]="q.expectedAnswer" rows="4"
               placeholder="Indiquez les éléments attendus : prix, cible, positionnement, rentabilité..."></textarea>
           </div>
@@ -284,65 +279,6 @@ Bonne réponse: C</code>
         <i class="bi bi-plus-circle me-2"></i>Ajouter une question
       </button>
 
-      <!-- ═══ Grille de correction ligne par ligne ══════════════════════════ -->
-      <div *ngIf="isEdit && grids.length" class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px solid #d5d9ef!important">
-        <div class="card-body p-4">
-          <div class="d-flex align-items-start gap-3 mb-3">
-            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                 style="width:44px;height:44px;background:#eef0fb;color:#1f2d7a;font-size:1.2rem"><i class="bi bi-table"></i></div>
-            <div>
-              <h6 class="fw-bold mb-0">Grille de correction</h6>
-              <p class="text-muted small mb-0">
-                Lue automatiquement dans votre correction. Chaque ligne est comparée à la réponse de l'étudiant
-                (saisie, ou lue sur sa copie PDF / photo). Vérifiez les valeurs attendues, tolérances et points avant la correction des copies.
-              </p>
-            </div>
-          </div>
-
-          <div *ngFor="let g of grids" class="mb-4">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-              <div class="small text-muted text-truncate" style="max-width:60%">{{ g.questionText }}</div>
-              <div class="d-flex align-items-center gap-2">
-                <span class="badge" [class.bg-success]="g.validated" [class.bg-secondary]="!g.validated">
-                  {{ g.validated ? 'Grille validée' : 'Grille automatique' }}
-                </span>
-                <span class="small text-muted">Total : {{ gridTotal(g) }} pt(s) · question sur {{ g.points }}</span>
-              </div>
-            </div>
-            <div class="table-responsive">
-              <table class="table table-sm align-middle mb-2" style="min-width:720px">
-                <thead class="table-light">
-                  <tr><th style="width:90px">Ligne</th><th>Question</th><th style="width:170px">Réponse attendue</th>
-                      <th style="width:110px">Tolérance (%)</th><th style="width:90px">Points</th><th style="width:40px"></th></tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let row of g.rows; let i = index">
-                    <td><input class="form-control form-control-sm" [(ngModel)]="row.id" aria-label="Identifiant de la ligne"></td>
-                    <td><input class="form-control form-control-sm" [(ngModel)]="row.question" aria-label="Question"></td>
-                    <td><input class="form-control form-control-sm" [(ngModel)]="row.expectedRaw" aria-label="Réponse attendue"
-                               [class.is-invalid]="parseAmount(row.expectedRaw) === null"></td>
-                    <td><input type="number" min="0" step="0.1" class="form-control form-control-sm" [(ngModel)]="row.tolerancePct" aria-label="Tolérance"></td>
-                    <td><input type="number" min="0" step="0.25" class="form-control form-control-sm" [(ngModel)]="row.points" aria-label="Points"></td>
-                    <td><button class="btn btn-link btn-sm text-danger p-0" (click)="g.rows.splice(i, 1)" aria-label="Supprimer la ligne">
-                      <i class="bi bi-x-circle"></i></button></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-              <button class="btn btn-sm btn-outline-primary" (click)="addGridRow(g)"><i class="bi bi-plus me-1"></i>Ajouter une ligne</button>
-              <button class="btn btn-sm btn-primary" (click)="saveGrid(g)" [disabled]="g.saving">
-                <span *ngIf="g.saving" class="spinner-border spinner-border-sm me-1"></span>
-                <i *ngIf="!g.saving" class="bi bi-check2 me-1"></i>Valider la grille
-              </button>
-              <button *ngIf="g.validated" class="btn btn-sm btn-outline-secondary" (click)="resetGrid(g)">
-                <i class="bi bi-arrow-counterclockwise me-1"></i>Revenir à la grille automatique
-              </button>
-              <span *ngIf="g.message" class="small align-self-center" [class.text-success]="!g.error" [class.text-danger]="g.error">{{ g.message }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- ═══ Étudiants concernés ══════════════════════════════════════════ -->
       <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #d5d9ef!important">
@@ -529,7 +465,6 @@ export class QcmCreateComponent implements OnInit {
     const id = this.dialogData?.id != null ? String(this.dialogData.id) : this.route.snapshot.paramMap.get('id');
     if (id) {
       this.isEdit = true; this.editId = +id;
-      this.loadGrids();
       this.http.get<any>(`/api/teacher/qcms/${id}`).subscribe(qcm => {
         this.title = qcm.title;
         this.description = qcm.description || '';
@@ -722,65 +657,6 @@ export class QcmCreateComponent implements OnInit {
       password = Array.from(bytes, b => alphabet[b % alphabet.length]).join('');
     } while (used.has(password));
     return password;
-  }
-
-  grids: EditableGrid[] = [];
-
-  loadGrids() {
-    this.http.get<any[]>(`/api/teacher/qcms/${this.editId}/grilles`).subscribe({
-      next: list => {
-        this.grids = list.map(g => ({
-          questionId: g.questionId, questionText: g.questionText, points: g.points, validated: g.validated,
-          rows: (g.rows || []).map((r: any) => ({
-            id: r.id, label: r.label, question: r.question || '', expectedRaw: r.expectedRaw,
-            tolerancePct: Math.round(r.tolerance * 100000) / 1000, points: r.points
-          }))
-        }));
-      },
-      error: () => { this.grids = []; }
-    });
-  }
-
-  gridTotal(g: EditableGrid): number {
-    return Math.round(g.rows.reduce((sum, r) => sum + (Number(r.points) || 0), 0) * 100) / 100;
-  }
-
-  addGridRow(g: EditableGrid) {
-    const id = 'Q' + (g.rows.length + 1);
-    g.rows.push({ id, label: id, question: '', expectedRaw: '', tolerancePct: 0.1, points: 1 });
-  }
-
-  /** « 5 280 000 », « 5.280.000 », « 12,5 » → nombre ; null si illisible. */
-  parseAmount(raw: string): number | null {
-    const match = (raw || '').match(/-?\d{1,3}(?:[ \u00a0\u202f.]\d{3})+(?:,\d+)?|-?\d+(?:[.,]\d+)?/);
-    if (!match) return null;
-    let v = match[0].replace(/[ \u00a0\u202f]/g, '');
-    if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(v)) v = v.replace(/\./g, '');
-    const n = Number(v.replace(',', '.'));
-    return Number.isFinite(n) ? n : null;
-  }
-
-  saveGrid(g: EditableGrid) {
-    const invalid = g.rows.find(r => !r.id.trim() || this.parseAmount(r.expectedRaw) === null);
-    if (invalid) {
-      g.error = true;
-      g.message = 'Chaque ligne doit avoir un identifiant et une réponse attendue chiffrée.';
-      return;
-    }
-    g.saving = true;
-    g.message = '';
-    const body = g.rows.map(r => ({
-      id: r.id.trim(), label: r.id.trim(), question: r.question, expected: this.parseAmount(r.expectedRaw),
-      expectedRaw: r.expectedRaw.trim(), tolerance: (Number(r.tolerancePct) || 0) / 100, points: Number(r.points) || 0
-    }));
-    this.http.put(`/api/teacher/qcms/${this.editId}/grilles/${g.questionId}`, body).subscribe({
-      next: () => { g.saving = false; g.validated = true; g.error = false; g.message = 'Grille enregistrée.'; },
-      error: e => { g.saving = false; g.error = true; g.message = e.error?.message || 'Enregistrement impossible.'; }
-    });
-  }
-
-  resetGrid(g: EditableGrid) {
-    this.http.delete(`/api/teacher/qcms/${this.editId}/grilles/${g.questionId}`).subscribe(() => this.loadGrids());
   }
 
   invalidEmails = new Set<string>();

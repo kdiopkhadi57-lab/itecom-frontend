@@ -11,6 +11,7 @@ import { Progress } from '../../core/models/course.model';
 import { COURSE_CATEGORIES } from '../../core/models/course.model';
 import { UserScopeService } from '../../core/services/user-scope.service';
 import { BarChartComponent, BarDatum } from '../../shared/components/bar-chart.component';
+import { AdminStatsComponent } from './admin-stats.component';
 
 /** Devoir vu par un professeur / administrateur (GET /api/teacher/qcms) */
 interface StaffQcm { id: number; title: string; status: string; studentCount: number; questionCount: number; createdAt: string | null; }
@@ -25,7 +26,7 @@ const MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Aoû
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, BarChartComponent],
+  imports: [CommonModule, FormsModule, RouterLink, BarChartComponent, AdminStatsComponent],
   styles: [`
     :host {
       --db-navy: #1f2d7a; --db-navy-2: #2b3ea8; --db-ink: #1f2a5c; --db-muted: #6b7280;
@@ -145,6 +146,9 @@ const MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Aoû
           </div>
         </div>
       </section>
+
+      <!-- ── Statistiques de l'administrateur ───────────────────────── -->
+      <app-admin-stats *ngIf="authService.isAdmin"></app-admin-stats>
 
       <!-- ── Accès rapide ────────────────────────────────────────────── -->
       <section class="row g-4">

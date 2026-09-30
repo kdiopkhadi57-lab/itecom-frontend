@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { DialogService, DialogRef, DIALOG_DATA } from '../../core/services/dialog.service';
+import { StudentPickerComponent, PickedStudent, toPickedStudent } from '../../shared/components/student-picker.component';
 
 interface Choice   { choiceText: string; isCorrect: boolean; }
 interface Question {
@@ -16,18 +17,11 @@ interface Question {
   choices: Choice[];
 }
 
-interface StudentEntry {
-  name: string;
-  email: string;
-  lastName: string;
-  firstName: string;
-  level: string;
-}
 
 @Component({
   selector: 'app-qcm-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, StudentPickerComponent],
   template: `
     <div class="fade-in-up" style="max-width:860px;margin:0 auto">
 
@@ -282,91 +276,22 @@ Bonne réponse: C</code>
       <!-- ═══ Étudiants concernés ══════════════════════════════════════════ -->
       <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #d5d9ef!important">
         <div class="card-body p-4">
-          <div class="d-flex align-items-center gap-3 flex-wrap">
+          <div class="d-flex align-items-center gap-3 mb-3">
             <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                  style="width:44px;height:44px;background:#eef0fb;color:#2b3ea8;font-size:1.3rem"><i class="bi bi-people"></i></div>
             <div class="flex-grow-1">
               <h6 class="fw-bold mb-0">Étudiants concernés <span class="badge rounded-pill bg-secondary ms-1" style="font-size:.7rem">Optionnel</span></h6>
               <p class="text-muted mb-0 small">
-                Si vide → QCM visible par <strong>tous</strong> les étudiants approuvés.<br>
-                Sinon → seulement les étudiants de la liste pourront le passer.<br>
-                Colonnes : Nom · Prénom · Niveau · Email<br>
-                Chaque étudiant doit déjà avoir un compte : il se connecte avec son email et le mot de passe de ce compte.<br>
-                Formats : Excel (.xlsx) · CSV · Word · PDF
+                Choisissez des niveaux, ajoutez des étudiants un par un ou importez une liste (les trois se combinent).
+                Sans aucun choix, le devoir est visible par tous les étudiants approuvés.
               </p>
             </div>
-            <div class="d-flex gap-2 flex-shrink-0">
-              <a href="/api/teacher/exams/student-template" download="modele_etudiants.xlsx"
-                 class="btn btn-outline-secondary btn-sm fw-semibold" style="border-radius:10px;white-space:nowrap">
-                <i class="bi bi-download me-1"></i>Modèle Excel
-              </a>
-              <button class="btn btn-outline-primary btn-sm fw-semibold" style="border-radius:10px;white-space:nowrap"
-                      (click)="studentInput.click()" [disabled]="studentParsing">
-                <span *ngIf="studentParsing" class="spinner-border spinner-border-sm me-1"></span>
-                <i *ngIf="!studentParsing" class="bi bi-upload me-1"></i>
-                {{ studentParsing ? 'Lecture...' : 'Importer un fichier' }}
-              </button>
-              <input #studentInput type="file" accept=".xlsx,.xls,.csv,.pdf,.docx,.doc"
-                     style="display:none" (change)="onStudentFile($event)">
-            </div>
           </div>
-
-          <div *ngIf="studentListError" id="studentListError" class="alert alert-danger py-2 mt-3 mb-0">
+          <div *ngIf="studentListError" id="studentListError" class="alert alert-danger py-2 mb-3">
             <i class="bi bi-exclamation-octagon me-2"></i>{{ studentListError }}
           </div>
-          <div *ngIf="studentError" class="alert alert-danger py-2 mt-3 mb-0">
-            <i class="bi bi-exclamation-triangle me-2"></i>{{ studentError }}
-          </div>
-
-          <div *ngIf="students.length > 0" class="mt-3">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <span class="badge rounded-pill bg-success">
-                <i class="bi bi-people me-1"></i>{{ students.length }} étudiant(s)
-              </span>
-              <div class="d-flex gap-2">
-                <button class="btn btn-sm btn-outline-secondary" (click)="students = []; studentError = ''">
-                  <i class="bi bi-x me-1"></i>Effacer tout
-                </button>
-                <button class="btn btn-sm btn-outline-primary" (click)="addStudent()">
-                  <i class="bi bi-plus me-1"></i>Ajouter manuellement
-                </button>
-              </div>
-            </div>
-            <div class="small text-muted mb-2">
-              <i class="bi bi-info-circle me-1"></i>
-              Chaque étudiant se connecte avec le mot de passe de son compte (reçu à la création du compte, modifiable depuis son profil).
-            </div>
-            <div style="max-height:320px;overflow:auto;border:1px solid #e5e7eb;border-radius:10px">
-              <table class="table table-sm table-hover mb-0 align-middle" style="min-width:600px">
-                <thead class="table-light sticky-top">
-                  <tr>
-                    <th style="width:32px">#</th><th>Nom</th><th>Prénom</th><th style="width:90px">Niveau</th>
-                    <th>Email</th><th style="width:40px"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let s of students; let i = index" [class.table-danger]="invalidEmails.has(s.email.trim().toLowerCase())">
-                    <td class="text-muted small">{{ i+1 }}</td>
-                    <td><input class="form-control form-control-sm" [(ngModel)]="s.lastName" placeholder="Nom"></td>
-                    <td><input class="form-control form-control-sm" [(ngModel)]="s.firstName" placeholder="Prénom"></td>
-                    <td><input class="form-control form-control-sm" [(ngModel)]="s.level" placeholder="L3"></td>
-                    <td><input class="form-control form-control-sm text-muted" [(ngModel)]="s.email" placeholder="email@example.com"></td>
-                    <td>
-                      <button class="btn btn-link btn-sm text-danger p-0" (click)="students.splice(i,1)">
-                        <i class="bi bi-x-circle"></i>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div *ngIf="students.length === 0 && !studentParsing && !studentError"
-               class="text-center py-3 text-muted mt-2" style="font-size:.85rem">
-            <i class="bi bi-people" style="font-size:1.8rem;opacity:.35"></i>
-            <p class="mt-2 mb-0">Laissez vide pour un accès universel, ou importez une liste pour cibler des étudiants</p>
-          </div>
+          <app-student-picker [students]="students" [targetLevels]="targetLevels"
+                              [invalidEmails]="invalidEmails" [emptyMeansAll]="true"></app-student-picker>
         </div>
       </div>
 
@@ -412,9 +337,8 @@ export class QcmCreateComponent implements OnInit {
   wordPreview: { title: string; description: string; questions: Question[] } | null = null;
 
   // ── Étudiants ─────────────────────────────────────────────────────────
-  students: StudentEntry[] = [];
-  studentParsing = false;
-  studentError = '';
+  students: PickedStudent[] = [];
+  targetLevels = new Set<string>();
   subjectFile: File | null = null;
   correctionFile: File | null = null;
 
@@ -459,6 +383,7 @@ export class QcmCreateComponent implements OnInit {
         this.description = qcm.description || '';
         this.estimatedDurationMinutes = qcm.estimatedDurationMinutes || 30;
         this.paperCorrectionRequired = !!qcm.paperCorrectionRequired;
+        this.targetLevels = new Set(qcm.targetLevels || []);
         this.questions = (qcm.questions || []).map((q: any) => ({
           questionText: q.questionText,
           points: q.points,
@@ -468,7 +393,7 @@ export class QcmCreateComponent implements OnInit {
           expectedAnswer: q.expectedAnswer || '',
           choices: (q.choices || []).map((c: any) => ({ choiceText: c.choiceText, isCorrect: c.isCorrect }))
         }));
-        this.students = (qcm.students || []).map((s: any) => this.toStudentEntry({
+        this.students = (qcm.students || []).map((s: any) => toPickedStudent({
           name: s.studentName, email: s.studentEmail, firstName: s.firstName,
           lastName: s.lastName, level: s.level
         }));
@@ -594,48 +519,6 @@ export class QcmCreateComponent implements OnInit {
     return !!this.title.trim() && (documentsReady || this.isValid);
   }
 
-  onStudentFile(e: Event) {
-    const input = e.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) return;
-    this.studentParsing = true;
-    this.studentError = '';
-    const fd = new FormData();
-    fd.append('file', file);
-    this.http.post<any>('/api/teacher/qcms/parse-students', fd).subscribe({
-      next: res => {
-        this.studentParsing = false;
-        this.students = (res.students || []).map((s: any) => this.toStudentEntry(s));
-        if (!this.students.length) this.studentError = 'Aucun étudiant détecté dans ce fichier.';
-      },
-      error: err => {
-        this.studentParsing = false;
-        this.studentError = err.error?.error || err.error?.message || 'Erreur lors de la lecture du fichier.';
-      }
-    });
-  }
-
-  private toStudentEntry(s: any): StudentEntry {
-    let firstName = (s.firstName || '').trim();
-    let lastName = (s.lastName || '').trim();
-    const name = (s.name || '').trim();
-    if (!firstName && !lastName && name) {
-      // « Prénom(s) Nom » : le dernier mot est le nom de famille
-      const lastSpace = name.lastIndexOf(' ');
-      firstName = lastSpace > 0 ? name.substring(0, lastSpace) : '';
-      lastName = lastSpace > 0 ? name.substring(lastSpace + 1) : name;
-    }
-    return {
-      name, email: s.email || '', firstName, lastName,
-      level: s.level || ''
-    };
-  }
-
-  addStudent() {
-    this.students.push({ name: '', email: '', firstName: '', lastName: '', level: '' });
-  }
-
   invalidEmails = new Set<string>();
   studentListError = '';
 
@@ -652,6 +535,7 @@ export class QcmCreateComponent implements OnInit {
       description: this.description,
       estimatedDurationMinutes: this.estimatedDurationMinutes,
       paperCorrectionRequired: this.paperCorrectionRequired,
+      targetLevels: [...this.targetLevels],
       questions: this.questions,
       students: this.students.filter(s => s.email.trim()).map(s => ({
         ...s,

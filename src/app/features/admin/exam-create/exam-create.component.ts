@@ -2,16 +2,15 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
 import { ExamService } from '../../../core/services/exam.service';
 import { ExamQuestionForm } from '../../../core/models/exam.model';
+import { StudentPickerComponent, PickedStudent, studentsCsv } from '../../../shared/components/student-picker.component';
 
-interface StudentPreview { name: string; email: string; }
 
 @Component({
   selector: 'app-exam-create',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, StudentPickerComponent],
   template: `
     <div class="container-fluid p-4 fade-in-up" style="max-width:900px">
       <div class="d-flex align-items-center gap-3 mb-4">
@@ -135,7 +134,7 @@ interface StudentPreview { name: string; email: string; }
         </div>
       </div>
 
-      <!-- ── Liste des étudiants ─────────────────────────────────────── -->
+      <!-- ── Étudiants ─────────────────────────────────────────────── -->
       <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #d5d9ef!important">
         <div class="card-body p-4">
           <div class="d-flex align-items-center gap-3 mb-3">
@@ -144,85 +143,13 @@ interface StudentPreview { name: string; email: string; }
               <i class="bi bi-people"></i>
             </div>
             <div class="flex-grow-1">
-              <h6 class="fw-bold mb-0">Liste des étudiants *</h6>
+              <h6 class="fw-bold mb-0">Étudiants *</h6>
               <p class="text-muted mb-0 small">
-                Excel (.xlsx) — col. A = Nom, col. B = Email, ligne 1 ignorée<br>
-                Ou PDF / Word avec une ligne par étudiant : <em>Nom Email</em>
+                Choisissez des niveaux, ajoutez des étudiants un par un ou importez une liste (les trois se combinent).
               </p>
             </div>
-            <div class="d-flex gap-2 flex-shrink-0">
-              <a href="/api/teacher/exams/student-template" download="modele_etudiants.xlsx"
-                 class="btn btn-outline-secondary btn-sm fw-semibold" style="border-radius:10px;white-space:nowrap">
-                <i class="bi bi-download me-1"></i>Modèle Excel
-              </a>
-              <button class="btn btn-outline-primary btn-sm fw-semibold" style="border-radius:10px;white-space:nowrap"
-                      (click)="studentInput.click()" [disabled]="studentParsing">
-                <span *ngIf="studentParsing" class="spinner-border spinner-border-sm me-1"></span>
-                <i *ngIf="!studentParsing" class="bi bi-upload me-1"></i>
-                {{ studentParsing ? 'Lecture...' : 'Importer un fichier' }}
-              </button>
-              <input #studentInput type="file" accept=".xlsx,.xls,.pdf,.docx,.doc"
-                     style="display:none" (change)="onStudentFileSelected($event)">
-            </div>
           </div>
-
-          <!-- Erreur parse -->
-          <div *ngIf="studentParseError" class="alert alert-danger py-2 mb-2">
-            <i class="bi bi-exclamation-triangle me-2"></i>{{ studentParseError }}
-          </div>
-
-          <!-- Prévisualisation -->
-          <div *ngIf="students.length > 0">
-            <div class="d-flex align-items-center justify-content-between mb-2">
-              <span class="badge rounded-pill bg-success">
-                <i class="bi bi-check-circle me-1"></i>{{ students.length }} étudiant(s) détecté(s)
-              </span>
-              <button class="btn btn-sm btn-outline-secondary" (click)="clearStudents()">
-                <i class="bi bi-x me-1"></i>Effacer
-              </button>
-            </div>
-            <div style="max-height:260px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px">
-              <table class="table table-sm table-hover mb-0">
-                <thead class="table-light sticky-top">
-                  <tr>
-                    <th style="width:40px">#</th>
-                    <th>Nom complet</th>
-                    <th>Email</th>
-                    <th style="width:50px"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let s of students; let i = index">
-                    <td class="text-muted small">{{ i + 1 }}</td>
-                    <td>
-                      <input class="form-control form-control-sm border-0 bg-transparent p-0"
-                             [(ngModel)]="s.name" style="min-width:120px">
-                    </td>
-                    <td>
-                      <input class="form-control form-control-sm border-0 bg-transparent p-0 text-muted"
-                             [(ngModel)]="s.email" style="min-width:160px">
-                    </td>
-                    <td>
-                      <button class="btn btn-link btn-sm text-danger p-0" (click)="removeStudent(i)"
-                              title="Retirer cet étudiant">
-                        <i class="bi bi-x-circle"></i>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <button class="btn btn-sm btn-outline-secondary mt-2" (click)="addStudentRow()">
-              <i class="bi bi-plus me-1"></i>Ajouter manuellement
-            </button>
-          </div>
-
-          <!-- Placeholder quand vide -->
-          <div *ngIf="students.length === 0 && !studentParsing && !studentParseError"
-               class="text-center py-3 text-muted" style="font-size:.88rem">
-            <i class="bi bi-upload" style="font-size:1.8rem;opacity:.4"></i>
-            <p class="mt-2 mb-0">Importez un fichier ou téléchargez le modèle Excel pour commencer</p>
-          </div>
+          <app-student-picker [students]="students" [targetLevels]="targetLevels"></app-student-picker>
         </div>
       </div>
 
@@ -250,13 +177,11 @@ export class ExamCreateComponent {
   success = false;
   error = '';
 
-  // Student list
-  students: StudentPreview[] = [];
-  studentFile: File | null = null;
-  studentParsing = false;
-  studentParseError = '';
+  // Étudiants : niveaux et/ou liste
+  students: PickedStudent[] = [];
+  targetLevels = new Set<string>();
 
-  constructor(private examService: ExamService, private router: Router, private http: HttpClient) {}
+  constructor(private examService: ExamService, private router: Router) {}
 
   get totalScore(): number { return this.questions.reduce((s, q) => s + (q.maxScore || 0), 0); }
 
@@ -265,37 +190,8 @@ export class ExamCreateComponent {
   onExamFileSelected(e: Event) { this.examFile = (e.target as HTMLInputElement).files?.[0] || null; }
   onCorrectionFileSelected(e: Event) { this.correctionFile = (e.target as HTMLInputElement).files?.[0] || null; }
 
-  // ── Student list ──────────────────────────────────────────────────────
-  onStudentFileSelected(e: Event) {
-    const input = e.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) return;
-    this.studentFile = file;
-    this.studentParsing = true;
-    this.studentParseError = '';
-
-    const fd = new FormData();
-    fd.append('file', file);
-    this.http.post<any>('/api/teacher/exams/parse-students', fd).subscribe({
-      next: res => {
-        this.students = res.students || [];
-        this.studentParsing = false;
-        if (!this.students.length) this.studentParseError = 'Aucun étudiant détecté dans ce fichier.';
-      },
-      error: err => {
-        this.studentParsing = false;
-        this.studentParseError = err.error?.error || err.error?.message || 'Erreur lors de la lecture du fichier.';
-      }
-    });
-  }
-
-  clearStudents() { this.students = []; this.studentFile = null; this.studentParseError = ''; }
-  removeStudent(i: number) { this.students.splice(i, 1); }
-  addStudentRow() { this.students.push({ name: '', email: '' }); }
-
   isValid(): boolean {
-    if (!this.title.trim() || this.students.length === 0) return false;
+    if (!this.title.trim() || (this.students.length === 0 && this.targetLevels.size === 0)) return false;
     if (!this.estimatedDurationMinutes || this.estimatedDurationMinutes <= 0) return false;
     if (this.mode === 'manual') {
       return this.questions.length > 0
@@ -309,17 +205,15 @@ export class ExamCreateComponent {
     this.loading = true;
     this.error = '';
 
-    // Reconstruire un fichier CSV/Excel en mémoire depuis la liste prévisualisée
-    const csvContent = 'Nom,Email\n' + this.students.map(s => `${s.name},${s.email}`).join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const file = new File([blob], 'etudiants.csv', { type: 'text/csv' });
+    const file = this.students.length ? studentsCsv(this.students) : null;
 
     const questions = this.mode === 'manual' ? this.questions : [];
     const examFile = this.mode === 'upload' ? this.examFile! : undefined;
     const correctionFile = this.mode === 'upload' ? this.correctionFile! : undefined;
 
     this.examService.createExam(
-      { title: this.title, description: this.description, estimatedDurationMinutes: this.estimatedDurationMinutes, questions },
+      { title: this.title, description: this.description, estimatedDurationMinutes: this.estimatedDurationMinutes, questions,
+        targetLevels: [...this.targetLevels] },
       file,
       examFile,
       correctionFile

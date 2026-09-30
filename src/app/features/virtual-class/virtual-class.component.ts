@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
+import { StudentPickerComponent, PickedStudent, studentsCsv } from '../../shared/components/student-picker.component';
 
 interface VirtualClass {
   id: number;
@@ -24,7 +25,7 @@ interface VirtualClass {
 @Component({
   selector: 'app-virtual-class',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, StudentPickerComponent],
   template: `
     <div class="fade-in-up">
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -197,8 +198,8 @@ interface VirtualClass {
       </div>
 
       <!-- Create Modal -->
-      <div class="modal fade show d-block" *ngIf="showCreateModal" style="background:rgba(0,0,0,.5)">
-        <div class="modal-dialog modal-dialog-centered">
+      <div class="modal fade show d-block" *ngIf="showCreateModal" style="background:rgba(0,0,0,.5);overflow-y:auto">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
           <div class="modal-content border-0 rounded-4">
             <div class="modal-header border-0 p-4">
               <h5 class="modal-title fw-bold"><i class="bi bi-calendar-event me-1"></i>Créer une classe virtuelle</h5>
@@ -224,16 +225,8 @@ interface VirtualClass {
                 </div>
               </div>
               <div class="mb-3">
-                <label class="form-label fw-semibold">Liste des étudiants *</label>
-                <input type="file" class="form-control" accept=".xlsx,.xls,.pdf,.docx,.doc"
-                       (change)="onStudentListSelected($event)">
-                <small class="text-muted d-block mt-1">
-                  Excel : colonne A = Nom, colonne B = Email, ligne 1 ignorée. PDF/Word : une ligne par étudiant, Nom Email.
-                </small>
-                <div *ngIf="studentListFile" class="text-success small mt-1">
-                  <i class="bi bi-check-circle me-1"></i>{{ studentListFile.name }}
-                  <span *ngIf="studentCount !== null"> · {{ studentCount }} étudiant(s) détecté(s)</span>
-                </div>
+                <label class="form-label fw-semibold">Étudiants *</label>
+                <app-student-picker [students]="newStudents" [targetLevels]="newLevels"></app-student-picker>
                 <div *ngIf="createError" class="alert alert-danger py-2 mt-2 mb-0 small">{{ createError }}</div>
               </div>
               <div class="alert alert-info small mb-0">
@@ -288,8 +281,8 @@ export class VirtualClassComponent implements OnInit {
   deletingRecording: VirtualClass | null = null;
   deleteLoading = false;
   newClass: any = { title: '', description: '', scheduledAt: '', durationMinutes: 60 };
-  studentListFile: File | null = null;
-  studentCount: number | null = null;
+  newStudents: PickedStudent[] = [];
+  newLevels = new Set<string>();
   createError = '';
 
   // Inline player state
@@ -441,42 +434,25 @@ export class VirtualClassComponent implements OnInit {
     });
   }
 
-  onStudentListSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    this.studentListFile = input.files?.[0] || null;
-    this.studentCount = null;
-    this.createError = '';
-    if (!this.studentListFile) return;
-
-    const formData = new FormData();
-    formData.append('file', this.studentListFile);
-    this.http.post<{ count: number }>('/api/teacher/exams/parse-students', formData).subscribe({
-      next: result => this.studentCount = result.count,
-      error: () => {
-        this.studentListFile = null;
-        this.createError = 'Impossible de lire la liste. Vérifiez le format et les colonnes demandées.';
-      }
-    });
-  }
-
   createClass() {
-    if (!this.studentListFile) {
-      this.createError = 'La liste des étudiants est obligatoire.';
+    if (!this.newStudents.length && !this.newLevels.size) {
+      this.createError = 'Choisissez au moins un niveau ou un étudiant.';
       return;
     }
     const formData = new FormData();
-    formData.append('class', new Blob([JSON.stringify(this.newClass)], { type: 'application/json' }));
-    formData.append('studentList', this.studentListFile);
+    const data = { ...this.newClass, targetLevels: [...this.newLevels].join(',') };
+    formData.append('class', new Blob([JSON.stringify(data)], { type: 'application/json' }));
+    if (this.newStudents.length) formData.append('studentList', studentsCsv(this.newStudents));
     this.http.post<VirtualClass>('/api/teacher/virtual-classes', formData).subscribe({
       next: (vc) => {
         this.classes.unshift(vc);
         this.showCreateModal = false;
         this.newClass = { title: '', description: '', scheduledAt: '', durationMinutes: 60 };
-        this.studentListFile = null;
-        this.studentCount = null;
+        this.newStudents = [];
+        this.newLevels = new Set();
         this.createError = '';
       },
-      error: () => { this.createError = 'Impossible de créer la session. Vérifiez les informations et la liste des étudiants.'; }
+      error: (e) => { this.createError = e.error?.message || 'Impossible de créer la session. Vérifiez les informations et la liste des étudiants.'; }
     });
   }
 }

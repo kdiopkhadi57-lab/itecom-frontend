@@ -10,10 +10,10 @@ export class ExamService {
 
   constructor(private http: HttpClient) {}
 
-  createExam(request: ExamCreateRequest, studentListFile: File, examFile?: File, correctionFile?: File): Observable<ApiResponse<Exam>> {
+  createExam(request: ExamCreateRequest, studentListFile: File | null, examFile?: File, correctionFile?: File): Observable<ApiResponse<Exam>> {
     const formData = new FormData();
     formData.append('exam', new Blob([JSON.stringify(request)], { type: 'application/json' }));
-    formData.append('studentList', studentListFile);
+    if (studentListFile) formData.append('studentList', studentListFile);
     if (examFile) {
       formData.append('examFile', examFile);
     }

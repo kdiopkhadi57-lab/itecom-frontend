@@ -8,13 +8,13 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Exam, ExamStudent, ExamSubmissionDetail } from '../../../core/models/exam.model';
 import { FileViewerComponent } from '../../../shared/components/file-viewer.component';
 import { DialogService } from '../../../core/services/dialog.service';
+import { StudentPickerComponent, PickedStudent } from '../../../shared/components/student-picker.component';
 
-interface StudentPreview { name: string; email: string; }
 
 @Component({
   selector: 'app-exam-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, StudentPickerComponent],
   template: `
     <div class="container-fluid p-4">
       <div class="d-flex align-items-center gap-3 mb-4">
@@ -100,69 +100,35 @@ interface StudentPreview { name: string; email: string; }
         <!-- ── Ajouter des étudiants ──────────────────────────────── -->
         <div class="card border-0 shadow-sm mb-4" style="border-radius:16px;border:2px dashed #d5d9ef!important">
           <div class="card-body p-4">
-            <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center gap-3 mb-3">
               <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
                    style="width:44px;height:44px;background:#eef0fb;color:#2b3ea8;font-size:1.3rem"><i class="bi bi-people"></i></div>
               <div class="flex-grow-1">
                 <h6 class="fw-bold mb-0">Ajouter des étudiants</h6>
-                <p class="text-muted mb-0 small">Excel (.xlsx), PDF ou Word (.docx) — col. A = Nom, col. B = Email</p>
-              </div>
-              <div class="d-flex gap-2 flex-shrink-0">
-                <a href="/api/teacher/exams/student-template" download="modele_etudiants.xlsx"
-                   class="btn btn-outline-secondary btn-sm fw-semibold" style="border-radius:10px;white-space:nowrap">
-                  <i class="bi bi-download me-1"></i>Modèle Excel
-                </a>
-                <button class="btn btn-outline-primary btn-sm fw-semibold" style="border-radius:10px;white-space:nowrap"
-                        (click)="addStudentInput.click()" [disabled]="addStudentParsing">
-                  <span *ngIf="addStudentParsing" class="spinner-border spinner-border-sm me-1"></span>
-                  <i *ngIf="!addStudentParsing" class="bi bi-upload me-1"></i>
-                  {{ addStudentParsing ? 'Lecture...' : 'Importer un fichier' }}
-                </button>
-                <input #addStudentInput type="file" accept=".xlsx,.xls,.pdf,.docx,.doc"
-                       style="display:none" (change)="onAddStudentFile($event)">
+                <p class="text-muted mb-0 small">
+                  Un niveau entier, un étudiant (même tout juste créé) ou une liste importée.
+                  Si l'examen est publié, les nouveaux inscrits reçoivent leur invitation.
+                </p>
               </div>
             </div>
 
-            <div *ngIf="addStudentError" class="alert alert-danger py-2 mt-3 mb-0">
+            <div *ngIf="addStudentError" class="alert alert-danger py-2 mb-3">
               <i class="bi bi-exclamation-triangle me-2"></i>{{ addStudentError }}
             </div>
-            <div *ngIf="addStudentSuccess" class="alert alert-success py-2 mt-3 mb-0">
+            <div *ngIf="addStudentSuccess" class="alert alert-success py-2 mb-3">
               <i class="bi bi-check-circle me-2"></i>{{ addStudentSuccess }}
             </div>
 
-            <!-- Prévisualisation avant envoi -->
-            <div *ngIf="addStudentPreview.length > 0" class="mt-3">
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="badge rounded-pill bg-primary">{{ addStudentPreview.length }} à ajouter</span>
-                <div class="d-flex gap-2">
-                  <button class="btn btn-sm btn-outline-secondary" (click)="addStudentPreview=[]">Annuler</button>
-                  <button class="btn btn-sm fw-semibold" (click)="confirmAddStudents()"
-                          [disabled]="addStudentSaving"
-                          style="background:#2b3ea8;color:white;border-radius:8px">
-                    <span *ngIf="addStudentSaving" class="spinner-border spinner-border-sm me-1"></span>
-                    <i *ngIf="!addStudentSaving" class="bi bi-check2 me-1"></i>
-                    {{ addStudentSaving ? 'Ajout...' : 'Confirmer l\'ajout' }}
-                  </button>
-                </div>
-              </div>
-              <div style="max-height:200px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:10px">
-                <table class="table table-sm table-hover mb-0">
-                  <thead class="table-light sticky-top">
-                    <tr><th>#</th><th>Nom</th><th>Email</th><th></th></tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let s of addStudentPreview; let i = index">
-                      <td class="text-muted small">{{ i+1 }}</td>
-                      <td><input class="form-control form-control-sm border-0 bg-transparent p-0"
-                                 [(ngModel)]="s.name"></td>
-                      <td><input class="form-control form-control-sm border-0 bg-transparent p-0 text-muted"
-                                 [(ngModel)]="s.email"></td>
-                      <td><button class="btn btn-link btn-sm text-danger p-0" (click)="addStudentPreview.splice(i,1)">
-                        <i class="bi bi-x-circle"></i></button></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+            <app-student-picker [students]="addStudentPreview" [targetLevels]="addLevels"
+                                [lockedLevels]="exam.targetLevels || []"></app-student-picker>
+
+            <div *ngIf="addStudentPreview.length || addLevels.size" class="d-flex justify-content-end gap-2 mt-3">
+              <button class="btn btn-sm btn-outline-secondary" (click)="resetAddStudents()">Annuler</button>
+              <button class="btn btn-sm btn-primary fw-semibold" (click)="confirmAddStudents()" [disabled]="addStudentSaving">
+                <span *ngIf="addStudentSaving" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="!addStudentSaving" class="bi bi-check2 me-1"></i>
+                {{ addStudentSaving ? 'Ajout...' : 'Confirmer l\'ajout' }}
+              </button>
             </div>
           </div>
         </div>
@@ -341,8 +307,8 @@ export class ExamDetailComponent implements OnInit {
   comparisonLoading = false;
 
   // ── Ajout d'étudiants ─────────────────────────────────────────────────
-  addStudentPreview: StudentPreview[] = [];
-  addStudentParsing = false;
+  addStudentPreview: PickedStudent[] = [];
+  addLevels = new Set<string>();
   addStudentSaving = false;
   addStudentError = '';
   addStudentSuccess = '';
@@ -459,47 +425,24 @@ export class ExamDetailComponent implements OnInit {
     return { INVITED: 'Invité', STARTED: 'En cours', SUBMITTED: 'Soumis', GRADED: 'Corrigé' }[status] || status;
   }
 
-  // ── Ajout d'étudiants via fichier ─────────────────────────────────────
-  onAddStudentFile(e: Event) {
-    const input = e.target as HTMLInputElement;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) return;
-    this.addStudentParsing = true;
-    this.addStudentError = '';
-    this.addStudentSuccess = '';
+  // ── Ajout d'étudiants (niveaux, comptes, liste) ──────────────────────
+  resetAddStudents() {
     this.addStudentPreview = [];
-
-    const fd = new FormData();
-    fd.append('file', file);
-    this.http.post<any>('/api/teacher/exams/parse-students', fd).subscribe({
-      next: res => {
-        this.addStudentParsing = false;
-        this.addStudentPreview = res.students || [];
-        if (!this.addStudentPreview.length)
-          this.addStudentError = 'Aucun étudiant détecté dans ce fichier.';
-      },
-      error: err => {
-        this.addStudentParsing = false;
-        this.addStudentError = err.error?.error || err.error?.message || 'Erreur lors de la lecture du fichier.';
-      }
-    });
+    this.addLevels = new Set();
   }
 
   confirmAddStudents() {
-    if (!this.exam || !this.addStudentPreview.length) return;
+    if (!this.exam || (!this.addStudentPreview.length && !this.addLevels.size)) return;
     this.addStudentSaving = true;
     this.addStudentError = '';
-
-    // Reconstruire CSV depuis la prévisualisation
-    const csv = 'Nom,Email\n' + this.addStudentPreview.map(s => `${s.name},${s.email}`).join('\n');
-    const fd = new FormData();
-    fd.append('file', new File([csv], 'etudiants.csv', { type: 'text/csv' }));
-
-    this.http.post<any>(`/api/teacher/exams/${this.exam.id}/add-students`, fd).subscribe({
+    const body = {
+      emails: this.addStudentPreview.map(s => s.email.trim()).filter(e => e),
+      levels: [...this.addLevels]
+    };
+    this.http.post<any>(`/api/teacher/exams/${this.exam.id}/students`, body).subscribe({
       next: res => {
         this.addStudentSaving = false;
-        this.addStudentPreview = [];
+        this.resetAddStudents();
         this.addStudentSuccess = `${res.message || 'Étudiants ajoutés avec succès.'}`;
         this.loadExam();
         setTimeout(() => this.addStudentSuccess = '', 5000);

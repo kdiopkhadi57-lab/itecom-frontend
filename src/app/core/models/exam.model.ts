@@ -32,6 +32,7 @@ export interface Exam {
   status: 'DRAFT' | 'PUBLISHED' | 'CLOSED';
   questionCount: number;
   studentCount: number;
+  targetLevels?: string[];
   createdAt: string;
   questions: ExamQuestion[];
   students: ExamStudent[];
@@ -42,6 +43,7 @@ export interface ExamCreateRequest {
   description: string;
   estimatedDurationMinutes: number;
   questions: ExamQuestionForm[];
+  targetLevels?: string[];
 }
 
 export interface ExamTakeResponse {

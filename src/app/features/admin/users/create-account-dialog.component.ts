@@ -139,7 +139,8 @@ export class CreateAccountDialogComponent {
   form = this.empty();
 
   readonly levels = ['L1', 'L2', 'L3', 'M1', 'M2'];
-  readonly maxBirthDate = new Date(new Date().getFullYear() - 10, 11, 31).toISOString().substring(0, 10);
+  // Seule limite : pas de date dans le futur
+  readonly maxBirthDate = new Date().toISOString().substring(0, 10);
   readonly specializations = [
     { value: 'genie-logiciel', label: 'Génie Logiciel' }, { value: 'reseau', label: 'Réseaux' },
     { value: 'comptabilite', label: 'Comptabilité' }, { value: 'sante', label: 'Santé' },

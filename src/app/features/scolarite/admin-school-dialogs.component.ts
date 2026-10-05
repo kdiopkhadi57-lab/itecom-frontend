@@ -83,89 +83,163 @@ export class FeeDialogComponent {
   }
 }
 
-/** Inscription administrative : un étudiant, ou tous les étudiants d'un niveau. */
+/**
+ * Inscription administrative : un nouvel étudiant (identité et pièces scannées en PDF),
+ * ou réinscription de tous les étudiants existants d'un niveau.
+ */
 @Component({
   selector: 'app-enrollment-dialog',
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
     <ul class="nav nav-underline school-tabs">
-      <li class="nav-item"><button type="button" class="nav-link" [class.active]="mode === 'one'" (click)="mode = 'one'">Un étudiant</button></li>
-      <li class="nav-item"><button type="button" class="nav-link" [class.active]="mode === 'level'" (click)="mode = 'level'">Tout un niveau</button></li>
+      <li class="nav-item"><button type="button" class="nav-link" [class.active]="mode === 'new'" (click)="mode = 'new'; error = ''">Nouvel étudiant</button></li>
+      <li class="nav-item"><button type="button" class="nav-link" [class.active]="mode === 'level'" (click)="mode = 'level'; error = ''">Réinscrire un niveau</button></li>
     </ul>
 
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label fw-semibold small" for="enrYear">Année universitaire</label>
-        <input id="enrYear" class="form-control" [(ngModel)]="year" placeholder="2026-2027">
-      </div>
-      <div class="col-md-6">
-        <label class="form-label fw-semibold small" for="enrLevel">Niveau</label>
-        <select id="enrLevel" class="form-select" [(ngModel)]="level">
-          <option *ngFor="let l of levels" [value]="l">{{ l }}</option>
-        </select>
-      </div>
-    </div>
-
-    <ng-container *ngIf="mode === 'one'">
-      <label class="form-label fw-semibold small mt-3" for="enrSearch">Étudiant</label>
-      <input id="enrSearch" type="search" class="form-control mb-2" [(ngModel)]="search" placeholder="Rechercher par nom ou email">
-      <div class="list-group" style="max-height:220px;overflow:auto">
-        <button type="button" *ngFor="let s of filteredStudents" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-                [class.active]="studentId === s.id" (click)="pick(s)">
-          <span>{{ s.name }}<span class="small d-block" [class.text-muted]="studentId !== s.id">{{ s.email }}</span></span>
-          <span class="small">{{ s.level || '—' }}</span>
-        </button>
-        <div *ngIf="filteredStudents.length === 0" class="text-muted small p-2">Aucun étudiant validé ne correspond.</div>
-      </div>
-      <div class="row g-3 mt-1">
+    <!-- ── Nouvel étudiant ── -->
+    <form *ngIf="mode === 'new'" (ngSubmit)="submit()" novalidate>
+      <h6 class="fw-bold mb-2">Identité</h6>
+      <div class="row g-3">
         <div class="col-md-6">
-          <label class="form-label fw-semibold small" for="enrSpec">Filière</label>
-          <select id="enrSpec" class="form-select" [(ngModel)]="specialization">
-            <option [ngValue]="null">Filière du compte</option>
+          <label class="form-label fw-semibold small" for="nsLast">Nom</label>
+          <input id="nsLast" class="form-control" name="lastName" [(ngModel)]="form.lastName" required autocomplete="off">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small" for="nsFirst">Prénom(s)</label>
+          <input id="nsFirst" class="form-control" name="firstName" [(ngModel)]="form.firstName" required autocomplete="off">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small" for="nsBirth">Date de naissance</label>
+          <input id="nsBirth" type="date" class="form-control" name="birthDate" [(ngModel)]="form.birthDate" [max]="today" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small" for="nsPlace">Lieu de naissance</label>
+          <input id="nsPlace" class="form-control" name="birthPlace" [(ngModel)]="form.birthPlace" required>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small" for="nsEmail">Email</label>
+          <input id="nsEmail" type="email" class="form-control" name="email" [(ngModel)]="form.email" required>
+          <div class="form-text">Identifiant de connexion : les accès lui sont envoyés à cette adresse.</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small" for="nsPhone">Téléphone <span class="text-muted fw-normal">(facultatif)</span></label>
+          <input id="nsPhone" type="tel" class="form-control" name="phone" [(ngModel)]="form.phone">
+        </div>
+      </div>
+
+      <h6 class="fw-bold mt-4 mb-2">Inscription</h6>
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label fw-semibold small" for="nsYear">Année</label>
+          <input id="nsYear" class="form-control" name="year" [(ngModel)]="year" placeholder="2026-2027">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-semibold small" for="nsLevel">Niveau</label>
+          <select id="nsLevel" class="form-select" name="level" [(ngModel)]="level">
+            <option *ngFor="let l of levels" [value]="l">{{ l }}</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label fw-semibold small" for="nsSpec">Filière</label>
+          <select id="nsSpec" class="form-select" name="spec" [(ngModel)]="form.specialization">
+            <option [ngValue]="null">Sans filière</option>
             <option *ngFor="let s of specs" [value]="s[0]">{{ s[1] }}</option>
           </select>
         </div>
-        <div class="col-md-6">
-          <label class="form-label fw-semibold small" for="enrDiscount">Réduction / bourse (FCFA)</label>
-          <input id="enrDiscount" type="number" min="0" step="500" class="form-control" [(ngModel)]="discount">
+        <div class="col-md-3">
+          <label class="form-label fw-semibold small" for="nsDiscount">Réduction (FCFA)</label>
+          <input id="nsDiscount" type="number" min="0" step="500" class="form-control" name="discount" [(ngModel)]="form.discount">
         </div>
       </div>
-      <p class="small text-muted mt-2 mb-0">Les frais sont repris du barème de l'année et du niveau (onglet « Frais »).</p>
+
+      <h6 class="fw-bold mt-4 mb-2">Profil</h6>
+      <div class="row g-2">
+        <div class="col-md-6">
+          <button type="button" class="method-card text-start" [class.active]="form.profile === 'NEW_BACHELOR'" (click)="form.profile = 'NEW_BACHELOR'">
+            <span class="method-name"><i class="bi bi-mortarboard me-1"></i>Nouveau bachelier</span>
+            <span class="small text-muted">Vient d'obtenir le bac</span>
+          </button>
+        </div>
+        <div class="col-md-6">
+          <button type="button" class="method-card text-start" [class.active]="form.profile === 'ALREADY_STUDENT'" (click)="form.profile = 'ALREADY_STUDENT'">
+            <span class="method-name"><i class="bi bi-person-badge me-1"></i>Déjà étudiant</span>
+            <span class="small text-muted">A fait une année dans le supérieur</span>
+          </button>
+        </div>
+      </div>
+
+      <h6 class="fw-bold mt-4 mb-2">Pièces scannées (PDF, 10 Mo maximum chacune)</h6>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small" for="nsBac">Attestation du bac</label>
+          <input id="nsBac" type="file" class="form-control" accept="application/pdf,.pdf" (change)="pick($event, 'bacAttestation')">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small" for="nsBacNotes">Relevé de notes du bac</label>
+          <input id="nsBacNotes" type="file" class="form-control" accept="application/pdf,.pdf" (change)="pick($event, 'bacTranscript')">
+        </div>
+        <div class="col-12" *ngIf="form.profile === 'ALREADY_STUDENT'">
+          <label class="form-label fw-semibold small" for="nsPrev">Relevés de notes de l'année passée</label>
+          <input id="nsPrev" type="file" class="form-control" accept="application/pdf,.pdf" multiple (change)="pickMany($event)">
+          <div class="form-text">Un ou plusieurs PDF (par semestre, par exemple).
+            <span *ngIf="previous.length">{{ previous.length }} fichier(s) : {{ previousNames }}</span></div>
+        </div>
+      </div>
+
+      <div *ngIf="error" class="alert alert-danger mt-3 mb-0 py-2">{{ error }}</div>
+      <div class="d-flex justify-content-end gap-2 mt-4">
+        <button type="button" class="btn btn-light" (click)="ref.close(created > 0)">Annuler</button>
+        <button type="submit" class="btn btn-primary" [disabled]="saving">
+          <span *ngIf="saving" class="spinner-border spinner-border-sm me-1"></span>Inscrire l'étudiant
+        </button>
+      </div>
+    </form>
+
+    <!-- ── Réinscription d'un niveau ── -->
+    <ng-container *ngIf="mode === 'level'">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small" for="enrYear">Année universitaire</label>
+          <input id="enrYear" class="form-control" [(ngModel)]="year" placeholder="2026-2027">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small" for="enrLevel">Niveau</label>
+          <select id="enrLevel" class="form-select" [(ngModel)]="level">
+            <option *ngFor="let l of levels" [value]="l">{{ l }}</option>
+          </select>
+        </div>
+      </div>
+      <p class="text-muted mt-3 mb-0">
+        Les étudiants qui ont déjà un compte en {{ level }} et ne sont pas encore inscrits pour {{ year }} seront inscrits
+        avec le barème de leur filière, et prévenus par notification et email.
+      </p>
+      <div *ngIf="error" class="alert alert-danger mt-3 mb-0 py-2">{{ error }}</div>
+      <div *ngIf="levelErrors.length" class="alert alert-warning mt-3 mb-0 py-2 small">
+        <div *ngFor="let e of levelErrors">{{ e }}</div>
+      </div>
+      <div class="d-flex justify-content-end gap-2 mt-4">
+        <button type="button" class="btn btn-light" (click)="ref.close(created > 0)">Fermer</button>
+        <button type="button" class="btn btn-primary" [disabled]="saving" (click)="submit()">
+          <span *ngIf="saving" class="spinner-border spinner-border-sm me-1"></span>Réinscrire le niveau {{ level }}
+        </button>
+      </div>
     </ng-container>
-
-    <p *ngIf="mode === 'level'" class="text-muted mt-3 mb-0">
-      Tous les étudiants validés du niveau {{ level }} qui ne sont pas encore inscrits pour {{ year }} seront inscrits
-      avec le barème de leur filière, et prévenus par notification et email.
-    </p>
-
-    <div *ngIf="error" class="alert alert-danger mt-3 mb-0 py-2">{{ error }}</div>
-    <div *ngIf="levelErrors.length" class="alert alert-warning mt-3 mb-0 py-2 small">
-      <div *ngFor="let e of levelErrors">{{ e }}</div>
-    </div>
-
-    <div class="d-flex justify-content-end gap-2 mt-4">
-      <button type="button" class="btn btn-light" (click)="ref.close(created > 0)">Fermer</button>
-      <button type="button" class="btn btn-primary" [disabled]="saving || (mode === 'one' && !studentId)" (click)="submit()">
-        <span *ngIf="saving" class="spinner-border spinner-border-sm me-1"></span>
-        {{ mode === 'one' ? 'Inscrire' : 'Inscrire le niveau ' + level }}
-      </button>
-    </div>
   `
 })
-export class EnrollmentDialogComponent implements OnInit {
-  mode: 'one' | 'level' = 'one';
+export class EnrollmentDialogComponent {
+  mode: 'new' | 'level' = 'new';
   year: string;
   level = 'L1';
-  students: { id: number; name: string; email: string; level: string | null; specialization: string | null }[] = [];
-  search = '';
-  studentId: number | null = null;
-  specialization: string | null = null;
-  discount = 0;
+  form = { lastName: '', firstName: '', birthDate: '', birthPlace: '', email: '', phone: '',
+           specialization: null as string | null, discount: 0, profile: 'NEW_BACHELOR' as 'NEW_BACHELOR' | 'ALREADY_STUDENT' };
+  files: { bacAttestation?: File; bacTranscript?: File } = {};
+  previous: File[] = [];
   saving = false;
   error = '';
   levelErrors: string[] = [];
   created = 0;
+  readonly today = new Date().toISOString().substring(0, 10);
   readonly levels = LEVELS;
   readonly specs = Object.entries(SPECIALIZATIONS);
 
@@ -174,42 +248,86 @@ export class EnrollmentDialogComponent implements OnInit {
     this.year = data.year;
   }
 
-  ngOnInit() {
-    this.school.students().subscribe(s => this.students = s);
+  get previousNames(): string { return this.previous.map(f => f.name).join(', '); }
+
+  pick(event: Event, key: 'bacAttestation' | 'bacTranscript') {
+    this.files[key] = (event.target as HTMLInputElement).files?.[0];
   }
 
-  get filteredStudents() {
-    const q = this.search.trim().toLowerCase();
-    return this.students.filter(s => !q || s.name.toLowerCase().includes(q) || s.email.toLowerCase().includes(q)).slice(0, 100);
+  pickMany(event: Event) {
+    this.previous = Array.from((event.target as HTMLInputElement).files ?? []);
   }
 
-  pick(s: { id: number; level: string | null }) {
-    this.studentId = s.id;
-    if (s.level && LEVELS.includes(s.level)) this.level = s.level;
+  /** Contrôles avant envoi ; le serveur refait les mêmes vérifications. */
+  private validateNew(): string | null {
+    const f = this.form;
+    if (!f.lastName.trim() || !f.firstName.trim()) return 'Indiquez le nom et le prénom.';
+    if (!f.birthDate) return 'Indiquez la date de naissance.';
+    if (f.birthDate > this.today) return 'La date de naissance ne peut pas être dans le futur.';
+    if (!f.birthPlace.trim()) return 'Indiquez le lieu de naissance.';
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.trim())) return 'Adresse email invalide.';
+    if (!this.files.bacAttestation) return 'Joignez l\'attestation du bac scannée en PDF.';
+    if (!this.files.bacTranscript) return 'Joignez le relevé de notes du bac scanné en PDF.';
+    if (f.profile === 'ALREADY_STUDENT' && this.previous.length === 0) return 'Joignez les relevés de notes de l\'année passée (PDF).';
+    const all = [this.files.bacAttestation, this.files.bacTranscript, ...(f.profile === 'ALREADY_STUDENT' ? this.previous : [])];
+    const notPdf = all.find(x => !x.name.toLowerCase().endsWith('.pdf'));
+    if (notPdf) return `« ${notPdf.name} » n'est pas un PDF.`;
+    const tooBig = all.find(x => x.size > 10 * 1024 * 1024);
+    if (tooBig) return `« ${tooBig.name} » dépasse 10 Mo.`;
+    return null;
   }
 
   submit() {
-    this.saving = true;
     this.error = '';
     this.levelErrors = [];
-    if (this.mode === 'one') {
-      this.school.enroll({ studentId: this.studentId, academicYear: this.year, level: this.level,
-                           specialization: this.specialization, discount: this.discount || 0 }).subscribe({
-        next: e => { this.dialogs.toast(`${e.studentName} inscrit(e) — matricule ${e.matricule}`); this.ref.close(true); },
-        error: err => { this.saving = false; this.error = apiError(err); }
-      });
-    } else {
-      this.school.enrollLevel(this.year, this.level).subscribe({
-        next: r => {
-          this.saving = false;
-          this.created += r.created;
-          this.levelErrors = r.errors;
-          this.dialogs.toast(`${r.created} étudiant(s) inscrit(s) en ${this.level}`, r.created ? 'success' : 'info');
-          if (!r.errors.length) this.ref.close(true);
-        },
-        error: err => { this.saving = false; this.error = apiError(err); }
-      });
-    }
+    if (this.mode === 'level') { this.submitLevel(); return; }
+    const invalid = this.validateNew();
+    if (invalid) { this.error = invalid; return; }
+
+    const f = this.form;
+    const body = new FormData();
+    body.append('lastName', f.lastName.trim());
+    body.append('firstName', f.firstName.trim());
+    body.append('birthDate', f.birthDate);
+    body.append('birthPlace', f.birthPlace.trim());
+    body.append('email', f.email.trim());
+    if (f.phone.trim()) body.append('phone', f.phone.trim());
+    body.append('academicYear', this.year);
+    body.append('level', this.level);
+    if (f.specialization) body.append('specialization', f.specialization);
+    body.append('discount', String(f.discount || 0));
+    body.append('profile', f.profile);
+    body.append('bacAttestation', this.files.bacAttestation!);
+    body.append('bacTranscript', this.files.bacTranscript!);
+    if (f.profile === 'ALREADY_STUDENT') this.previous.forEach(p => body.append('previousTranscripts', p));
+
+    this.saving = true;
+    this.school.admit(body).subscribe({
+      next: r => {
+        this.ref.close(true);
+        if (r.emailSent) {
+          this.dialogs.toast(r.message);
+        } else {
+          this.dialogs.alert({ title: 'Étudiant inscrit', icon: 'bi-exclamation-triangle', tone: 'warning',
+            message: `${r.message}\nIdentifiant : ${f.email.trim().toLowerCase()} — mot de passe : ${r.password}` });
+        }
+      },
+      error: err => { this.saving = false; this.error = apiError(err); }
+    });
+  }
+
+  private submitLevel() {
+    this.saving = true;
+    this.school.enrollLevel(this.year, this.level).subscribe({
+      next: r => {
+        this.saving = false;
+        this.created += r.created;
+        this.levelErrors = r.errors;
+        this.dialogs.toast(`${r.created} étudiant(s) réinscrit(s) en ${this.level}`, r.created ? 'success' : 'info');
+        if (!r.errors.length) this.ref.close(true);
+      },
+      error: err => { this.saving = false; this.error = apiError(err); }
+    });
   }
 }
 
@@ -317,6 +435,21 @@ export class EnrollmentDialogComponent implements OnInit {
         </div>
       </div>
 
+      <!-- Pièces du dossier -->
+      <div *ngIf="tab === 'pieces'">
+        <div class="list-group">
+          <div *ngFor="let d of f.documents" class="list-group-item d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+              <div class="fw-semibold"><i class="bi bi-file-earmark-pdf me-1 text-danger"></i>{{ d.typeLabel }}</div>
+              <div class="small text-muted">{{ d.originalName }} · {{ (d.size / 1024) | number:'1.0-0' }} Ko · reçu le {{ d.uploadedAt | date:'dd/MM/yyyy' }}</div>
+            </div>
+            <button type="button" class="btn btn-sm btn-light" (click)="school.openPdf('/api/admin/scolarite/documents/' + d.id, d.typeLabel)">
+              <i class="bi bi-eye me-1"></i>Voir</button>
+          </div>
+          <div *ngIf="f.documents.length === 0" class="text-muted small p-2">Aucune pièce : étudiant réinscrit depuis un compte existant.</div>
+        </div>
+      </div>
+
       <!-- Inscription -->
       <div *ngIf="tab === 'inscription'">
         <div class="row g-3">
@@ -353,7 +486,7 @@ export class EnrollmentFileDialogComponent implements OnInit {
   pay = { amount: null as number | null, method: 'ESPECES', transactionRef: '' };
   certType = 'INSCRIPTION';
   edit = { status: 'PENDING', discount: 0, installments: 1 };
-  readonly tabs = [['finances', 'Finances'], ['notes', 'Notes'], ['attestations', 'Attestations'], ['inscription', 'Inscription']];
+  readonly tabs = [['finances', 'Finances'], ['notes', 'Notes'], ['attestations', 'Attestations'], ['pieces', 'Pièces du dossier'], ['inscription', 'Inscription']];
   readonly methods = Object.entries(METHOD_LABELS);
   readonly certTypes = Object.entries(CERTIFICATE_TYPES);
   readonly statuses = Object.entries(ENROLLMENT_STATUS);

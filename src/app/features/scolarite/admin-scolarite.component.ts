@@ -430,7 +430,7 @@ export class AdminScolariteComponent implements OnInit {
   }
 
   openEnroll() {
-    this.dialogs.open<boolean>(EnrollmentDialogComponent, { title: 'Nouvelle inscription', icon: 'bi-person-plus', size: 'lg', data: { year: this.year } })
+    this.dialogs.open<boolean>(EnrollmentDialogComponent, { title: 'Inscription', icon: 'bi-person-plus', size: 'lg', data: { year: this.year } })
       .afterClosed.then(changed => { if (changed) this.loadTab(); });
   }
 

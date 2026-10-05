@@ -35,9 +35,14 @@ export interface Fee {
   registrationFee: number; tuitionFee: number; installments: number;
 }
 
+export interface SchoolDocument { id: number; type: string; typeLabel: string; originalName: string; size: number; uploadedAt: string; }
+
 export interface EnrollmentFile {
   enrollment: Enrollment; schedule: ScheduleItem[]; payments: Payment[]; transcript: Transcript; certificates: Certificate[];
+  documents: SchoolDocument[];
 }
+
+export interface Admission { enrollment: Enrollment; emailSent: boolean; message: string; password: string; }
 
 export interface SheetRow { enrollmentId: number; studentName: string; matricule: string; grade: number | null; comment: string | null; published: boolean; }
 
@@ -114,10 +119,10 @@ export class SchoolService {
   fees() { return this.http.get<Fee[]>(`${this.admin}/fees`); }
   saveFee(fee: Fee) { return fee.id ? this.http.put<Fee>(`${this.admin}/fees/${fee.id}`, fee) : this.http.post<Fee>(`${this.admin}/fees`, fee); }
   deleteFee(id: number) { return this.http.delete(`${this.admin}/fees/${id}`); }
-  students() { return this.http.get<{ id: number; name: string; email: string; level: string | null; specialization: string | null }[]>(`${this.admin}/students`); }
   enrollments(year: string) { return this.http.get<Enrollment[]>(`${this.admin}/enrollments`, { params: { year } }); }
   enrollmentFile(id: number) { return this.http.get<EnrollmentFile>(`${this.admin}/enrollments/${id}`); }
-  enroll(body: any) { return this.http.post<Enrollment>(`${this.admin}/enrollments`, body); }
+  /** Nouvel étudiant : identité, inscription et pièces PDF (multipart). */
+  admit(body: FormData) { return this.http.post<Admission>(`${this.admin}/enrollments/new`, body); }
   enrollLevel(academicYear: string, level: string) { return this.http.post<{ created: number; errors: string[] }>(`${this.admin}/enrollments/level`, { academicYear, level }); }
   updateEnrollment(id: number, body: any) { return this.http.put<Enrollment>(`${this.admin}/enrollments/${id}`, body); }
   deleteEnrollment(id: number) { return this.http.delete(`${this.admin}/enrollments/${id}`); }
@@ -140,7 +145,7 @@ export class SchoolService {
   broadcast(body: any) { return this.http.post<{ sent: number }>(`${this.admin}/broadcast`, body); }
 
   // Étudiant
-  mySchooling() { return this.http.get<{ enrollments: (Omit<EnrollmentFile, 'enrollment'> & { enrollment: Enrollment })[]; paymentNumbers: Record<string, string> }>('/api/scolarite/me'); }
+  mySchooling() { return this.http.get<{ enrollments: Omit<EnrollmentFile, 'documents'>[]; paymentNumbers: Record<string, string> }>('/api/scolarite/me'); }
   pay(body: any) { return this.http.post<Payment>('/api/scolarite/payments', body); }
 
   // Vérification publique

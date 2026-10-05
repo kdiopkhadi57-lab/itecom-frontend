@@ -40,12 +40,14 @@ export interface Lesson {
   videoUrl?: string;
   /** Version légère (360p) pour les connexions faibles et le hors connexion. */
   videoLightUrl?: string | null;
+  /** Progression de l'étudiant sur la leçon (0 à 100) et position de reprise de la vidéo (secondes). */
+  progressPercentage?: number | null;
+  videoPosition?: number | null;
   pdfUrl?: string;
   duration: number;
   orderIndex: number;
   type: 'VIDEO' | 'PDF' | 'QUIZ' | 'CODE_EXERCISE' | 'EXCEL_EXERCISE';
   completed?: boolean;
-  progressPercentage?: number;
   starterCode?: string;
   language?: string;
   exercise?: boolean;

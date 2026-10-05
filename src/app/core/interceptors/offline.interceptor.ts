@@ -8,7 +8,7 @@ import { OfflineService } from '../services/offline.service';
  * L'application répond tout de suite « enregistré » : l'étudiant continue normalement.
  */
 const QUEUEABLE: [string, RegExp][] = [
-  ['POST', /^\/api\/progress\/lesson\/\d+\/(complete|scroll|time|save-code)$/],
+  ['POST', /^\/api\/progress\/lesson\/\d+\/(complete|scroll|time|save-code|video)$/],
   ['POST', /^\/api\/courses\/\d+\/enroll$/],
   ['PUT', /^\/api\/users\/profile$/],
   ['POST', /^\/api\/notifications\/(\d+\/read|read-all)$/]

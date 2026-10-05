@@ -136,6 +136,7 @@
                 {{ lesson.type }}
               </span>
               <span *ngIf="lesson.duration">{{ lesson.duration }}min</span>
+              <span *ngIf="!lesson.completed && (lesson.progressPercentage || 0) > 0" class="text-warning">{{ lesson.progressPercentage | number:'1.0-0' }} %</span>
             </div>
           </div>
         </div>
@@ -149,9 +150,15 @@
           <h3 class="fw-bold mb-1">{{ currentLesson.title }}</h3>
           <p class="text-muted">{{ currentLesson.description }}</p>
         </div>
-        <button *ngIf="!currentLesson.completed" class="btn btn-success btn-sm"
-                (click)="markComplete()" [disabled]="markingComplete">
-          <i class="bi bi-check-circle me-1"></i>Marquer comme complété
+        <!-- Vidéo : validée en la regardant ; document : après un temps de lecture ; texte : en bas de page ou bouton -->
+        <div *ngIf="!currentLesson.completed && isTrackedVideo" class="lesson-watch small text-muted text-nowrap">
+          <i class="bi bi-play-circle me-1"></i>Vue à <strong>{{ lessonPercent }} %</strong> · validée à 90 %
+        </div>
+        <button *ngIf="!currentLesson.completed && !isTrackedVideo" class="btn btn-success btn-sm"
+                (click)="markComplete()" [disabled]="markingComplete || documentWait > 0">
+          <i class="bi bi-check-circle me-1"></i>
+          <ng-container *ngIf="isDocument">J'ai terminé la lecture<span *ngIf="documentWait > 0"> ({{ documentWait }} s)</span></ng-container>
+          <ng-container *ngIf="!isDocument">Marquer comme complété</ng-container>
         </button>
         <span *ngIf="currentLesson.completed" class="badge bg-success px-3 py-2">
           <i class="bi bi-check-circle me-1"></i>Complété ✓
@@ -167,8 +174,10 @@
               <p class="mt-2 opacity-75">Vidéo non disponible pour cette démo</p>
               <p class="small opacity-50">URL : {{ currentLesson.videoUrl || 'Non configuré' }}</p>
             </div>
-            <video *ngIf="currentLesson.videoUrl" [src]="videoSrc" controls preload="metadata" playsinline
-                   class="w-100" style="max-height:400px">
+            <video *ngIf="currentLesson.videoUrl" #vid [src]="videoSrc" controls preload="metadata" playsinline
+                   class="w-100" style="max-height:400px"
+                   (loadedmetadata)="onVideoMetadata(vid)" (timeupdate)="onVideoTime(vid)"
+                   (seeking)="onVideoBreak(vid)" (pause)="onVideoBreak(vid, true)" (ended)="onVideoBreak(vid, true)">
               Votre navigateur ne supporte pas la vidéo.
             </video>
           </div>
@@ -180,6 +189,16 @@
             <button type="button" class="btn" [class.btn-primary]="quality === 'auto'" [class.btn-outline-secondary]="quality !== 'auto'" (click)="setQuality('auto')">Auto</button>
             <button type="button" class="btn" [class.btn-primary]="quality === 'hd'" [class.btn-outline-secondary]="quality !== 'hd'" (click)="setQuality('hd')">Normale</button>
             <button type="button" class="btn" [class.btn-primary]="quality === 'light'" [class.btn-outline-secondary]="quality !== 'light'" (click)="setQuality('light')">Légère (économie de données)</button>
+          </div>
+        </div>
+        <!-- Avancement de la vidéo -->
+        <div *ngIf="isTrackedVideo" class="mt-2 mb-2">
+          <div class="progress" style="height:6px" role="progressbar" [attr.aria-valuenow]="lessonPercent" aria-valuemin="0" aria-valuemax="100"
+               aria-label="Part de la vidéo regardée">
+            <div class="progress-bar" [class.bg-success]="currentLesson.completed" [style.width.%]="lessonPercent"></div>
+          </div>
+          <div class="small text-muted mt-1">
+            {{ currentLesson.completed ? 'Vidéo terminée.' : 'Regardez au moins 90 % de la vidéo pour valider la leçon (avancer la barre ne compte pas, ni au-delà de ×2).' }}
           </div>
         </div>
         <div *ngIf="playingDownloaded" class="small text-success"><i class="bi bi-phone me-1"></i>Lecture depuis l'appareil (cours téléchargé), sans consommer de données.</div>

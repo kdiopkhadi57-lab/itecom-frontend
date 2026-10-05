@@ -24,6 +24,13 @@ export class ProgressService {
       { context: new HttpContext().set(SILENT_ERRORS, true) });
   }
 
+  /** Plages de vidéo réellement regardées, position de reprise et durée (fusionnées par le serveur). */
+  saveVideoProgress(lessonId: number, body: { duration: number; position: number; ranges: [number, number][] }):
+      Observable<ApiResponse<{ percentage: number; completed: boolean; position: number } | null>> {
+    return this.http.post<ApiResponse<{ percentage: number; completed: boolean; position: number } | null>>(
+      `/api/progress/lesson/${lessonId}/video`, body, { context: new HttpContext().set(SILENT_ERRORS, true) });
+  }
+
   saveCode(lessonId: number, code: string): Observable<ApiResponse<string>> {
     return this.http.post<ApiResponse<string>>(`/api/progress/lesson/${lessonId}/save-code`, { code });
   }

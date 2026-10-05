@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -9,6 +9,7 @@ import { Course, Lesson } from '../../../core/models/course.model';
 import { OfflineService, formatSize } from '../../../core/services/offline.service';
 import { DialogService } from '../../../core/services/dialog.service';
 import { VideoQuality, getVideoQuality, pickVideoUrl, setVideoQuality } from '../../../core/utils/video-quality';
+import { MAX_COUNTED_RATE, WatchTracker } from '../../../core/utils/watch-tracker';
 
 type CoursePlayerTab = 'cours' | 'pratique';
 
@@ -115,11 +116,14 @@ export class CoursePlayerComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.timeTicker) clearInterval(this.timeTicker);
     this.flushTime();
+    this.flushVideo();
   }
 
   private tickTime(): void {
     if (!this.currentLesson || document.hidden) return;
     this.pendingSeconds++;
+    this.secondsOnLesson++;
+    if (this.secondsOnLesson === CoursePlayerComponent.MIN_READING_SECONDS) this.measureReading();
     if (this.pendingSeconds >= CoursePlayerComponent.TIME_FLUSH_SECONDS) this.flushTime();
   }
 
@@ -171,10 +175,19 @@ export class CoursePlayerComponent implements OnInit, OnDestroy {
   // ─── Navigation entre leçons ────────────────────────────────────────────
 
   selectLesson(lesson: Lesson): void {
-    if (this.currentLesson && this.currentLesson.id !== lesson.id) this.flushTime();
+    if (this.currentLesson && this.currentLesson.id !== lesson.id) {
+      this.flushTime();
+      this.flushVideo();
+    }
     this.currentLesson = lesson;
     this.selectedQuiz = null;
-    this.lastSentScrollPercentage = lesson.completed ? 100 : 0;
+    this.lastSentScrollPercentage = lesson.completed ? 100 : (lesson.progressPercentage ?? 0);
+    this.secondsOnLesson = 0;
+    this.watch = new WatchTracker();
+    this.videoDuration = 0;
+    this.resumed = false;
+    // Contenu court, déjà entièrement visible : la lecture est mesurée sans défilement
+    setTimeout(() => this.measureReading(), 600);
   }
 
   prevLesson(): void {
@@ -202,12 +215,125 @@ export class CoursePlayerComponent implements OnInit, OnDestroy {
     this.progressService.completeLesson(this.currentLesson.id).subscribe({
       next: () => {
         this.currentLesson!.completed = true;
+        this.currentLesson!.progressPercentage = 100;
         this.markingComplete = false;
         this.refreshProgress();
       },
-      error: () => { this.markingComplete = false; }
+      error: err => {
+        this.markingComplete = false;
+        this.dialogs.toast(err?.error?.message || 'Impossible de terminer la leçon.', 'warning', 6000);
+      }
     });
   }
+
+  // ─── Règles d'achèvement selon le type de leçon ─────────────────────────
+
+  /** Secondes passées sur la leçon ouverte (onglet visible). */
+  secondsOnLesson = 0;
+  /** Lecture d'un document : temps minimal avant « J'ai terminé ». */
+  static readonly MIN_DOCUMENT_SECONDS = 30;
+  /** Lecture d'un texte : temps minimal avant l'achèvement automatique en bas de page. */
+  static readonly MIN_READING_SECONDS = 15;
+
+  /** Vidéo de la plateforme : terminée en la regardant (90 %), pas par un bouton. */
+  get isTrackedVideo(): boolean {
+    const l = this.currentLesson;
+    return !!l && l.type === 'VIDEO' && !!l.videoUrl && l.videoUrl.startsWith('/uploads/');
+  }
+
+  get isDocument(): boolean { return this.currentLesson?.type === 'PDF' && !!this.currentLesson.pdfUrl; }
+
+  /** Secondes restantes avant de pouvoir terminer un document. */
+  get documentWait(): number {
+    return this.isDocument ? Math.max(0, CoursePlayerComponent.MIN_DOCUMENT_SECONDS - this.secondsOnLesson) : 0;
+  }
+
+  get lessonPercent(): number {
+    const l = this.currentLesson;
+    if (!l) return 0;
+    if (l.completed) return 100;
+    return Math.round(Math.max(l.progressPercentage ?? 0, this.isTrackedVideo ? this.watch.sessionPercent(this.videoDuration) : 0));
+  }
+
+  // ─── Vidéo : plages réellement regardées, reprise de la lecture ─────────
+
+  private watch = new WatchTracker();
+  private videoDuration = 0;
+  private resumed = false;
+  private lastVideoFlush = 0;
+  private videoPosition = 0;
+  readonly maxCountedRate = MAX_COUNTED_RATE;
+
+  onVideoMetadata(video: HTMLVideoElement) {
+    this.videoDuration = video.duration || 0;
+    const pos = this.currentLesson?.videoPosition ?? 0;
+    // Reprise là où l'étudiant s'était arrêté (sauf tout au début ou à la toute fin)
+    if (!this.resumed && pos > 5 && pos < this.videoDuration - 5) {
+      video.currentTime = pos;
+      this.dialogs.toast(`Reprise de la vidéo à ${this.formatTime(pos)}`, 'info', 3000);
+    }
+    this.resumed = true;
+  }
+
+  onVideoTime(video: HTMLVideoElement) {
+    if (!this.isTrackedVideo) return;
+    this.videoDuration = video.duration || this.videoDuration;
+    this.videoPosition = video.currentTime;
+    this.watch.onTime(video.currentTime, video.playbackRate, video.paused || video.seeking);
+    if (Date.now() - this.lastVideoFlush > 15_000) this.flushVideo();
+  }
+
+  onVideoBreak(video: HTMLVideoElement, flush = false) {
+    this.watch.breakContinuity();
+    this.videoPosition = video.currentTime;
+    if (flush) this.flushVideo();
+  }
+
+  /** Envoie les plages vues (toutes les 15 s, à la pause, à la fin, en changeant de leçon ou de page). */
+  private flushVideo(keepalive = false) {
+    const lesson = this.currentLesson;
+    if (!lesson || !this.isTrackedVideo || !(this.videoDuration > 0)) return;
+    if (!this.watch.hasPending() && Math.abs(this.videoPosition - (lesson.videoPosition ?? 0)) < 3) return;
+    this.lastVideoFlush = Date.now();
+    const body = { duration: this.videoDuration, position: this.videoPosition, ranges: this.watch.take() };
+    lesson.videoPosition = this.videoPosition;
+    if (keepalive) {
+      // Page en train de se fermer : envoi garanti par le navigateur
+      const token = localStorage.getItem('token');
+      fetch(`/api/progress/lesson/${lesson.id}/video`, { method: 'POST', keepalive: true,
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(body) }).catch(() => {});
+      return;
+    }
+    this.progressService.saveVideoProgress(lesson.id, body).subscribe({
+      next: res => {
+        const d = res?.data;
+        if (!d) return;   // gardé hors connexion : envoyé plus tard
+        lesson.progressPercentage = d.percentage;
+        if (d.completed && !lesson.completed) {
+          lesson.completed = true;
+          this.dialogs.toast('Vidéo terminée : leçon validée.', 'success');
+          this.refreshProgress();
+        } else {
+          this.refreshProgress();
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  formatTime(seconds: number): string {
+    const s = Math.floor(seconds);
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
+
+  @HostListener('document:visibilitychange')
+  onVisibility() {
+    if (document.hidden) { this.flushTime(); this.flushVideo(true); }
+  }
+
+  @HostListener('window:pagehide')
+  onPageHide() { this.flushVideo(true); }
 
   refreshProgress(): void {
     this.progressService.getCourseProgress(this.courseId).subscribe(p => {
@@ -220,11 +346,34 @@ export class CoursePlayerComponent implements OnInit, OnDestroy {
    * Suit la lecture de la page : une fois le bas de la leçon atteint, la leçon est
    * automatiquement marquée comme complétée (sans action manuelle de l'élève).
    */
-  onContentScroll(el: HTMLElement): void {
-    if (!this.currentLesson || this.currentLesson.completed || this.scrollUpdatePending) return;
+  onContentScroll(_el?: HTMLElement): void {
+    this.measureReading();
+  }
 
-    const scrollable = el.scrollHeight - el.clientHeight;
-    const percentage = scrollable <= 0 ? 100 : Math.min(100, (el.scrollTop / scrollable) * 100);
+  /** Sur téléphone, c'est la page entière qui défile (et non la zone de contenu). */
+  @HostListener('window:scroll')
+  onWindowScroll() { this.measureReading(); }
+
+  /**
+   * Part de la leçon lue : défilement de la zone de contenu (ordinateur) ou de la page (téléphone).
+   * Une leçon texte est terminée en bas de page, après un temps minimal de lecture.
+   * Les vidéos (mesurées en les regardant) et les documents (bouton « J'ai terminé ») ne passent pas par là.
+   */
+  measureReading(): void {
+    if (!this.currentLesson || this.currentLesson.completed || this.scrollUpdatePending || this.isTrackedVideo || this.isDocument) return;
+    const el = document.querySelector<HTMLElement>('.content-area');
+    if (!el) return;
+    let percentage: number;
+    if (el.scrollHeight > el.clientHeight + 2) {
+      const scrollable = el.scrollHeight - el.clientHeight;
+      percentage = Math.min(100, (el.scrollTop / scrollable) * 100);
+    } else {
+      const rect = el.getBoundingClientRect();
+      const visibleBottom = window.innerHeight - 70;   // au-dessus de la barre d'onglets du téléphone
+      percentage = rect.height <= 0 ? 100 : Math.max(0, Math.min(100, ((visibleBottom - rect.top) / rect.height) * 100));
+    }
+    // Fin atteinte trop vite (simple survol) : on attend le temps minimal de lecture
+    if (percentage >= 95 && this.secondsOnLesson < CoursePlayerComponent.MIN_READING_SECONDS) percentage = 94;
 
     // On n'envoie une mise à jour que par tranche de 10% pour ne pas spammer le serveur.
     if (percentage - this.lastSentScrollPercentage < 10 && percentage < 95) return;
@@ -236,8 +385,9 @@ export class CoursePlayerComponent implements OnInit, OnDestroy {
     this.progressService.updateScrollProgress(lessonId, percentage).subscribe({
       next: () => {
         this.scrollUpdatePending = false;
-        if (percentage >= 95 && this.currentLesson?.id === lessonId) {
-          this.currentLesson.completed = true;
+        if (this.currentLesson?.id === lessonId) {
+          this.currentLesson.progressPercentage = Math.max(this.currentLesson.progressPercentage ?? 0, percentage >= 95 ? 100 : percentage);
+          if (percentage >= 95) this.currentLesson.completed = true;
           this.refreshProgress();
         }
       },

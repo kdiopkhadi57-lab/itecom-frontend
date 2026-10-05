@@ -452,3 +452,86 @@ body.sidebar-collapsed .main-content.main-content-full {
   &.active { border-color: var(--primary); background: var(--primary-soft); }
   .method-name { font-weight: 700; display: block; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MOBILE : l'application se comporte comme une application de téléphone
+   (barre d'onglets en bas, en-tête compact, zones de l'encoche, feuilles de dialogue)
+   ══════════════════════════════════════════════════════════════════════════ */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --tabbar-height: 62px;
+}
+html { -webkit-text-size-adjust: 100%; }
+body { -webkit-tap-highlight-color: transparent; }
+a, button, .btn, [role="button"] { touch-action: manipulation; }
+
+@media (max-width: 767.98px) {
+  html, body { overflow-x: hidden; overscroll-behavior-y: none; }
+  body { background: var(--page-bg); }
+
+  /* En-tête compact, sous la barre d'état et l'encoche */
+  .app-header {
+    height: calc(56px + var(--safe-top)); padding: var(--safe-top) 12px 0; gap: .5rem;
+    background: rgba(244, 244, 246, .92); -webkit-backdrop-filter: saturate(180%) blur(14px); backdrop-filter: saturate(180%) blur(14px);
+  }
+  .header-title h1 { font-size: 1.05rem; }
+  .header-title span { display: none; }
+  .header-actions { gap: .4rem; }
+  .header-icon-btn { width: 40px; height: 40px; border: 0; background: transparent; font-size: 1.3rem; }
+  .header-user { display: none; }
+
+  /* Contenu : marges serrées, place pour la barre d'onglets */
+  .main-content {
+    margin-top: calc(56px + var(--safe-top));
+    padding: 16px 14px calc(var(--tabbar-height) + var(--safe-bottom) + 24px);
+    min-height: calc(100dvh - 56px - var(--safe-top));
+  }
+  .main-content.main-content-full { padding-bottom: 0; }
+  .main-content h1 { font-size: 1.55rem; }
+  .main-content h1.fw-bold, .main-content h2.fw-bold { letter-spacing: -.01em; }
+  .main-content h2 { font-size: 1.3rem; }
+  .main-content .p-4 { padding: 1rem !important; }
+  .main-content .p-5 { padding: 1.5rem !important; }
+  .main-content .card-body { padding: 1rem; }
+  /* En-têtes de page : titre puis bouton en dessous, jamais de débordement */
+  .main-content .d-flex.justify-content-between { flex-wrap: wrap; gap: .75rem; }
+  .main-content .d-flex.justify-content-between > .btn,
+  .main-content .d-flex.justify-content-between > a.btn { flex: 1 1 auto; }
+  .main-content .card, .main-content .stat-card { border-radius: 16px; }
+
+  /* Champs à 16 px : iOS ne zoome plus au toucher ; cibles tactiles confortables */
+  input.form-control, select.form-select, textarea.form-control { font-size: 16px; min-height: 44px; }
+  .btn { min-height: 40px; }
+  .btn-sm { min-height: 34px; }
+
+  /* Retour au toucher, comme une application */
+  .btn:active, .card a:active, .bottom-tab:active, .list-group-item-action:active { transform: scale(.97); }
+  .btn, .bottom-tab, .list-group-item-action { transition: transform .08s ease; }
+
+  /* Menu latéral (« Plus ») : sous l'encoche */
+  .sidebar { padding-top: var(--safe-top); padding-bottom: var(--safe-bottom); width: min(84vw, 320px); }
+
+  /* Tableaux « en cartes » : chaque ligne devient une carte lisible sur téléphone */
+  .table-stack thead { display: none; }
+  .table-stack, .table-stack tbody, .table-stack tr, .table-stack td { display: block; width: 100%; }
+  .table-stack tr { border: 1px solid var(--border); border-radius: 12px; padding: .5rem .75rem; margin-bottom: .6rem; background: var(--surface-raised); }
+  .table-stack td { border: 0 !important; padding: .25rem 0 !important; text-align: left !important; display: flex; justify-content: space-between; gap: 1rem; }
+  .table-stack td[data-label]::before { content: attr(data-label); color: var(--muted); font-size: .85rem; flex-shrink: 0; }
+  .table-stack td:empty { display: none; }
+}
+
+/* Ouverte depuis l'écran d'accueil : pas de sélection de texte sur les éléments d'interface */
+@media (display-mode: standalone) {
+  .bottom-nav, .app-header, .sidebar, .btn { -webkit-user-select: none; user-select: none; }
+}
+.header-brand { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px;
+  background: var(--navy); color: #fff; font-size: 1.05rem; flex-shrink: 0; }
+.header-back i { font-size: 1.35rem; color: var(--primary); }
+.header-title { transition: opacity .18s ease; }
+@media (max-width: 767.98px) { .header-title-hidden { opacity: 0; } }
+@media (max-width: 767.98px) {
+  .table-stack td { background: transparent !important; box-shadow: none !important; }
+  .method-card { padding: 10px 6px; }
+  .method-card .small { white-space: nowrap; font-size: .72rem; }
+}

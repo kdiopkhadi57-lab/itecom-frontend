@@ -1,11 +1,11 @@
 <div class="fade-in-up">
   <!-- Top bar -->
-  <div class="d-flex align-items-center gap-3 mb-3">
-    <a [routerLink]="['/courses', courseId]" class="btn btn-sm btn-outline-secondary">
+  <div class="player-top d-flex align-items-center gap-3 mb-3">
+    <a [routerLink]="['/courses', courseId]" class="btn btn-sm btn-outline-secondary d-none d-md-inline-block">
       <i class="bi bi-arrow-left me-1"></i>Retour
     </a>
-    <div class="fw-bold text-truncate flex-grow-1">{{ course?.title }}</div>
-    <div class="d-flex align-items-center gap-2">
+    <div class="player-title fw-bold text-truncate flex-grow-1">{{ course?.title }}</div>
+    <div class="player-progress d-flex align-items-center gap-2">
       <div class="progress-custom" style="width:120px">
         <div class="progress-bar" [style.width.%]="overallProgress"></div>
       </div>
@@ -144,7 +144,7 @@
 
     <!-- Content area -->
     <div class="content-area reading-pad" *ngIf="currentLesson" #contentArea (scroll)="onContentScroll(contentArea)">
-      <div class="d-flex justify-content-between align-items-start mb-4">
+      <div class="lesson-head d-flex justify-content-between align-items-start mb-4">
         <div>
           <h3 class="fw-bold mb-1">{{ currentLesson.title }}</h3>
           <p class="text-muted">{{ currentLesson.description }}</p>
@@ -174,7 +174,7 @@
           </div>
         </div>
         <!-- Qualité : légère pour les connexions faibles -->
-        <div *ngIf="currentLesson.videoLightUrl && !playingDownloaded" class="d-flex align-items-center gap-2 small">
+        <div *ngIf="currentLesson.videoLightUrl && !playingDownloaded" class="quality-bar d-flex flex-wrap align-items-center gap-2 small">
           <span class="text-muted">Qualité :</span>
           <div class="btn-group btn-group-sm" role="group" aria-label="Qualité vidéo">
             <button type="button" class="btn" [class.btn-primary]="quality === 'auto'" [class.btn-outline-secondary]="quality !== 'auto'" (click)="setQuality('auto')">Auto</button>

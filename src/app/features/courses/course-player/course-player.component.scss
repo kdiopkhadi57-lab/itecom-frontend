@@ -82,3 +82,18 @@
     border-radius: 0 0 12px 12px;
   }
 }
+
+
+// ── Téléphone : lecteur pleine largeur, barre du haut sur deux lignes, gros boutons ──
+@media (max-width: 767.98px) {
+  .player-top { flex-wrap: wrap; row-gap: .5rem; }
+  .player-title { flex: 1 1 100%; order: -1; font-size: 1.05rem; white-space: normal; }
+  .player-progress { flex: 1 1 auto; }
+  .player-progress .progress-custom { flex: 1 1 auto; width: auto !important; }
+  .lesson-head { flex-direction: column; gap: .75rem; }
+  .lesson-head > .btn, .lesson-head > .badge { width: 100%; min-height: 44px; font-size: .95rem; display: inline-flex; align-items: center; justify-content: center; }
+  .content-area.reading-pad { padding: 1rem .75rem; overflow-x: hidden; }
+  .video-container { border-radius: 12px; }
+  .video-container video { max-height: none !important; }
+  .quality-bar .btn-group { flex-wrap: wrap; }
+}

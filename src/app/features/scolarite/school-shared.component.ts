@@ -9,15 +9,15 @@ import { ScheduleItem, SCHEDULE_STATUS, Transcript, fcfa } from '../../core/serv
   imports: [CommonModule],
   template: `
     <div class="table-responsive">
-      <table class="table table-sm align-middle mb-0">
+      <table class="table table-sm align-middle mb-0 table-stack">
         <thead class="table-light"><tr><th>Échéance</th><th>Date limite</th><th class="text-end">Montant</th><th class="text-end">Réglé</th><th class="text-end">État</th></tr></thead>
         <tbody>
           <tr *ngFor="let i of items">
-            <td>{{ i.label }}</td>
-            <td>{{ i.dueDate | date:'dd/MM/yyyy' }}</td>
-            <td class="text-end amount">{{ fcfa(i.amount) }}</td>
-            <td class="text-end amount">{{ fcfa(i.paid) }}</td>
-            <td class="text-end"><span class="status-badge" [ngClass]="status[i.status].tone">{{ status[i.status].label }}</span></td>
+            <td class="fw-semibold">{{ i.label }}</td>
+            <td data-label="Date limite">{{ i.dueDate | date:'dd/MM/yyyy' }}</td>
+            <td data-label="Montant" class="text-end amount">{{ fcfa(i.amount) }}</td>
+            <td data-label="Réglé" class="text-end amount">{{ fcfa(i.paid) }}</td>
+            <td data-label="État" class="text-end"><span class="status-badge" [ngClass]="status[i.status].tone">{{ status[i.status].label }}</span></td>
           </tr>
           <tr *ngIf="items.length === 0"><td colspan="5" class="text-muted text-center py-3">Aucun frais à régler.</td></tr>
         </tbody>

@@ -171,15 +171,15 @@ export class MobilePaymentDialogComponent {
         </div></div>
 
         <div *ngIf="tab === 'paiements'" class="card"><div class="table-responsive">
-          <table class="table align-middle mb-0">
+          <table class="table align-middle mb-0 table-stack">
             <thead class="table-light"><tr><th>Date</th><th>Mode</th><th>Référence</th><th class="text-end">Montant</th><th>État</th><th></th></tr></thead>
             <tbody>
               <tr *ngFor="let p of c.payments">
-                <td class="small">{{ p.submittedAt | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td>{{ methodLabel(p.method) }}</td>
-                <td class="small">{{ p.transactionRef || '—' }}</td>
-                <td class="text-end amount fw-semibold">{{ fcfa(p.amount) }}</td>
-                <td><span class="status-badge" [ngClass]="pstatus[p.status].tone">{{ pstatus[p.status].label === 'À vérifier' ? 'En vérification' : pstatus[p.status].label }}</span>
+                <td class="small" data-label="Date">{{ p.submittedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td data-label="Mode">{{ methodLabel(p.method) }}</td>
+                <td class="small" data-label="Référence">{{ p.transactionRef || '—' }}</td>
+                <td class="text-end amount fw-semibold" data-label="Montant">{{ fcfa(p.amount) }}</td>
+                <td data-label="État"><span class="status-badge" [ngClass]="pstatus[p.status].tone">{{ pstatus[p.status].label === 'À vérifier' ? 'En vérification' : pstatus[p.status].label }}</span>
                   <div *ngIf="p.rejectionReason" class="small text-muted">{{ p.rejectionReason }}</div></td>
                 <td class="text-end">
                   <button *ngIf="p.status === 'VALIDATED'" type="button" class="btn btn-sm btn-light" (click)="school.openPdf('/api/scolarite/payments/' + p.id + '/receipt', p.receiptNumber!)">

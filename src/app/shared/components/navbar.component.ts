@@ -1,7 +1,7 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
 import { HttpClient, HttpContext } from '@angular/common/http';
-import { CommonModule } from '@angular/common';
+import { CommonModule, Location } from '@angular/common';
 import { Subscription, filter, timer } from 'rxjs';
 import { SILENT_ERRORS } from '../../core/interceptors/error.interceptor';
 import { AuthService } from '../../core/services/auth.service';
@@ -18,7 +18,9 @@ const CATEGORY_ICONS: Record<string, string> = {
 /** Titre affiché dans l'en-tête selon l'URL (préfixe le plus long d'abord). */
 const PAGE_TITLES: [string, PageTitle][] = [
   ['/dashboard', { title: 'Accueil', subtitle: 'Tableau de bord' }],
-  ['/courses/my-learning', { title: 'Mon apprentissage', subtitle: 'Cours suivis' }],
+  ['/courses/my-learning', { title: 'Mes cours', subtitle: 'Cours suivis' }],
+  ['/courses/*/learn', { title: 'Cours', subtitle: 'Leçons' }],
+  ['/courses/*', { title: 'Cours', subtitle: 'Présentation' }],
   ['/courses', { title: 'Cours', subtitle: 'Catalogue des formations' }],
   ['/my-exams', { title: 'Examens', subtitle: 'Mes examens en ligne' }],
   ['/qcm', { title: 'Devoirs', subtitle: 'Mes devoirs' }],
@@ -40,6 +42,11 @@ const PAGE_TITLES: [string, PageTitle][] = [
   ['/references', { title: 'Références', subtitle: 'Ressources' }]
 ];
 
+/** Pages ouvertes depuis les onglets ou le menu : pas de bouton retour sur téléphone. */
+const ROOT_PAGES = ['/dashboard', '/courses', '/courses/my-learning', '/qcm', '/my-exams', '/scolarite', '/virtual-class',
+  '/library', '/references', '/profile', '/teacher/courses', '/teacher/exams', '/teacher/students', '/teacher/create-course',
+  '/admin/scolarite', '/admin/paiements', '/admin/users', '/admin/registrations'];
+
 /** Préfixe d'URL, « * » remplaçant un segment (ex. un identifiant). */
 function matchesPrefix(path: string, prefix: string): boolean {
   const p = path.split('/'), q = prefix.split('/');
@@ -53,11 +60,13 @@ function matchesPrefix(path: string, prefix: string): boolean {
   imports: [CommonModule, RouterLink],
   template: `
     <header class="app-header">
-      <button type="button" class="header-icon-btn d-md-none" (click)="layout.toggleMobile()" aria-label="Ouvrir le menu">
-        <i class="bi bi-list"></i>
+      <!-- Téléphone : retour sur les pages secondaires, logo sur les pages principales (menu complet : onglet « Plus ») -->
+      <button *ngIf="!isRootPage" type="button" class="header-icon-btn header-back d-md-none" (click)="back()" aria-label="Retour">
+        <i class="bi bi-chevron-left"></i>
       </button>
+      <span *ngIf="isRootPage" class="header-brand d-md-none" aria-hidden="true"><i class="bi bi-mortarboard-fill"></i></span>
 
-      <div class="header-title">
+      <div class="header-title" [class.header-title-hidden]="hideTitle">
         <h1>{{ page.title }}</h1>
         <span>{{ page.subtitle }}</span>
       </div>
@@ -119,13 +128,17 @@ function matchesPrefix(path: string, prefix: string): boolean {
 })
 export class NavbarComponent implements OnInit, OnDestroy {
   page: PageTitle = PAGE_TITLES[0][1];
+  isRootPage = true;
+  /** Téléphone : le titre de l'en-tête n'apparaît qu'une fois le grand titre de la page sorti de l'écran (comme iOS). */
+  hideTitle = false;
+  private navigations = 0;
   pendingCount = 0;
   unreadCount = 0;
   notifications: AppNotification[] = [];
   private poll?: Subscription;
 
   constructor(public authService: AuthService, public layout: LayoutService,
-              private router: Router, private http: HttpClient) {}
+              private router: Router, private http: HttpClient, private location: Location) {}
 
   get initials(): string {
     const u = this.authService.currentUser;
@@ -185,8 +198,25 @@ export class NavbarComponent implements OnInit, OnDestroy {
     });
   }
 
+  @HostListener('window:scroll')
+  updateTitleVisibility() {
+    if (!window.matchMedia('(max-width: 767.98px)').matches) { this.hideTitle = false; return; }
+    const pageTitle = document.querySelector('.main-content h1');
+    this.hideTitle = !!pageTitle && pageTitle.getBoundingClientRect().bottom > 60;
+  }
+
+  /** Retour à la page précédente de l'application, sinon à l'accueil. */
+  back() {
+    if (this.navigations > 1) this.location.back();
+    else this.router.navigateByUrl('/dashboard');
+  }
+
   private updateTitle(url: string) {
     const path = url.split(/[?#]/)[0];
+    this.navigations++;
+    this.isRootPage = ROOT_PAGES.includes(path);
+    // Le contenu de la page arrive après la navigation : on vérifie à nouveau peu après
+    [0, 300, 1000].forEach(ms => setTimeout(() => this.updateTitleVisibility(), ms));
     const match = [...PAGE_TITLES].sort((a, b) => b[0].length - a[0].length)
       .find(([prefix]) => matchesPrefix(path, prefix));
     this.page = match ? match[1] : { title: 'ITECOM', subtitle: 'E-learning' };

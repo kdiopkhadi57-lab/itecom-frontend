@@ -45,6 +45,12 @@ const MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Aoû
 
     .db-card { background: var(--surface); border-radius: 16px; border: 1px solid var(--surface-border); }
     .db-filters { padding: 1.25rem 1.5rem; }
+    button.db-pill { border: 0; cursor: pointer; font: inherit; }
+    .db-pill-caret { font-size: .75rem; margin-left: .35rem; }
+    @media (max-width: 767.98px) {
+      .db-filters:not(.open) { display: none; }
+      .db-filters { padding: 1rem; }
+    }
     .db-filters label { font-size: .75rem; font-weight: 700; letter-spacing: .1em; color: var(--db-muted); text-transform: uppercase; margin-bottom: .4rem; }
     .db-filters .form-control, .db-filters .form-select { border-radius: 10px; min-height: 44px; border-color: var(--surface-border); }
     .db-btn-primary { background: var(--db-navy); border-color: var(--db-navy); color: #fff; border-radius: 10px; min-height: 44px; font-weight: 600; padding: 0 1.4rem; }
@@ -80,11 +86,15 @@ const MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Aoû
         <div class="db-eyebrow">ITECOM · {{ roleLabel }}</div>
         <h1>Bonjour {{ authService.currentUser?.firstName }} <span aria-hidden="true">👋</span></h1>
         <p>{{ heroText }}</p>
-        <span class="db-pill"><i class="bi bi-calendar3"></i>{{ periodLabel }}</span>
+        <button type="button" class="db-pill" (click)="showFilters = !showFilters" [attr.aria-expanded]="showFilters"
+                aria-controls="db-filters" title="Changer la période">
+          <i class="bi bi-calendar3"></i>{{ periodLabel }}<i class="bi bi-chevron-down db-pill-caret d-md-none"></i>
+        </button>
       </section>
 
       <!-- ── Filtres ──────────────────────────────────────────────────── -->
-      <section class="db-card db-filters mb-4">
+      <!-- Téléphone : filtres repliés, ouverts en touchant la période -->
+      <section id="db-filters" class="db-card db-filters mb-4" [class.open]="showFilters">
         <div class="row g-3 align-items-end">
           <div class="col-12 col-sm-6 col-lg-3">
             <label class="form-label d-block" for="db-from">Du</label>
@@ -185,6 +195,8 @@ const MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Aoû
   `
 })
 export class DashboardComponent implements OnInit {
+  /** Téléphone : filtres de période repliés par défaut. */
+  showFilters = false;
   categories = COURSE_CATEGORIES;
   hideProgramming = false;
   userCategoryKeys: string[] | null = null;
@@ -299,6 +311,7 @@ export class DashboardComponent implements OnInit {
     this.to = this.draftTo;
     this.type = this.draftType;
     this.recompute();
+    this.showFilters = false;
   }
 
   reset() {

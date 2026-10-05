@@ -115,6 +115,21 @@ import { DIALOG_DATA, DialogRef, DialogService, DialogState } from '../../core/s
     .toast-item.tone-danger > i { color: #dc2626; }
     .toast-item.tone-warning > i { color: #d97706; }
     .toast-item.tone-info > i, .toast-item.tone-primary > i { color: #2b3ea8; }
+    /* Téléphone : feuille qui monte du bas, poignée, boutons pleine largeur ; messages en haut, sous l'encoche */
+    @media (max-width: 767.98px) {
+      .dlg-backdrop { align-items: flex-end; padding: 0; }
+      .dlg, .dlg-sm, .dlg-md, .dlg-lg, .dlg-xl {
+        max-width: none; border-radius: 22px 22px 0 0; max-height: calc(94dvh - env(safe-area-inset-top, 0px));
+        padding-bottom: env(safe-area-inset-bottom, 0px); animation: sheet .28s cubic-bezier(.2, .8, .2, 1);
+      }
+      .dlg::before { content: ''; display: block; width: 40px; height: 5px; border-radius: 3px; background: #cbd5e1; margin: 8px auto 0; flex-shrink: 0; }
+      .dlg-head { padding: 10px 16px 12px; }
+      .dlg-body { padding: 16px; }
+      .dlg-foot { flex-direction: column-reverse; padding: 0 16px 16px; }
+      .dlg-foot .btn { width: 100%; min-height: 48px; }
+      .toast-stack { top: calc(env(safe-area-inset-top, 0px) + 64px); left: 12px; right: 12px; max-width: none; }
+    }
+    @keyframes sheet { from { transform: translateY(100%); } to { transform: none; } }
     @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
     @keyframes pop { from { opacity: 0; transform: translateY(12px) scale(.98); } to { opacity: 1; transform: none; } }
     @keyframes slide { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }

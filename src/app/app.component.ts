@@ -8,6 +8,8 @@ import { UiChromeService } from './core/services/ui-chrome.service';
 import { CommonModule } from '@angular/common';
 import { DialogHostComponent } from './shared/components/dialog-host.component';
 import { OfflineService } from './core/services/offline.service';
+import { BottomNavComponent } from './shared/components/bottom-nav.component';
+import { InstallBannerComponent } from './shared/components/install-banner.component';
 
 /** Pages affichées sans menu, même connecté : connexion et vérification publique d'un document. */
 function isStandalonePage(url: string): boolean {
@@ -17,13 +19,17 @@ function isStandalonePage(url: string): boolean {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, NavbarComponent, SidebarComponent, CommonModule, DialogHostComponent],
+  imports: [RouterOutlet, RouterLink, NavbarComponent, SidebarComponent, BottomNavComponent, InstallBannerComponent,
+            CommonModule, DialogHostComponent],
   template: `
     <!-- Les pages /auth (connexion…) et /verification (QR code) s'affichent toujours sans le menu du tableau de bord -->
     <ng-container *ngIf="authService.isAuthenticated && !(isAuthPage$ | async); else publicLayout">
       <ng-container *ngIf="!(uiChrome.hidden$ | async)">
         <app-navbar></app-navbar>
         <app-sidebar></app-sidebar>
+        <!-- Téléphone : onglets en bas et proposition d'installer l'application -->
+        <app-bottom-nav></app-bottom-nav>
+        <app-install-banner></app-install-banner>
       </ng-container>
       <main class="main-content fade-in-up" [class.main-content-full]="uiChrome.hidden$ | async">
         <div *ngIf="!(offline.online$ | async)" class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-3" role="status">

@@ -8,6 +8,7 @@ import { UiChromeService } from './core/services/ui-chrome.service';
 import { CommonModule } from '@angular/common';
 import { DialogHostComponent } from './shared/components/dialog-host.component';
 import { OfflineService } from './core/services/offline.service';
+import { ScrollService } from './core/services/scroll.service';
 import { BottomNavComponent } from './shared/components/bottom-nav.component';
 import { InstallBannerComponent } from './shared/components/install-banner.component';
 
@@ -54,5 +55,5 @@ export class AppComponent {
   );
 
   constructor(public authService: AuthService, public uiChrome: UiChromeService, private router: Router,
-              public offline: OfflineService) {}
+              public offline: OfflineService, _scroll: ScrollService) {}
 }

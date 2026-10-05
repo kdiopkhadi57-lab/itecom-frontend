@@ -427,7 +427,7 @@ body.sidebar-collapsed .main-content.main-content-full {
   .app-header { left: 0; padding: 0 16px; gap: .75rem; }
   .main-content { margin-left: 0; padding: 20px 16px; }
   .header-title h1 { font-size: 1.1rem; }
-  body.sidebar-mobile-open { overflow: hidden; }
+  body.sidebar-mobile-open { overflow: hidden; }   /* blocage complet assuré par ScrollService */
 }
 
 /* ── Scolarité : statuts, onglets et montants ─────────────────────────────── */
@@ -467,7 +467,15 @@ body { -webkit-tap-highlight-color: transparent; }
 a, button, .btn, [role="button"] { touch-action: manipulation; }
 
 @media (max-width: 767.98px) {
-  html, body { overflow-x: hidden; overscroll-behavior-y: none; }
+  html, body { overflow-x: hidden; }
+  /* Champ sélectionné : jamais caché sous l'en-tête ni sous la barre d'onglets */
+  html { scroll-padding-top: calc(64px + var(--safe-top)); scroll-padding-bottom: calc(var(--tabbar-height) + var(--safe-bottom) + 16px); }
+  /* Zones qui défilent seules (menu, tableaux larges, onglets) : sans entraîner la page */
+  .sidebar-nav, .table-responsive, .school-tabs { overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+  /* Barres d'onglets horizontales : défilement au doigt, sans barre visible, arrêt net sur un onglet */
+  .school-tabs { scrollbar-width: none; scroll-snap-type: x proximity; }
+  .school-tabs::-webkit-scrollbar { display: none; }
+  .school-tabs .nav-item { scroll-snap-align: center; flex-shrink: 0; }
   body { background: var(--page-bg); }
 
   /* En-tête compact, sous la barre d'état et l'encoche */
@@ -524,6 +532,8 @@ a, button, .btn, [role="button"] { touch-action: manipulation; }
 /* Ouverte depuis l'écran d'accueil : pas de sélection de texte sur les éléments d'interface */
 @media (display-mode: standalone) {
   .bottom-nav, .app-header, .sidebar, .btn { -webkit-user-select: none; user-select: none; }
+  /* Application installée : pas de rebond ni de « tirer pour actualiser » du navigateur (gardés dans un onglet) */
+  html, body { overscroll-behavior-y: none; }
 }
 .header-brand { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px;
   background: var(--navy); color: #fff; font-size: 1.05rem; flex-shrink: 0; }

@@ -2,6 +2,7 @@ import { Component, HostListener, Injector } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DIALOG_DATA, DialogRef, DialogService, DialogState } from '../../core/services/dialog.service';
+import { ScrollService } from '../../core/services/scroll.service';
 
 /** Affiche les popups et notifications de l'application (une seule instance, dans AppComponent). */
 @Component({
@@ -88,7 +89,8 @@ import { DIALOG_DATA, DialogRef, DialogService, DialogState } from '../../core/s
     }
     .dlg-title { font-weight: 800; margin: 0; color: #0f172a; font-size: 1.1rem; }
     .dlg-body { padding: 20px 22px; }
-    .dlg-scroll { overflow-y: auto; }
+    .dlg-scroll { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+    .dlg-backdrop { overscroll-behavior: contain; }
     .dlg-message { color: #64748b; margin: 8px 0 0; white-space: pre-line; }
     .dlg-foot { display: flex; justify-content: center; gap: 10px; padding: 0 22px 22px; }
     .dlg-foot .btn { min-width: 120px; border-radius: 12px; font-weight: 600; }
@@ -140,7 +142,15 @@ export class DialogHostComponent {
   readonly toasts$ = this.dialogs.toasts$;
   private injectors = new Map<number, Injector>();
 
-  constructor(public dialogs: DialogService, private injector: Injector) {}
+  private locked = false;
+
+  constructor(public dialogs: DialogService, private injector: Injector, scroll: ScrollService) {
+    // Popup ouverte : la page derrière ne défile plus ; fermée : on retrouve la même position
+    this.dialogs.dialogs$.subscribe(list => {
+      if (list.length && !this.locked) { scroll.lock(); this.locked = true; }
+      else if (!list.length && this.locked) { scroll.unlock(); this.locked = false; }
+    });
+  }
 
   injectorFor(d: DialogState): Injector {
     let inj = this.injectors.get(d.id);

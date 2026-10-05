@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -18,7 +19,7 @@ interface QcmSummary {
 @Component({
   selector: 'app-qcm-students-overview',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, RouterLink],
   template: `
     <div class="fade-in-up">
       <div class="d-flex align-items-center justify-content-between gap-3 mb-4 flex-wrap">
@@ -44,7 +45,7 @@ interface QcmSummary {
       </div>
 
       <div class="row g-3" *ngIf="!loading && qcms.length > 0">
-        <div class="col-12 col-md-6 col-xl-4" *ngFor="let qcm of qcms">
+        <div class="col-12 col-md-6 col-xl-4" *ngFor="let qcm of qcms | paginate: qcmsPg.page : qcmsPg.size">
           <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden">
             <div class="card-body p-4 d-flex flex-column">
               <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
@@ -65,10 +66,13 @@ interface QcmSummary {
           </div>
         </div>
       </div>
+      <app-pagination [pager]="qcmsPg" [total]="qcms.length"></app-pagination>
     </div>
   `
 })
 export class QcmStudentsOverviewComponent implements OnInit {
+  /** Pagination des listes. */
+  qcmsPg = new Pager(9);
   qcms: QcmSummary[] = [];
   loading = true;
   error = '';

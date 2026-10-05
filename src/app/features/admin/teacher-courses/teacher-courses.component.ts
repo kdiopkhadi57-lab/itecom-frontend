@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CourseService } from '../../../core/services/course.service';
@@ -9,7 +10,7 @@ import { EditCourseComponent } from '../edit-course/edit-course.component';
 @Component({
   selector: 'app-teacher-courses',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, RouterLink],
   template: `
     <div class="fade-in-up">
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -52,7 +53,7 @@ import { EditCourseComponent } from '../edit-course/edit-course.component';
       </div>
 
       <div class="row g-4" *ngIf="!loading">
-        <div class="col-md-6" *ngFor="let course of courses">
+        <div class="col-md-6" *ngFor="let course of courses | paginate: coursesPg.page : coursesPg.size">
           <div class="card h-100" style="border-radius:16px;overflow:hidden;border:1px solid var(--surface-border)">
             <div class="p-3 d-flex align-items-center gap-3" style="background:var(--surface-muted);border-bottom:1px solid var(--surface-border)">
               <div class="d-flex align-items-center justify-content-center flex-shrink-0"
@@ -103,10 +104,13 @@ import { EditCourseComponent } from '../edit-course/edit-course.component';
           </div>
         </div>
       </div>
+      <app-pagination [pager]="coursesPg" [total]="courses.length"></app-pagination>
     </div>
   `
 })
 export class TeacherCoursesComponent implements OnInit {
+  /** Pagination des listes. */
+  coursesPg = new Pager(10);
   courses: Course[] = [];
   loading = true;
 

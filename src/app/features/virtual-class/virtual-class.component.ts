@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { pickVideoUrl } from '../../core/utils/video-quality';
 import { Router, RouterLink } from '@angular/router';
@@ -27,7 +28,7 @@ interface VirtualClass {
 @Component({
   selector: 'app-virtual-class',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, StudentPickerComponent],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, RouterLink, FormsModule, StudentPickerComponent],
   template: `
     <div class="fade-in-up">
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -73,7 +74,7 @@ interface VirtualClass {
           <h4 class="mt-3">Aucune classe {{ getTabLabel() }}</h4>
         </div>
 
-        <div class="col-md-6 col-xl-4" *ngFor="let vc of filteredClasses">
+        <div class="col-md-6 col-xl-4" *ngFor="let vc of filteredClasses | paginate: classesPg.page : classesPg.size">
           <div class="card border-0 shadow-sm h-100" style="border-radius:16px; overflow:hidden">
             <!-- Status banner -->
             <div class="p-3 text-white text-center fw-semibold"
@@ -186,6 +187,7 @@ interface VirtualClass {
           </div>
         </div>
       </div>
+      <app-pagination [pager]="classesPg" [total]="filteredClasses.length"></app-pagination>
 
       <!-- How it works (if empty) -->
       <div *ngIf="!loading && classes.length === 0" class="mt-4">
@@ -278,6 +280,8 @@ interface VirtualClass {
   `
 })
 export class VirtualClassComponent implements OnInit {
+  /** Pagination des listes. */
+  classesPg = new Pager(9);
   classes: VirtualClass[] = [];
   loading = true;
   activeTab = 'upcoming';

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { DialogService } from '../../core/services/dialog.service';
@@ -13,7 +14,7 @@ interface FeeRow { level: string; registrationFee: number | null; monthlyFee: nu
 @Component({
   selector: 'app-admin-paiements',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, FormsModule],
   template: `
     <div class="fade-in-up">
       <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
@@ -65,16 +66,16 @@ interface FeeRow { level: string; registrationFee: number | null; monthlyFee: nu
         </div>
       </div>
       <div class="card"><div class="table-responsive">
-        <table class="table align-middle mb-0">
+        <table class="table align-middle mb-0 table-stack">
           <thead class="table-light"><tr><th>Date</th><th>Étudiant</th><th>Mode</th><th>Téléphone / Réf.</th><th class="text-end">Montant</th><th>État</th><th class="text-end">Actions</th></tr></thead>
           <tbody>
-            <tr *ngFor="let p of payments">
-              <td class="small">{{ p.submittedAt | date:'dd/MM/yyyy HH:mm' }}</td>
-              <td>{{ p.studentName }}<div class="small text-muted">{{ p.matricule }} · {{ p.level }} · {{ p.purpose === 'INSCRIPTION' ? 'Inscription' : 'Mensualité' }}</div></td>
-              <td>{{ methodLabel(p.method) }}</td>
-              <td class="small">{{ p.phone || '—' }}<div class="fw-semibold">{{ p.transactionRef || '—' }}</div></td>
-              <td class="text-end amount fw-semibold">{{ fcfa(p.amount) }}</td>
-              <td>
+            <tr *ngFor="let p of payments | paginate: paymentsPg.page : paymentsPg.size">
+              <td class="small" data-label="Date">{{ p.submittedAt | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td class="fw-semibold">{{ p.studentName }}<div class="small text-muted">{{ p.matricule }} · {{ p.level }} · {{ p.purpose === 'INSCRIPTION' ? 'Inscription' : 'Mensualité' }}</div></td>
+              <td data-label="Mode">{{ methodLabel(p.method) }}</td>
+              <td class="small" data-label="Téléphone / Réf.">{{ p.phone || '—' }}<div class="fw-semibold">{{ p.transactionRef || '—' }}</div></td>
+              <td class="text-end amount fw-semibold" data-label="Montant">{{ fcfa(p.amount) }}</td>
+              <td data-label="État">
                 <span class="status-badge" [ngClass]="statusMap[p.status].tone">{{ statusMap[p.status].label }}</span>
                 <div *ngIf="p.rejectionReason" class="small text-muted">{{ p.rejectionReason }}</div>
               </td>
@@ -91,12 +92,15 @@ interface FeeRow { level: string; registrationFee: number | null; monthlyFee: nu
               {{ status === 'PENDING' ? 'Aucun paiement en attente de vérification.' : 'Aucun paiement.' }}</td></tr>
           </tbody>
         </table>
-      </div></div>
+      </div>
+      <app-pagination [pager]="paymentsPg" [total]="payments.length"></app-pagination></div>
       <p class="small text-muted mt-2"><i class="bi bi-info-circle me-1"></i>Comparez le numéro, le montant et la référence avec le relevé de votre compte Wave / Orange Money / Free Money avant de valider. Le reçu avec QR code est généré à la validation et l'étudiant est prévenu.</p>
     </div>
   `
 })
 export class AdminPaiementsComponent implements OnInit {
+  /** Pagination des listes. */
+  paymentsPg = new Pager(20);
   year = '';
   years: string[] = [];
   months = 9;

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../shared/components/pagination.component';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
@@ -8,7 +9,7 @@ import { DialogService } from '../../core/services/dialog.service';
 @Component({
   selector: 'app-project-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, DatePipe],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, ReactiveFormsModule, DatePipe],
   template: `
     <div class="fade-in-up" *ngIf="!accessDenied">
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -82,7 +83,7 @@ import { DialogService } from '../../core/services/dialog.service';
       </div>
 
       <div class="row g-3" *ngIf="!loading">
-        <div *ngFor="let p of projects" class="col-md-6 col-xl-4">
+        <div *ngFor="let p of projects | paginate: projectsPg.page : projectsPg.size" class="col-md-6 col-xl-4">
           <div class="card border-0 shadow-sm h-100" style="border-radius:14px;border-left:4px solid #2b3ea8">
             <div class="card-body p-4 d-flex flex-column">
               <div class="d-flex align-items-center gap-2 mb-2">
@@ -119,6 +120,7 @@ import { DialogService } from '../../core/services/dialog.service';
           </div>
         </div>
       </div>
+      <app-pagination [pager]="projectsPg" [total]="projects.length"></app-pagination>
     </div>
 
     <div *ngIf="accessDenied" class="text-center py-5 text-muted">
@@ -128,6 +130,8 @@ import { DialogService } from '../../core/services/dialog.service';
   `
 })
 export class ProjectListComponent implements OnInit {
+  /** Pagination des listes. */
+  projectsPg = new Pager(9);
   accessDenied = false;
   projects: Project[] = [];
   loading = true;

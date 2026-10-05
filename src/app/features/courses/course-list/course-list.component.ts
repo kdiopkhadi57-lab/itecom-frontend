@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -9,7 +10,7 @@ import { UserScopeService } from '../../../core/services/user-scope.service';
 @Component({
   selector: 'app-course-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, RouterLink, FormsModule],
   template: `
     <div class="fade-in-up">
       <!-- Header -->
@@ -87,7 +88,7 @@ import { UserScopeService } from '../../../core/services/user-scope.service';
         </div>
 
         <div class="row g-4">
-          <div class="col-md-6 col-xl-4" *ngFor="let course of filteredCourses">
+          <div class="col-md-6 col-xl-4" *ngFor="let course of filteredCourses | paginate: coursesPg.page : coursesPg.size">
             <div class="course-card card h-100">
               <!-- Thumbnail -->
               <div class="course-thumbnail-placeholder"
@@ -127,11 +128,14 @@ import { UserScopeService } from '../../../core/services/user-scope.service';
             </div>
           </div>
         </div>
+        <app-pagination [pager]="coursesPg" [total]="filteredCourses.length"></app-pagination>
       </div>
     </div>
   `
 })
 export class CourseListComponent implements OnInit {
+  /** Pagination des listes. */
+  coursesPg = new Pager(9);
   courses: Course[] = [];
   filteredCourses: Course[] = [];
   loading = true;

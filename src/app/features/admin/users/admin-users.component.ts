@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, PagerMap } from '../../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -36,7 +37,7 @@ const NO_SUBJECT = '__none__';
 @Component({
   selector: 'app-admin-users',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, RouterLink, FormsModule],
   template: `
     <div class="fade-in-up">
 
@@ -67,9 +68,9 @@ const NO_SUBJECT = '__none__';
             <div class="stat-value">{{ subjectCount }}</div><div class="stat-label">Matières enseignées</div></div>
         </div>
         <div class="col-6 col-md-3">
-          <a routerLink="/admin/registrations" class="text-decoration-none">
-            <div class="stat-card"><div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
-              <div class="stat-value">{{ pendingCount }}</div><div class="stat-label">Inscriptions en attente</div></div>
+          <a routerLink="/admin/paiements" class="text-decoration-none">
+            <div class="stat-card"><div class="stat-icon"><i class="bi bi-cash-coin"></i></div>
+              <div class="stat-value">{{ pendingCount }}</div><div class="stat-label">Paiements à vérifier</div></div>
           </a>
         </div>
       </div>
@@ -137,7 +138,7 @@ const NO_SUBJECT = '__none__';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let u of g.users">
+              <tr *ngFor="let u of g.users | paginate: userPages.get(g.key).page : userPages.get(g.key).size">
                 <td>
                   <div class="d-flex align-items-center gap-2">
                     <span class="avatar">{{ u.firstName.charAt(0) }}{{ u.lastName.charAt(0) }}</span>
@@ -167,6 +168,7 @@ const NO_SUBJECT = '__none__';
             </tbody>
           </table>
         </div>
+        <app-pagination [pager]="userPages.get(g.key)" [total]="g.users.length"></app-pagination>
       </div>
     </div>
   `,
@@ -203,6 +205,8 @@ const NO_SUBJECT = '__none__';
   `]
 })
 export class AdminUsersComponent implements OnInit {
+  /** Pagination des listes. */
+  userPages = new PagerMap(10);
   activeTab: 'students' | 'teachers' = 'students';
   students: AppUser[] = [];
   teachers: AppUser[] = [];
@@ -231,7 +235,8 @@ export class AdminUsersComponent implements OnInit {
     const check = () => { if (++done === 3) this.loading = false; };
     this.http.get<AppUser[]>('/api/admin/users/students').subscribe({ next: d => { this.students = d; check(); }, error: () => check() });
     this.http.get<AppUser[]>('/api/admin/users/teachers').subscribe({ next: d => { this.teachers = d; check(); }, error: () => check() });
-    this.http.get<{ pending: number }>('/api/admin/users/stats').subscribe({ next: d => { this.pendingCount = d.pending; check(); }, error: () => check() });
+    this.http.get<unknown[]>('/api/admin/scolarite/payments', { params: { status: 'PENDING' } })
+      .subscribe({ next: d => { this.pendingCount = d.length; check(); }, error: () => check() });
   }
 
   setTab(tab: 'students' | 'teachers') {

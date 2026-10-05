@@ -63,12 +63,6 @@ import { LayoutService } from '../../core/services/layout.service';
           <ng-container *ngIf="authService.isAdmin">
             <li class="sidebar-heading"><span>Administration</span></li>
             <li>
-              <a class="nav-link" routerLink="/admin/registrations" routerLinkActive="active" title="Inscriptions">
-                <i class="bi bi-person-check"></i><span>Inscriptions</span>
-                <span *ngIf="pendingCount > 0" class="sidebar-badge">{{ pendingCount }}</span>
-              </a>
-            </li>
-            <li>
               <a class="nav-link" routerLink="/admin/scolarite" routerLinkActive="active" title="Scolarité">
                 <i class="bi bi-bank"></i><span>Scolarité</span>
               </a>
@@ -102,7 +96,6 @@ import { LayoutService } from '../../core/services/layout.service';
   `
 })
 export class SidebarComponent implements OnInit {
-  pendingCount = 0;
   pendingPayments = 0;
 
   constructor(public authService: AuthService, public userScope: UserScopeService, private http: HttpClient,
@@ -115,10 +108,6 @@ export class SidebarComponent implements OnInit {
   }
 
   loadPendingCount() {
-    this.http.get<{count: number}>('/api/admin/registrations/count').subscribe({
-      next: (res) => this.pendingCount = res.count,
-      error: () => {}
-    });
     this.http.get<unknown[]>('/api/admin/scolarite/payments', { params: { status: 'PENDING' } }).subscribe({
       next: (res) => this.pendingPayments = res.length,
       error: () => {}

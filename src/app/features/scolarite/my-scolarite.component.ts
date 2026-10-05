@@ -9,6 +9,7 @@ import {
 } from '../../core/services/school.service';
 import { phoneError, phoneUsageFor } from '../../core/validators/contact';
 import { SchoolScheduleComponent, SchoolTranscriptComponent } from './school-shared.component';
+import { PaginatePipe, PaginationComponent, Pager } from '../../shared/components/pagination.component';
 
 interface MyEnrollment {
   enrollment: Enrollment; schedule: ScheduleItem[]; payments: Payment[]; transcript: Transcript; certificates: Certificate[];
@@ -115,7 +116,7 @@ export class MobilePaymentDialogComponent {
 @Component({
   selector: 'app-my-scolarite',
   standalone: true,
-  imports: [CommonModule, SchoolScheduleComponent, SchoolTranscriptComponent],
+  imports: [CommonModule, SchoolScheduleComponent, SchoolTranscriptComponent, PaginationComponent, PaginatePipe],
   template: `
     <div class="fade-in-up">
       <div class="mb-3">
@@ -174,7 +175,7 @@ export class MobilePaymentDialogComponent {
           <table class="table align-middle mb-0 table-stack">
             <thead class="table-light"><tr><th>Date</th><th>Mode</th><th>Référence</th><th class="text-end">Montant</th><th>État</th><th></th></tr></thead>
             <tbody>
-              <tr *ngFor="let p of c.payments">
+              <tr *ngFor="let p of c.payments | paginate: paymentsPg.page : paymentsPg.size">
                 <td class="small" data-label="Date">{{ p.submittedAt | date:'dd/MM/yyyy HH:mm' }}</td>
                 <td data-label="Mode">{{ methodLabel(p.method) }}</td>
                 <td class="small" data-label="Référence">{{ p.transactionRef || '—' }}</td>
@@ -189,7 +190,8 @@ export class MobilePaymentDialogComponent {
               <tr *ngIf="c.payments.length === 0"><td colspan="6" class="text-center text-muted py-4">Aucun paiement pour cette année.</td></tr>
             </tbody>
           </table>
-        </div></div>
+        </div>
+        <app-pagination [pager]="paymentsPg" [total]="c.payments.length"></app-pagination></div>
 
         <div *ngIf="tab === 'notes'" class="card"><div class="card-body">
           <app-school-transcript [transcript]="c.transcript" emptyText="Aucune note publiée pour le moment."></app-school-transcript>
@@ -216,6 +218,8 @@ export class MobilePaymentDialogComponent {
   `
 })
 export class MyScolariteComponent implements OnInit {
+  /** Pagination des listes. */
+  paymentsPg = new Pager(10);
   enrollments: MyEnrollment[] = [];
   paymentNumbers: Record<string, string> = {};
   selected = 0;

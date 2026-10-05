@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
@@ -12,7 +13,7 @@ import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course
 @Component({
   selector: 'app-my-learning',
   standalone: true,
-  imports: [CommonModule, RouterLink, DecimalPipe],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, RouterLink, DecimalPipe],
   template: `
     <div class="fade-in-up">
       <div class="d-flex justify-content-between align-items-center mb-4">
@@ -92,7 +93,7 @@ import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course
 
       <!-- Courses grid -->
       <div class="row g-4" *ngIf="!loading && courses.length > 0">
-        <div class="col-md-6 col-xl-4" *ngFor="let course of courses">
+        <div class="col-md-6 col-xl-4" *ngFor="let course of courses | paginate: coursesPg.page : coursesPg.size">
           <div class="card course-card h-100">
             <div class="course-thumbnail-placeholder"
                  [style.background]="getCategoryGradient(course.category)">
@@ -137,10 +138,13 @@ import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course
           </div>
         </div>
       </div>
+      <app-pagination [pager]="coursesPg" [total]="courses.length"></app-pagination>
     </div>
   `
 })
 export class MyLearningComponent implements OnInit {
+  /** Pagination des listes. */
+  coursesPg = new Pager(9);
   courses: Course[] = [];
   progressMap: Record<number, Progress> = {};
   loading = true;

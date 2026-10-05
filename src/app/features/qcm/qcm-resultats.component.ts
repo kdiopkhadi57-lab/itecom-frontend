@@ -1,4 +1,5 @@
 import { Component, HostListener, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, PagerMap } from '../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -17,7 +18,7 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
 @Component({
   selector: 'app-qcm-resultats',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, RouterLink, FormsModule],
   template: `
     <div class="fade-in-up">
       <div class="d-flex align-items-center justify-content-between gap-3 mb-4 flex-wrap">
@@ -102,8 +103,8 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let r of g.rows; let i = index">
-                  <td class="text-muted">{{ i + 1 }}</td>
+                <tr *ngFor="let r of g.rows | paginate: rowPages.get(g.key).page : rowPages.get(g.key).size; let i = index">
+                  <td class="text-muted">{{ (rowPages.get(g.key).current(g.rows.length) - 1) * rowPages.get(g.key).size + i + 1 }}</td>
                   <td class="fw-semibold">{{ r.lastName || lastNameOf(r) }}</td>
                   <td>{{ r.firstName || firstNameOf(r) }}</td>
                   <td>{{ r.birthDate ? (r.birthDate | date:'dd/MM/yyyy') : '—' }}</td>
@@ -135,6 +136,7 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
               </tbody>
             </table>
           </div>
+          <app-pagination [pager]="rowPages.get(g.key)" [total]="g.rows.length"></app-pagination>
         </div>
       </div>
 
@@ -347,6 +349,8 @@ interface PassageResult  { passageId?: number; studentName: string; studentEmail
   `]
 })
 export class QcmResultatsComponent implements OnInit {
+  /** Pagination des listes. */
+  rowPages = new PagerMap(20);
   results: PassageResult[] = [];
   loading = true;
   downloading = false;

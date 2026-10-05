@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -25,7 +26,7 @@ const STATUS_LABELS: Record<string, string> = { PUBLISHED: 'Publié', DRAFT: 'Br
 @Component({
   selector: 'app-admin-stats',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, BarChartComponent],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, FormsModule, RouterLink, BarChartComponent],
   styles: [`
     .as-card { background: var(--surface); border-radius: 16px; border: 1px solid var(--surface-border); }
     .as-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; padding: 1.25rem 1.5rem .5rem; }
@@ -88,7 +89,7 @@ const STATUS_LABELS: Record<string, string> = { PUBLISHED: 'Publié', DRAFT: 'Br
                 <thead><tr><th>Cours</th><th>Professeur</th><th>Niveau</th><th class="text-end">Leçons</th><th class="text-end">Inscrits</th>
                   <th class="text-end">Actifs</th><th class="text-end">Terminé</th><th>Progression</th><th class="text-end">Temps</th><th></th></tr></thead>
                 <tbody>
-                  <tr *ngFor="let c of data.courseReports">
+                  <tr *ngFor="let c of data.courseReports | paginate: coursesPg.page : coursesPg.size">
                     <td class="fw-semibold">{{ c.title }}
                       <span *ngIf="!c.published" class="badge text-bg-light border ms-1">Brouillon</span></td>
                     <td>{{ c.teacher || '—' }}</td>
@@ -105,6 +106,7 @@ const STATUS_LABELS: Record<string, string> = { PUBLISHED: 'Publié', DRAFT: 'Br
                 </tbody>
               </table>
             </div>
+            <app-pagination [pager]="coursesPg" [total]="data.courseReports.length"></app-pagination>
           </ng-container>
 
           <!-- ── Étudiants suivis ───────────────────────────────────── -->
@@ -121,7 +123,7 @@ const STATUS_LABELS: Record<string, string> = { PUBLISHED: 'Publié', DRAFT: 'Br
                 <thead><tr><th>Étudiant</th><th>Niveau</th><th class="text-end">Cours</th><th class="text-end">Leçons terminées</th>
                   <th>Progression</th><th class="text-end">Temps</th><th>Dernière activité</th></tr></thead>
                 <tbody>
-                  <tr *ngFor="let s of filteredStudents">
+                  <tr *ngFor="let s of filteredStudents | paginate: studentsPg.page : studentsPg.size">
                     <td><div class="fw-semibold">{{ s.lastName }} {{ s.firstName }}</div><div class="small text-muted">{{ s.email }}</div></td>
                     <td>{{ s.level || '—' }}</td>
                     <td class="text-end">{{ s.courses }}</td>
@@ -134,6 +136,7 @@ const STATUS_LABELS: Record<string, string> = { PUBLISHED: 'Publié', DRAFT: 'Br
                 </tbody>
               </table>
             </div>
+            <app-pagination [pager]="studentsPg" [total]="filteredStudents.length"></app-pagination>
           </ng-container>
 
           <!-- ── Examens ────────────────────────────────────────────── -->
@@ -154,7 +157,7 @@ const STATUS_LABELS: Record<string, string> = { PUBLISHED: 'Publié', DRAFT: 'Br
                 <thead><tr><th>Type</th><th>Titre</th><th>Professeur</th><th>Statut</th><th>Créé le</th><th class="text-end">Rendues</th>
                   <th class="text-end">Moyenne</th><th class="text-end">Réussite</th><th></th></tr></thead>
                 <tbody>
-                  <tr *ngFor="let e of data.examReports">
+                  <tr *ngFor="let e of data.examReports | paginate: examsPg.page : examsPg.size">
                     <td><span class="badge" [ngClass]="e.type === 'Devoir' ? 'text-bg-primary' : 'text-bg-secondary'">{{ e.type }}</span></td>
                     <td class="fw-semibold">{{ e.title }}</td>
                     <td>{{ e.teacher || '—' }}</td>
@@ -172,6 +175,7 @@ const STATUS_LABELS: Record<string, string> = { PUBLISHED: 'Publié', DRAFT: 'Br
                 </tbody>
               </table>
             </div>
+            <app-pagination [pager]="examsPg" [total]="data.examReports.length"></app-pagination>
           </ng-container>
 
           <!-- ── Rapports par niveau ────────────────────────────────── -->
@@ -214,6 +218,10 @@ const STATUS_LABELS: Record<string, string> = { PUBLISHED: 'Publié', DRAFT: 'Br
   `
 })
 export class AdminStatsComponent implements OnInit {
+  /** Pagination des listes. */
+  coursesPg = new Pager(10);
+  studentsPg = new Pager(20);
+  examsPg = new Pager(10);
   readonly tabs: { key: Tab; label: string; icon: string }[] = [
     { key: 'courses', label: 'Cours en ligne', icon: 'bi-play-btn' },
     { key: 'students', label: 'Étudiants suivis', icon: 'bi-people' },

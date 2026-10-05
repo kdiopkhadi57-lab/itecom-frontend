@@ -210,6 +210,7 @@ export class DashboardComponent implements OnInit {
   staffQcms: StaffQcm[] = [];
   studentQcms: StudentQcm[] = [];
   adminStats: { students: number; teachers: number; pending: number } | null = null;
+  pendingPayments = 0;
 
   // Filtres : brouillon (formulaire) et appliqués
   draftFrom = '';
@@ -295,6 +296,7 @@ export class DashboardComponent implements OnInit {
       this.courseService.getTeacherCourses().subscribe({ next: c => { this.teacherCourses = c || []; done(); }, error: () => done() });
       if (this.authService.isAdmin) {
         load<{ students: number; teachers: number; pending: number }>('/api/admin/users/stats', v => this.adminStats = v);
+        load<unknown[]>('/api/admin/scolarite/payments?status=PENDING', v => this.pendingPayments = v?.length ?? 0);
       }
     } else {
       load<StudentQcm[]>('/api/qcm', v => this.studentQcms = v || []);
@@ -345,7 +347,7 @@ export class DashboardComponent implements OnInit {
     ];
     if (this.authService.isAdmin) {
       this.kpis.unshift({ label: 'Étudiants inscrits', value: this.adminStats?.students ?? 0, link: '/admin/users' });
-      this.kpis.push({ label: 'Inscriptions en attente', value: this.adminStats?.pending ?? 0, link: '/admin/registrations' });
+      this.kpis.push({ label: 'Paiements à vérifier', value: this.pendingPayments, link: '/admin/paiements' });
     } else {
       this.kpis.unshift({ label: 'Mes cours', value: this.teacherCourses.length, link: '/teacher/courses' });
       this.kpis.push({ label: 'Devoirs clôturés', value: count('CLOSED') });

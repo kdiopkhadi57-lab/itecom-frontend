@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -14,7 +15,7 @@ type Tab = 'dashboard' | 'enrollments' | 'grades' | 'certificates' | 'announceme
 @Component({
   selector: 'app-admin-scolarite',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, FormsModule, RouterLink],
   template: `
     <div class="fade-in-up">
       <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
@@ -115,7 +116,7 @@ type Tab = 'dashboard' | 'enrollments' | 'grades' | 'certificates' | 'announceme
           <table class="table align-middle mb-0">
             <thead class="table-light"><tr><th>Matricule</th><th>Étudiant</th><th>Niveau</th><th>Statut</th><th style="min-width:160px">Paiement</th><th class="text-end">Reste</th><th></th></tr></thead>
             <tbody>
-              <tr *ngFor="let e of filteredEnrollments" style="cursor:pointer" (click)="openFile(e.id)">
+              <tr *ngFor="let e of filteredEnrollments | paginate: enrollmentsPg.page : enrollmentsPg.size" style="cursor:pointer" (click)="openFile(e.id)">
                 <td class="small fw-semibold">{{ e.matricule }}</td>
                 <td>{{ e.studentName }}<div class="small text-muted">{{ spec(e.specialization) }}</div></td>
                 <td>{{ e.level }}</td>
@@ -135,7 +136,8 @@ type Tab = 'dashboard' | 'enrollments' | 'grades' | 'certificates' | 'announceme
                 Aucune inscription{{ search || levelFilter || statusFilter ? ' ne correspond aux filtres' : ' pour ' + year + '. Utilisez « Inscrire »' }}.</td></tr>
             </tbody>
           </table>
-        </div></div>
+        </div>
+        <app-pagination [pager]="enrollmentsPg" [total]="filteredEnrollments.length"></app-pagination></div>
       </ng-container>
 
       <!-- ── Notes ── -->
@@ -176,7 +178,7 @@ type Tab = 'dashboard' | 'enrollments' | 'grades' | 'certificates' | 'announceme
             <table class="table table-sm align-middle mb-0">
               <thead class="table-light"><tr><th>Matricule</th><th>Étudiant</th><th style="width:130px">Note /20</th><th>Appréciation</th><th></th></tr></thead>
               <tbody>
-                <tr *ngFor="let r of sheetRows">
+                <tr *ngFor="let r of sheetRows | paginate: sheetPg.page : sheetPg.size">
                   <td class="small">{{ r.matricule }}</td>
                   <td>{{ r.studentName }}</td>
                   <td><input type="number" min="0" max="20" step="0.25" class="form-control form-control-sm" [(ngModel)]="r.grade" [attr.aria-label]="'Note de ' + r.studentName"
@@ -188,6 +190,7 @@ type Tab = 'dashboard' | 'enrollments' | 'grades' | 'certificates' | 'announceme
               </tbody>
             </table>
           </div>
+          <app-pagination [pager]="sheetPg" [total]="sheetRows.length"></app-pagination>
           <div class="d-flex flex-wrap justify-content-between gap-2 mt-3">
             <button class="btn btn-outline-primary" [disabled]="busy" (click)="publish()"><i class="bi bi-megaphone me-1"></i>Publier les notes du {{ sheet.semester }} ({{ sheet.level }})</button>
             <button class="btn btn-primary" [disabled]="busy || sheetRows.length === 0" (click)="saveSheet()"><i class="bi bi-save me-1"></i>Enregistrer la feuille</button>
@@ -206,7 +209,7 @@ type Tab = 'dashboard' | 'enrollments' | 'grades' | 'certificates' | 'announceme
           <table class="table align-middle mb-0">
             <thead class="table-light"><tr><th>Référence</th><th>Document</th><th>Étudiant</th><th>Délivré le</th><th>État</th><th class="text-end"></th></tr></thead>
             <tbody>
-              <tr *ngFor="let c of filteredCertificates">
+              <tr *ngFor="let c of filteredCertificates | paginate: certificatesPg.page : certificatesPg.size">
                 <td class="small fw-semibold">{{ c.reference }}</td>
                 <td>{{ c.typeLabel }}<div *ngIf="c.mention" class="small text-muted">Mention {{ c.mention }}</div></td>
                 <td>{{ c.studentName }}<div class="small text-muted">{{ c.matricule }} · {{ c.level }} · {{ c.academicYear }}</div></td>
@@ -220,7 +223,8 @@ type Tab = 'dashboard' | 'enrollments' | 'grades' | 'certificates' | 'announceme
               <tr *ngIf="filteredCertificates.length === 0"><td colspan="6" class="text-center text-muted py-4">Aucun document délivré.</td></tr>
             </tbody>
           </table>
-        </div></div>
+        </div>
+        <app-pagination [pager]="certificatesPg" [total]="filteredCertificates.length"></app-pagination></div>
       </ng-container>
 
       <!-- ── Annonces ── -->
@@ -261,6 +265,10 @@ type Tab = 'dashboard' | 'enrollments' | 'grades' | 'certificates' | 'announceme
   `
 })
 export class AdminScolariteComponent implements OnInit {
+  /** Pagination des listes. */
+  enrollmentsPg = new Pager(20);
+  sheetPg = new Pager(50);
+  certificatesPg = new Pager(20);
   tab: Tab = 'dashboard';
   year = '';
   years: string[] = [];

@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -14,7 +15,7 @@ import { StudentPickerComponent, PickedStudent } from '../../../shared/component
 @Component({
   selector: 'app-exam-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, StudentPickerComponent],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, RouterLink, FormsModule, StudentPickerComponent],
   template: `
     <div class="container-fluid p-4">
       <div class="d-flex align-items-center gap-3 mb-4">
@@ -153,7 +154,7 @@ import { StudentPickerComponent, PickedStudent } from '../../../shared/component
                   </tr>
                 </thead>
                 <tbody>
-                  <tr *ngFor="let s of exam.students">
+                  <tr *ngFor="let s of exam.students | paginate: studentsPg.page : studentsPg.size">
                     <td>{{ s.studentName }}</td>
                     <td class="text-muted small">{{ s.studentEmail }}</td>
                     <td>
@@ -208,6 +209,7 @@ import { StudentPickerComponent, PickedStudent } from '../../../shared/component
                 </tbody>
               </table>
             </div>
+            <app-pagination [pager]="studentsPg" [total]="exam.students.length"></app-pagination>
           </div>
         </div>
       </div>
@@ -294,6 +296,8 @@ import { StudentPickerComponent, PickedStudent } from '../../../shared/component
   `
 })
 export class ExamDetailComponent implements OnInit {
+  /** Pagination des listes. */
+  studentsPg = new Pager(20);
   exam: Exam | null = null;
   loading = true;
   expandedStudent: ExamStudent | null = null;

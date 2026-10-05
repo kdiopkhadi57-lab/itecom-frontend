@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -28,7 +29,7 @@ interface DiscoveredBook {
 @Component({
   selector: 'app-library',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, FormsModule, RouterLink],
   template: `
     <div class="fade-in-up">
 
@@ -121,7 +122,7 @@ interface DiscoveredBook {
 
       <!-- Books grid -->
       <div *ngIf="!loading" class="row g-4">
-        <div *ngFor="let book of filteredBooks" class="col-6 col-md-4 col-lg-3 col-xl-2-custom">
+        <div *ngFor="let book of filteredBooks | paginate: booksPg.page : booksPg.size" class="col-6 col-md-4 col-lg-3 col-xl-2-custom">
           <div class="book-card card border-0 shadow-sm h-100" (click)="openBook(book)"
                style="border-radius:12px;cursor:pointer;transition:transform .2s,box-shadow .2s">
             <div class="book-cover position-relative" [style.background]="getCoverColor(book)">
@@ -150,6 +151,7 @@ interface DiscoveredBook {
           </div>
         </div>
       </div>
+      <app-pagination [pager]="booksPg" [total]="filteredBooks.length"></app-pagination>
 
       <!-- ═══════════════════════════════════════════════════════
            MODAL : Découvrir des livres (Google Books)
@@ -509,6 +511,8 @@ interface DiscoveredBook {
   `]
 })
 export class LibraryComponent implements OnInit {
+  /** Pagination des listes. */
+  booksPg = new Pager(12);
   allBooks: Book[] = [];
   filteredBooks: Book[] = [];
   categories: string[] = [];

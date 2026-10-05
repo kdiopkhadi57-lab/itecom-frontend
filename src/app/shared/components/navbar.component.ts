@@ -33,7 +33,6 @@ const PAGE_TITLES: [string, PageTitle][] = [
   ['/teacher/exams', { title: 'Devoirs et examens', subtitle: 'Espace professeur' }],
   ['/teacher/qcms', { title: 'Devoirs et examens', subtitle: 'Espace professeur' }],
   ['/teacher/students', { title: 'Étudiants et notes', subtitle: 'Espace professeur' }],
-  ['/admin/registrations', { title: 'Inscriptions', subtitle: 'Administration' }],
   ['/admin/users', { title: 'Étudiants et professeurs', subtitle: 'Administration' }],
   ['/admin/scolarite', { title: 'Scolarité', subtitle: 'Administration' }],
   ['/admin/paiements', { title: 'Paiements', subtitle: 'Administration' }],
@@ -45,7 +44,7 @@ const PAGE_TITLES: [string, PageTitle][] = [
 /** Pages ouvertes depuis les onglets ou le menu : pas de bouton retour sur téléphone. */
 const ROOT_PAGES = ['/dashboard', '/courses', '/courses/my-learning', '/qcm', '/my-exams', '/scolarite', '/virtual-class',
   '/library', '/references', '/profile', '/teacher/courses', '/teacher/exams', '/teacher/students', '/teacher/create-course',
-  '/admin/scolarite', '/admin/paiements', '/admin/users', '/admin/registrations'];
+  '/admin/scolarite', '/admin/paiements', '/admin/users'];
 
 /** Préfixe d'URL, « * » remplaçant un segment (ex. un identifiant). */
 function matchesPrefix(path: string, prefix: string): boolean {
@@ -83,9 +82,9 @@ function matchesPrefix(path: string, prefix: string): boolean {
               <span>Notifications</span>
               <button *ngIf="unreadCount > 0" type="button" class="btn btn-link btn-sm p-0 text-decoration-none" (click)="markAllRead($event)">Tout marquer comme lu</button>
             </div>
-            <a *ngIf="pendingCount > 0" class="dropdown-item d-flex gap-2 align-items-start" routerLink="/admin/registrations">
-              <i class="bi bi-person-check mt-1"></i>
-              <span>{{ pendingCount }} inscription{{ pendingCount > 1 ? 's' : '' }} en attente de validation</span>
+            <a *ngIf="pendingCount > 0" class="dropdown-item d-flex gap-2 align-items-start" routerLink="/admin/paiements">
+              <i class="bi bi-cash-coin mt-1"></i>
+              <span>{{ pendingCount }} paiement{{ pendingCount > 1 ? 's' : '' }} à vérifier</span>
             </a>
             <div style="max-height:380px;overflow-y:auto">
               <button *ngFor="let n of notifications" type="button" class="dropdown-item d-flex gap-2 align-items-start text-wrap"
@@ -155,8 +154,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
       .subscribe(e => this.updateTitle(e.urlAfterRedirects));
 
     if (this.authService.isAdmin) {
-      this.http.get<{ count: number }>('/api/admin/registrations/count').subscribe({
-        next: res => this.pendingCount = res.count,
+      // Paiements mobiles des étudiants en attente de vérification
+      this.http.get<unknown[]>('/api/admin/scolarite/payments', { params: { status: 'PENDING' } }).subscribe({
+        next: res => this.pendingCount = res.length,
         error: () => {}
       });
     }

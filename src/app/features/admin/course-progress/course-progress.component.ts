@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -20,7 +21,7 @@ type SortKey = 'name' | 'progress' | 'time' | 'activity';
 @Component({
   selector: 'app-course-progress',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, BarChartComponent],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, FormsModule, RouterLink, BarChartComponent],
   styles: [`
     .cp-title { font-size: 1.5rem; font-weight: 700; color: #1f2a5c; margin: 0; }
     .cp-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; }
@@ -152,7 +153,7 @@ type SortKey = 'name' | 'progress' | 'time' | 'activity';
                   </tr>
                 </thead>
                 <tbody>
-                  <ng-container *ngFor="let s of visibleStudents">
+                  <ng-container *ngFor="let s of visibleStudents | paginate: studentsPg.page : studentsPg.size">
                     <tr class="cp-row" tabindex="0" (click)="toggle(s.id)" (keydown.enter)="toggle(s.id)"
                         [attr.aria-expanded]="expandedId === s.id">
                       <td>
@@ -196,6 +197,7 @@ type SortKey = 'name' | 'progress' | 'time' | 'activity';
                 </tbody>
               </table>
             </div>
+            <app-pagination [pager]="studentsPg" [total]="visibleStudents.length"></app-pagination>
           </section>
         </ng-container>
       </ng-container>
@@ -203,6 +205,8 @@ type SortKey = 'name' | 'progress' | 'time' | 'activity';
   `
 })
 export class CourseProgressComponent implements OnInit {
+  /** Pagination des listes. */
+  studentsPg = new Pager(20);
   private static readonly CHART_LIMIT = 10;
 
   data: CourseProgress | null = null;

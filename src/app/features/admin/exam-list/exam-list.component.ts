@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
@@ -13,7 +14,7 @@ interface Qcm { id: number; title: string; description: string; status: string; 
 @Component({
   selector: 'app-exam-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, RouterLink],
   template: `
     <div class="fade-in-up">
 
@@ -72,7 +73,7 @@ interface Qcm { id: number; title: string; description: string; status: string; 
          <a routerLink="/teacher/exams/create" class="btn btn-primary mt-2">Créer un examen</a> -->
         </div>
         <div class="row g-3" *ngIf="!loadingExams && exams.length > 0">
-          <div class="col-md-6 col-lg-4" *ngFor="let exam of exams">
+          <div class="col-md-6 col-lg-4" *ngFor="let exam of exams | paginate: examsPg.page : examsPg.size">
             <div class="card h-100 border-0 shadow-sm" style="border-radius:16px;overflow:hidden">
               <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-start mb-2">
@@ -111,6 +112,7 @@ interface Qcm { id: number; title: string; description: string; status: string; 
             </div>
           </div>
         </div>
+        <app-pagination [pager]="examsPg" [total]="exams.length"></app-pagination>
       </ng-container>
 
       <!-- ═══════════════════════ ONGLET QCMs ═══════════════════════════════ -->
@@ -129,7 +131,7 @@ interface Qcm { id: number; title: string; description: string; status: string; 
           </div>
         </div>
         <div class="row g-3" *ngIf="!loadingQcm && qcms.length > 0">
-          <div class="col-12 col-md-6 col-xl-4" *ngFor="let q of qcms">
+          <div class="col-12 col-md-6 col-xl-4" *ngFor="let q of qcms | paginate: qcmsPg.page : qcmsPg.size">
             <div class="card border-0 shadow-sm h-100" style="border-radius:16px;overflow:hidden">
               <div class="card-body p-4">
                 <div class="d-flex align-items-start justify-content-between mb-2">
@@ -164,12 +166,16 @@ interface Qcm { id: number; title: string; description: string; status: string; 
             </div>
           </div>
         </div>
+        <app-pagination [pager]="qcmsPg" [total]="qcms.length"></app-pagination>
       </ng-container>
 
     </div>
   `
 })
 export class ExamListComponent implements OnInit {
+  /** Pagination des listes. */
+  examsPg = new Pager(9);
+  qcmsPg = new Pager(9);
   tab: 'exams' | 'qcm' = 'exams';
 
   exams: Exam[] = [];

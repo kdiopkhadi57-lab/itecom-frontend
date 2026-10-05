@@ -1,4 +1,5 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
@@ -33,7 +34,7 @@ interface ProjectFile {
 @Component({
   selector: 'app-exercise-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterLink],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, ReactiveFormsModule, FormsModule, RouterLink],
   template: `
     <div class="fade-in-up" style="height:100vh;display:flex;flex-direction:column">
       <!-- Header -->
@@ -104,7 +105,7 @@ interface ProjectFile {
           </div>
 
           <div class="d-flex flex-column gap-2" *ngIf="!loading">
-            <div *ngFor="let ex of exercises"
+            <div *ngFor="let ex of exercises | paginate: exercisesPg.page : exercisesPg.size"
                  id="exercise-{{ex.id}}"
                  class="card border-0 p-3 cursor-pointer exercise-card"
                  [class.bg-primary]="selectedExercise?.id === ex.id"
@@ -136,6 +137,7 @@ interface ProjectFile {
               </ng-container>
             </div>
           </div>
+          <app-pagination [pager]="exercisesPg" [total]="exercises.length"></app-pagination>
         </div>
 
         <!-- Right: IDE / Exercise Panel -->
@@ -323,6 +325,8 @@ interface ProjectFile {
   `]
 })
 export class ExerciseListComponent implements OnInit, OnDestroy {
+  /** Pagination des listes. */
+  exercisesPg = new Pager(10);
   exercises: Lesson[] = [];
   selectedExercise: Lesson | null = null;
   selectedExercisePdfUrl: SafeResourceUrl | null = null;

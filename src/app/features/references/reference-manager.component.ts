@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -12,7 +13,7 @@ type View = 'list' | 'form' | 'citation';
 @Component({
   selector: 'app-reference-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, MarkdownItalicPipe],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, FormsModule, RouterLink, MarkdownItalicPipe],
   template: `
 <div class="fade-in-up">
 
@@ -142,7 +143,7 @@ type View = 'list' | 'form' | 'citation';
       </div>
 
       <!-- Reference cards -->
-      <div *ngFor="let ref of filteredRefs" class="ref-card">
+      <div *ngFor="let ref of filteredRefs | paginate: refsPg.page : refsPg.size" class="ref-card">
         <div class="d-flex align-items-start gap-3">
           <div class="ref-type-badge" [style.background]="typeColor(ref.refType)">
             <i class="bi" [ngClass]="typeIcon(ref.refType)"></i>
@@ -191,6 +192,7 @@ type View = 'list' | 'form' | 'citation';
       </div>
 
     </div>
+    <app-pagination [pager]="refsPg" [total]="filteredRefs.length"></app-pagination>
   </div>
 </div>
 
@@ -549,6 +551,8 @@ type View = 'list' | 'form' | 'citation';
   `]
 })
 export class ReferenceManagerComponent implements OnInit {
+  /** Pagination des listes. */
+  refsPg = new Pager(10);
   refs: Reference[] = [];
   filteredRefs: Reference[] = [];
   collections: string[] = [];

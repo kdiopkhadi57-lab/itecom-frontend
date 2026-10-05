@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
+import { PaginatePipe, PaginationComponent, Pager } from '../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -27,7 +28,7 @@ type Filter = 'ALL' | 'PRESENT' | 'ABSENT' | 'LATE' | 'EARLY';
 @Component({
   selector: 'app-virtual-class-attendance',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, BarChartComponent],
+  imports: [PaginationComponent, PaginatePipe, CommonModule, FormsModule, RouterLink, BarChartComponent],
   styles: [`
     .va-title { font-size: 1.5rem; font-weight: 700; color: #1f2a5c; margin: 0; }
     .va-meta { display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; font-size: .88rem; color: var(--muted); }
@@ -165,7 +166,7 @@ type Filter = 'ALL' | 'PRESENT' | 'ABSENT' | 'LATE' | 'EARLY';
                 </tr>
               </thead>
               <tbody>
-                <ng-container *ngFor="let p of visibleStudents">
+                <ng-container *ngFor="let p of visibleStudents | paginate: studentsPg.page : studentsPg.size">
                   <tr class="va-row" tabindex="0" (click)="toggle(p.email)" (keydown.enter)="toggle(p.email)" [attr.aria-expanded]="expanded === p.email">
                     <td>
                       <div class="fw-semibold">{{ p.name || p.email }}</div>
@@ -210,6 +211,7 @@ type Filter = 'ALL' | 'PRESENT' | 'ABSENT' | 'LATE' | 'EARLY';
               </tbody>
             </table>
           </div>
+          <app-pagination [pager]="studentsPg" [total]="visibleStudents.length"></app-pagination>
           <div *ngIf="timelineStart && timelineEnd" class="d-flex justify-content-end mt-2">
             <div class="small text-muted"><i class="bi bi-info-circle me-1"></i>Chronologie de {{ fmtTime(timelineStart) }} à {{ fmtTime(timelineEnd) }} ; pointillés : horaire prévu.</div>
           </div>
@@ -219,6 +221,8 @@ type Filter = 'ALL' | 'PRESENT' | 'ABSENT' | 'LATE' | 'EARLY';
   `
 })
 export class VirtualClassAttendanceComponent implements OnInit, OnDestroy {
+  /** Pagination des listes. */
+  studentsPg = new Pager(20);
   report: AttendanceReport | null = null;
   loading = true;
   error = '';

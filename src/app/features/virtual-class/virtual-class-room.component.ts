@@ -5,6 +5,7 @@ import { HttpClient, HttpContext } from '@angular/common/http';
 import { SILENT_ERRORS } from '../../core/interceptors/error.interceptor';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
+import { DialogService } from '../../core/services/dialog.service';
 
 declare const JitsiMeetExternalAPI: any;
 
@@ -19,6 +20,13 @@ interface VirtualClass {
   status: string;
   teacherName: string | null;
   courseTitle: string | null;
+}
+
+interface RollCallLine { name: string; email: string; status: 'PRESENT' | 'NO_ANSWER' | 'NOT_CONNECTED'; answeredAt: string | null; }
+
+interface RollCall {
+  id: number; startedAt: string; expiresAt: string; open: boolean;
+  expected: number; present: number; noAnswer: number; notConnected: number; students: RollCallLine[];
 }
 
 interface JitsiTokenResponse {
@@ -50,6 +58,48 @@ interface JitsiTokenResponse {
       <div *ngIf="!loading && vc">
         <div *ngIf="isTeacher && joinNotifications.length > 0" class="alert alert-success d-flex flex-column gap-1 py-2">
           <div *ngFor="let n of joinNotifications"><i class="bi bi-person-check-fill me-2"></i><strong>{{ n }}</strong> a rejoint la session.</div>
+        </div>
+
+        <!-- Rappel toutes les 15 minutes : faire l'appel -->
+        <div *ngIf="isTeacher && reminderDue && !activeRollCall?.open" class="alert alert-warning d-flex flex-wrap align-items-center gap-2 shadow-sm roll-call-reminder" role="alert">
+          <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+          <div class="flex-grow-1">
+            <div class="fw-bold">Il est temps de faire l'appel</div>
+            <div class="small">Vérifiez que tous les étudiants sont bien là : un appel toutes les {{ reminderMinutes }} minutes.</div>
+          </div>
+          <button class="btn btn-warning fw-semibold" [disabled]="rollCallBusy" (click)="startRollCall()">
+            <i class="bi bi-person-raised-hand me-1"></i>Faire l'appel maintenant</button>
+          <button class="btn btn-outline-secondary btn-sm" (click)="snoozeReminder()">Dans 5 minutes</button>
+        </div>
+
+        <div *ngIf="isTeacher && joined" class="card border-0 shadow-sm mb-3">
+          <div class="card-body py-3">
+            <div class="d-flex flex-wrap align-items-center gap-3">
+              <span class="fw-semibold"><i class="bi bi-person-raised-hand me-2 text-primary"></i>Appel des étudiants</span>
+              <button class="btn btn-sm btn-primary" [disabled]="rollCallBusy || activeRollCall?.open" (click)="startRollCall()">
+                <span *ngIf="rollCallBusy" class="spinner-border spinner-border-sm me-1"></span>
+                <i *ngIf="!rollCallBusy" class="bi bi-bell me-1"></i>Faire l'appel</button>
+              <span *ngIf="!activeRollCall?.open" class="small text-muted"><i class="bi bi-alarm me-1"></i>Prochain rappel dans {{ nextReminderLabel }}</span>
+              <span *ngIf="activeRollCall?.open" class="small text-muted"><i class="bi bi-hourglass-split me-1"></i>Appel en cours : {{ rollCallSecondsLeft }} s pour répondre</span>
+            </div>
+
+            <div *ngIf="activeRollCall as rc" class="mt-3">
+              <div class="d-flex flex-wrap gap-2 mb-2 small">
+                <span class="status-badge ok">{{ rc.present }} présent(s)</span>
+                <span class="status-badge warn">{{ rc.noAnswer }} connecté(s) sans réponse</span>
+                <span class="status-badge danger">{{ rc.notConnected }} non connecté(s)</span>
+                <span class="text-muted">sur {{ rc.expected }} étudiant(s) · appel de {{ rc.startedAt | date:'HH:mm' }}</span>
+                <button *ngIf="!rc.open" type="button" class="btn btn-link btn-sm p-0 ms-auto" (click)="activeRollCall = null">Masquer</button>
+              </div>
+              <div class="d-flex flex-wrap gap-2">
+                <span *ngFor="let l of rc.students" class="badge border py-2 px-3 d-flex align-items-center gap-1"
+                      [ngClass]="l.status === 'PRESENT' ? 'bg-success-subtle text-success-emphasis' : l.status === 'NO_ANSWER' ? 'bg-warning-subtle text-warning-emphasis' : 'bg-light text-muted'"
+                      [title]="l.status === 'PRESENT' ? 'A répondu à ' + (l.answeredAt | date:'HH:mm:ss') : l.status === 'NO_ANSWER' ? 'Connecté, sans réponse' : 'Pas connecté'">
+                  <i class="bi" [ngClass]="l.status === 'PRESENT' ? 'bi-check-circle-fill' : l.status === 'NO_ANSWER' ? 'bi-question-circle' : 'bi-x-circle'"></i>{{ l.name || l.email }}
+                </span>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div *ngIf="isTeacher" class="card border-0 shadow-sm mb-3">
@@ -120,7 +170,10 @@ interface JitsiTokenResponse {
         </details>
       </div>
     </div>
-  `
+  `,
+  styles: [`
+    .roll-call-reminder { position: sticky; top: 72px; z-index: 5; border-left: 6px solid #b4690e; }
+  `]
 })
 export class VirtualClassRoomComponent implements OnInit, OnDestroy {
   @ViewChild('jitsiContainer', { static: false }) jitsiContainer!: ElementRef<HTMLDivElement>;
@@ -146,6 +199,18 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
   private attendanceHeartbeat: ReturnType<typeof setInterval> | null = null;
   private static readonly HEARTBEAT_MS = 30000;
 
+  // Appel : rappel au professeur toutes les 15 minutes, réponse « Je suis présent » des étudiants
+  readonly reminderMinutes = 15;
+  reminderDue = false;
+  nextReminderAt = 0;
+  activeRollCall: RollCall | null = null;
+  rollCallBusy = false;
+  private now = Date.now();
+  private reminderTicker: ReturnType<typeof setInterval> | null = null;
+  private rollCallPoll: ReturnType<typeof setInterval> | null = null;
+  private studentCallPoll: ReturnType<typeof setInterval> | null = null;
+  private answeringCallId: number | null = null;
+
   private jitsiApi: any;
   private mediaRecorder: MediaRecorder | null = null;
   private recordedChunks: Blob[] = [];
@@ -157,7 +222,8 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private router: Router,
     private http: HttpClient,
-    public authService: AuthService
+    public authService: AuthService,
+    private dialogs: DialogService
   ) {}
 
   get isTeacher(): boolean {
@@ -197,8 +263,132 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
     }
     this.displayStream?.getTracks().forEach(t => t.stop());
     clearTimeout(this.joinTimeoutHandle);
+    this.stopRollCallTimers();
     this.leaveAttendance();
     this.jitsiApi?.dispose();
+  }
+
+  // --- Appel ---
+
+  get nextReminderLabel(): string {
+    const s = Math.max(0, Math.round((this.nextReminderAt - this.now) / 1000));
+    return `${Math.floor(s / 60)} min ${String(s % 60).padStart(2, '0')} s`;
+  }
+
+  get rollCallSecondsLeft(): number {
+    return this.activeRollCall ? Math.max(0, Math.round((new Date(this.activeRollCall.expiresAt).getTime() - this.now) / 1000)) : 0;
+  }
+
+  /** Démarre le rappel (professeur) ou l'écoute des appels (étudiant) une fois dans la salle. */
+  private startRollCallTimers() {
+    if (this.isTeacher) {
+      if (this.reminderTicker) return;
+      this.nextReminderAt = Date.now() + this.reminderMinutes * 60_000;
+      this.reminderTicker = setInterval(() => {
+        this.now = Date.now();
+        if (!this.reminderDue && !this.activeRollCall?.open && this.now >= this.nextReminderAt) this.raiseReminder();
+      }, 1000);
+    } else if (!this.studentCallPoll) {
+      this.checkStudentRollCall();
+      this.studentCallPoll = setInterval(() => this.checkStudentRollCall(), 15_000);
+    }
+  }
+
+  private stopRollCallTimers() {
+    [this.reminderTicker, this.rollCallPoll, this.studentCallPoll].forEach(t => t && clearInterval(t));
+    this.reminderTicker = this.rollCallPoll = this.studentCallPoll = null;
+  }
+
+  /** Avertissement : bandeau, son et notification du navigateur si l'onglet n'est pas affiché. */
+  private raiseReminder() {
+    this.reminderDue = true;
+    this.beep();
+    this.dialogs.toast('Rappel : faites l\'appel pour vérifier que tout le monde est là.', 'warning', 8000);
+    if (document.hidden && 'Notification' in window && Notification.permission === 'granted') {
+      new Notification('ITECOM — Faire l\'appel', { body: `${this.vc?.title ?? 'Classe virtuelle'} : vérifiez que tous les étudiants sont là.` });
+    }
+  }
+
+  snoozeReminder() {
+    this.reminderDue = false;
+    this.nextReminderAt = Date.now() + 5 * 60_000;
+  }
+
+  startRollCall() {
+    if (!this.vc || this.rollCallBusy) return;
+    // Autorise les notifications du navigateur pour les prochains rappels (onglet en arrière-plan)
+    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
+    this.rollCallBusy = true;
+    this.http.post<RollCall>(`/api/teacher/virtual-classes/${this.vc.id}/roll-calls`, {}).subscribe({
+      next: rc => {
+        this.rollCallBusy = false;
+        this.activeRollCall = rc;
+        this.reminderDue = false;
+        this.nextReminderAt = Date.now() + this.reminderMinutes * 60_000;
+        this.dialogs.toast('Appel lancé : les étudiants connectés doivent confirmer leur présence.', 'info');
+        if (this.rollCallPoll) clearInterval(this.rollCallPoll);
+        this.rollCallPoll = setInterval(() => this.refreshRollCall(), 4000);
+      },
+      error: err => { this.rollCallBusy = false; this.dialogs.toast(err.error?.message || 'Impossible de lancer l\'appel.', 'danger'); }
+    });
+  }
+
+  private refreshRollCall() {
+    if (!this.vc || !this.activeRollCall) return;
+    this.http.get<RollCall>(`/api/teacher/virtual-classes/${this.vc.id}/roll-calls/${this.activeRollCall.id}`,
+      { context: new HttpContext().set(SILENT_ERRORS, true) }).subscribe({
+      next: rc => {
+        this.activeRollCall = rc;
+        if (!rc.open && this.rollCallPoll) {
+          clearInterval(this.rollCallPoll);
+          this.rollCallPoll = null;
+          const missing = rc.noAnswer + rc.notConnected;
+          this.dialogs.toast(missing ? `Appel terminé : ${rc.present} présent(s), ${missing} sans réponse.` : 'Appel terminé : tout le monde est là.',
+            missing ? 'warning' : 'success', 6000);
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  /** Étudiant : si un appel est ouvert, demande « Je suis présent ». */
+  private checkStudentRollCall() {
+    if (!this.vc || this.answeringCallId) return;
+    const classId = this.vc.id;
+    this.http.get<{ id: number; secondsLeft: number } | null>(`/api/virtual-classes/${classId}/roll-calls/active`,
+      { context: new HttpContext().set(SILENT_ERRORS, true) }).subscribe({
+      next: call => {
+        if (!call || this.answeringCallId) return;
+        this.answeringCallId = call.id;
+        this.beep();
+        this.dialogs.alert({
+          title: 'Appel du professeur', icon: 'bi-person-raised-hand', tone: 'warning', confirmText: 'Je suis présent',
+          message: `Confirmez votre présence dans les ${Math.ceil(call.secondsLeft / 60)} minute(s). Sans réponse, vous serez noté(e) absent(e) à cet appel.`
+        }).then(() => {
+          this.http.post(`/api/virtual-classes/${classId}/roll-calls/${call.id}/answer`, {}).subscribe({
+            next: () => { this.answeringCallId = null; this.dialogs.toast('Présence confirmée.'); },
+            error: err => { this.answeringCallId = null; this.dialogs.toast(err.error?.message || 'Présence non enregistrée.', 'danger'); }
+          });
+        });
+      },
+      error: () => {}
+    });
+  }
+
+  /** Court signal sonore pour attirer l'attention. */
+  private beep() {
+    try {
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.6);
+      osc.onended = () => ctx.close();
+    } catch { /* son indisponible : le bandeau suffit */ }
   }
 
   // --- Présence ---
@@ -310,6 +500,7 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
         clearTimeout(this.joinTimeoutHandle);
         this.log('videoConferenceJoined : ' + (event?.displayName || '') + ' (id=' + event?.id + ')');
         this.joinAttendance();
+        this.startRollCallTimers();
         // Récupère les participants déjà présents dans le salon au moment
         // où le professeur ouvre la page (ex: étudiants connectés avant lui).
         const existing = this.jitsiApi.getParticipantsInfo?.() || [];

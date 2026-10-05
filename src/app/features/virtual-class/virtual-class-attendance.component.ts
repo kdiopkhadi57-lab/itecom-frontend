@@ -10,6 +10,7 @@ interface Participant {
   name: string | null; email: string; enrolled: boolean; status: 'PRESENT' | 'ABSENT';
   late: boolean; leftEarly: boolean; online: boolean;
   firstJoinAt: string | null; lastLeaveAt: string | null; totalSeconds: number; connections: number;
+  rollCallsAnswered: number;
   segments: Segment[];
 }
 interface AttendanceReport {
@@ -18,6 +19,7 @@ interface AttendanceReport {
   enrolledCount: number; presentCount: number; absentCount: number; lateCount: number; leftEarlyCount: number;
   attendanceRate: number; averageSeconds: number;
   teacher: Participant | null; students: Participant[];
+  rollCalls: { startedAt: string; answered: number }[];
 }
 type Filter = 'ALL' | 'PRESENT' | 'ABSENT' | 'LATE' | 'EARLY';
 
@@ -89,6 +91,14 @@ type Filter = 'ALL' | 'PRESENT' | 'ABSENT' | 'LATE' | 'EARLY';
             </ng-container>
             <ng-template #teacherAbsent><span class="text-muted">ne s'est pas connecté à cette séance</span></ng-template>
           </div>
+          <div class="small mt-2">
+            <i class="bi bi-person-raised-hand me-1 text-primary"></i>
+            <ng-container *ngIf="report.rollCalls.length; else noCall">
+              {{ report.rollCalls.length }} appel(s) :
+              <span *ngFor="let c of report.rollCalls; let last = last">{{ fmtTime(c.startedAt) }} ({{ c.answered }} présent(s)){{ last ? '' : ', ' }}</span>
+            </ng-container>
+            <ng-template #noCall><span class="text-muted">Aucun appel fait pendant la séance.</span></ng-template>
+          </div>
         </div>
 
         <!-- Indicateurs -->
@@ -150,6 +160,7 @@ type Filter = 'ALL' | 'PRESENT' | 'ABSENT' | 'LATE' | 'EARLY';
                   <th>Départ</th>
                   <th class="text-end">Durée</th>
                   <th class="text-end">Connexions</th>
+                  <th class="text-end" *ngIf="report.rollCalls.length">Appels</th>
                   <th style="min-width:200px">Chronologie</th>
                 </tr>
               </thead>
@@ -172,6 +183,8 @@ type Filter = 'ALL' | 'PRESENT' | 'ABSENT' | 'LATE' | 'EARLY';
                     <td class="text-nowrap">{{ p.online ? 'En ligne' : (p.lastLeaveAt ? fmtTime(p.lastLeaveAt) : '—') }}</td>
                     <td class="text-end text-nowrap">{{ p.status === 'PRESENT' ? formatDuration(p.totalSeconds) : '—' }}</td>
                     <td class="text-end">{{ p.connections || '—' }}</td>
+                    <td class="text-end text-nowrap" *ngIf="report.rollCalls.length"
+                        [class.text-danger]="p.rollCallsAnswered < report.rollCalls.length">{{ p.rollCallsAnswered }} / {{ report.rollCalls.length }}</td>
                     <td>
                       <div class="va-timeline" [attr.aria-label]="'Chronologie de connexion de ' + (p.name || p.email)">
                         <div *ngIf="windowBox" class="va-window" [style.left.%]="windowBox.left" [style.width.%]="windowBox.width"></div>
@@ -182,7 +195,7 @@ type Filter = 'ALL' | 'PRESENT' | 'ABSENT' | 'LATE' | 'EARLY';
                     </td>
                   </tr>
                   <tr *ngIf="expanded === p.email" class="va-detail">
-                    <td colspan="7">
+                    <td [attr.colspan]="report.rollCalls.length ? 8 : 7">
                       <div *ngIf="p.segments.length === 0" class="small text-muted px-2">Aucune connexion à cette séance.</div>
                       <div *ngFor="let s of p.segments; let i = index" class="small px-2 py-1">
                         <strong>Connexion {{ i + 1 }}</strong> : de {{ fmtTime(s.joinedAt) }} à
@@ -192,7 +205,7 @@ type Filter = 'ALL' | 'PRESENT' | 'ABSENT' | 'LATE' | 'EARLY';
                   </tr>
                 </ng-container>
                 <tr *ngIf="visibleStudents.length === 0">
-                  <td colspan="7" class="text-center text-muted py-4">Aucun étudiant pour ce filtre.</td>
+                  <td [attr.colspan]="report.rollCalls.length ? 8 : 7" class="text-center text-muted py-4">Aucun étudiant pour ce filtre.</td>
                 </tr>
               </tbody>
             </table>

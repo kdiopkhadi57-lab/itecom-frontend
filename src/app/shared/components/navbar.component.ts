@@ -1,12 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { NavigationEnd, Router, RouterLink } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { CommonModule } from '@angular/common';
-import { filter } from 'rxjs';
+import { Subscription, filter, timer } from 'rxjs';
+import { SILENT_ERRORS } from '../../core/interceptors/error.interceptor';
 import { AuthService } from '../../core/services/auth.service';
 import { LayoutService } from '../../core/services/layout.service';
 
 interface PageTitle { title: string; subtitle: string; }
+
+interface AppNotification { id: number; title: string; message: string; link: string | null; category: string; read: boolean; createdAt: string; }
+
+const CATEGORY_ICONS: Record<string, string> = {
+  PAIEMENT: 'bi-cash-coin', NOTES: 'bi-journal-text', ATTESTATION: 'bi-patch-check', INSCRIPTION: 'bi-person-vcard', INFO: 'bi-megaphone'
+};
 
 /** Titre affiché dans l'en-tête selon l'URL (préfixe le plus long d'abord). */
 const PAGE_TITLES: [string, PageTitle][] = [
@@ -26,6 +33,8 @@ const PAGE_TITLES: [string, PageTitle][] = [
   ['/teacher/students', { title: 'Étudiants et notes', subtitle: 'Espace professeur' }],
   ['/admin/registrations', { title: 'Inscriptions', subtitle: 'Administration' }],
   ['/admin/users', { title: 'Étudiants et professeurs', subtitle: 'Administration' }],
+  ['/admin/scolarite', { title: 'Scolarité', subtitle: 'Administration' }],
+  ['/scolarite', { title: 'Ma scolarité', subtitle: 'Frais, notes et attestations' }],
   ['/library', { title: 'Bibliothèque', subtitle: 'Ressources' }],
   ['/references', { title: 'Références', subtitle: 'Ressources' }]
 ];
@@ -54,17 +63,32 @@ function matchesPrefix(path: string, prefix: string): boolean {
 
       <div class="header-actions">
         <div class="dropdown">
-          <button type="button" class="header-icon-btn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
+          <button type="button" class="header-icon-btn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications"
+                  (click)="loadNotifications()">
             <i class="bi bi-bell"></i>
-            <span *ngIf="pendingCount > 0" class="header-dot">{{ pendingCount > 9 ? '9+' : pendingCount }}</span>
+            <span *ngIf="badgeCount > 0" class="header-dot">{{ badgeCount > 9 ? '9+' : badgeCount }}</span>
           </button>
-          <div class="dropdown-menu dropdown-menu-end header-menu">
-            <div class="header-menu-title">Notifications</div>
+          <div class="dropdown-menu dropdown-menu-end header-menu" style="width:360px;max-width:92vw">
+            <div class="header-menu-title d-flex justify-content-between align-items-center">
+              <span>Notifications</span>
+              <button *ngIf="unreadCount > 0" type="button" class="btn btn-link btn-sm p-0 text-decoration-none" (click)="markAllRead($event)">Tout marquer comme lu</button>
+            </div>
             <a *ngIf="pendingCount > 0" class="dropdown-item d-flex gap-2 align-items-start" routerLink="/admin/registrations">
               <i class="bi bi-person-check mt-1"></i>
               <span>{{ pendingCount }} inscription{{ pendingCount > 1 ? 's' : '' }} en attente de validation</span>
             </a>
-            <div *ngIf="pendingCount === 0" class="px-3 py-2 small text-muted">Aucune nouvelle notification</div>
+            <div style="max-height:380px;overflow-y:auto">
+              <button *ngFor="let n of notifications" type="button" class="dropdown-item d-flex gap-2 align-items-start text-wrap"
+                      [class.fw-semibold]="!n.read" (click)="openNotification(n)">
+                <i class="bi mt-1" [ngClass]="icon(n.category)" [class.text-primary]="!n.read"></i>
+                <span class="flex-grow-1">
+                  <span class="d-block">{{ n.title }}</span>
+                  <span class="d-block small text-muted fw-normal">{{ n.message }}</span>
+                  <span class="d-block small text-muted fw-normal">{{ n.createdAt | date:'dd/MM HH:mm' }}</span>
+                </span>
+              </button>
+            </div>
+            <div *ngIf="pendingCount === 0 && notifications.length === 0" class="px-3 py-2 small text-muted">Aucune notification</div>
           </div>
         </div>
 
@@ -92,9 +116,12 @@ function matchesPrefix(path: string, prefix: string): boolean {
     </header>
   `
 })
-export class NavbarComponent implements OnInit {
+export class NavbarComponent implements OnInit, OnDestroy {
   page: PageTitle = PAGE_TITLES[0][1];
   pendingCount = 0;
+  unreadCount = 0;
+  notifications: AppNotification[] = [];
+  private poll?: Subscription;
 
   constructor(public authService: AuthService, public layout: LayoutService,
               private router: Router, private http: HttpClient) {}
@@ -119,6 +146,42 @@ export class NavbarComponent implements OnInit {
         error: () => {}
       });
     }
+    // Nombre de notifications non lues, rafraîchi chaque minute
+    this.poll = timer(0, 60_000).subscribe(() => this.loadUnreadCount());
+  }
+
+  ngOnDestroy() { this.poll?.unsubscribe(); }
+
+  get badgeCount(): number { return this.pendingCount + this.unreadCount; }
+
+  icon(category: string): string { return CATEGORY_ICONS[category] ?? 'bi-bell'; }
+
+  private loadUnreadCount() {
+    if (!this.authService.isAuthenticated) return;
+    this.http.get<{ count: number }>('/api/notifications/unread-count', { context: new HttpContext().set(SILENT_ERRORS, true) })
+      .subscribe({ next: r => this.unreadCount = r.count, error: () => {} });
+  }
+
+  loadNotifications() {
+    this.http.get<AppNotification[]>('/api/notifications', { context: new HttpContext().set(SILENT_ERRORS, true) })
+      .subscribe({ next: n => this.notifications = n, error: () => {} });
+  }
+
+  openNotification(n: AppNotification) {
+    if (!n.read) {
+      n.read = true;
+      this.unreadCount = Math.max(0, this.unreadCount - 1);
+      this.http.post(`/api/notifications/${n.id}/read`, {}).subscribe({ error: () => {} });
+    }
+    if (n.link) this.router.navigateByUrl(n.link);
+  }
+
+  markAllRead(event: Event) {
+    event.stopPropagation();
+    this.http.post('/api/notifications/read-all', {}).subscribe(() => {
+      this.unreadCount = 0;
+      this.notifications.forEach(n => n.read = true);
+    });
   }
 
   private updateTitle(url: string) {

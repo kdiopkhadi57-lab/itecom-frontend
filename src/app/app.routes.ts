@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, teacherGuard } from './core/guards/auth.guard';
+import { adminGuard, authGuard, studentGuard, teacherGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
@@ -75,6 +75,24 @@ export const routes: Routes = [
     path: 'admin/users',
     canActivate: [authGuard],
     loadComponent: () => import('./features/admin/users/admin-users.component').then(m => m.AdminUsersComponent)
+  },
+  {
+    path: 'admin/scolarite',
+    canActivate: [authGuard, adminGuard],
+    loadComponent: () => import('./features/scolarite/admin-scolarite.component').then(m => m.AdminScolariteComponent)
+  },
+  {
+    path: 'scolarite',
+    canActivate: [authGuard, studentGuard],
+    loadComponent: () => import('./features/scolarite/my-scolarite.component').then(m => m.MyScolariteComponent)
+  },
+  {
+    path: 'verification',
+    loadComponent: () => import('./features/verification/verification.component').then(m => m.VerificationComponent)
+  },
+  {
+    path: 'verification/:code',
+    loadComponent: () => import('./features/verification/verification.component').then(m => m.VerificationComponent)
   },
   {
     path: 'exam/:token',

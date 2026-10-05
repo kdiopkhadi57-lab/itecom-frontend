@@ -22,6 +22,12 @@ export const teacherGuard: CanActivateFn = (route, state) => {
   return inject(Router).createUrlTree([authService.isAuthenticated ? '/dashboard' : '/auth/login']);
 };
 
+export const adminGuard: CanActivateFn = () => {
+  let authService = inject(AuthService);
+  if (authService.isAuthenticated && authService.isAdmin) return true;
+  return inject(Router).createUrlTree([authService.isAuthenticated ? '/dashboard' : '/auth/login']);
+};
+
 /** Pages de connexion : un utilisateur déjà connecté est renvoyé vers son tableau de bord. */
 export const guestGuard: CanActivateFn = () => {
   let authService = inject(AuthService);

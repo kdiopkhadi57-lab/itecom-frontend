@@ -429,3 +429,26 @@ body.sidebar-collapsed .main-content.main-content-full {
   .header-title h1 { font-size: 1.1rem; }
   body.sidebar-mobile-open { overflow: hidden; }
 }
+
+/* ── Scolarité : statuts, onglets et montants ─────────────────────────────── */
+.status-badge {
+  display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 999px;
+  font-size: .75rem; font-weight: 600; white-space: nowrap;
+  &.ok { background: #e6f4ea; color: var(--success); }
+  &.warn { background: #fdf3e1; color: var(--warning); }
+  &.danger { background: #fbeaea; color: var(--danger); }
+  &.muted { background: var(--surface-muted); color: var(--muted); }
+}
+.school-tabs { border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; flex-wrap: nowrap; overflow-x: auto; }
+.school-tabs .nav-link { color: var(--muted); white-space: nowrap; }
+.school-tabs .nav-link.active { color: var(--primary); }
+.school-tabs .tab-count { background: var(--danger); color: #fff; border-radius: 999px; font-size: .7rem; padding: 1px 7px; margin-left: 4px; }
+.amount { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pay-progress { height: 6px; border-radius: 999px; background: var(--surface-muted); }
+.pay-progress .progress-bar { background: var(--success); border-radius: 999px; }
+.method-card {
+  border: 1px solid var(--border); border-radius: 12px; background: var(--surface-raised); padding: 12px; width: 100%;
+  text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+  &.active { border-color: var(--primary); background: var(--primary-soft); }
+  .method-name { font-weight: 700; display: block; }
+}

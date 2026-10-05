@@ -6,6 +6,7 @@ import { DIALOG_DATA } from '../../core/services/dialog.service';
 export interface FileViewerData {
   url: string;
   name?: string;
+  kind?: 'image' | 'pdf';   // pour une adresse sans extension (ex. blob: d'un PDF protégé)
 }
 
 /** Visionneuse de fichier (image, PDF) ouverte dans une popup, sans quitter la page. */
@@ -58,7 +59,7 @@ export class FileViewerComponent {
 
   constructor(@Inject(DIALOG_DATA) public data: FileViewerData, sanitizer: DomSanitizer) {
     const path = (data.url || '').split('?')[0].toLowerCase();
-    this.kind = /\.(png|jpe?g|gif|webp|bmp|heic)$/.test(path) ? 'image' : path.endsWith('.pdf') ? 'pdf' : 'other';
+    this.kind = data.kind ?? (/\.(png|jpe?g|gif|webp|bmp|heic)$/.test(path) ? 'image' : path.endsWith('.pdf') ? 'pdf' : 'other');
     this.name = data.name || decodeURIComponent(path.substring(path.lastIndexOf('/') + 1)) || 'Fichier';
     this.safeUrl = sanitizer.bypassSecurityTrustResourceUrl(data.url);
   }

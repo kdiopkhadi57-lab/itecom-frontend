@@ -44,6 +44,9 @@ import { LayoutService } from '../../core/services/layout.service';
               <i class="bi bi-clipboard-check"></i><span>Examens en ligne</span></a></li>
           <li><a class="nav-link" routerLink="/virtual-class" routerLinkActive="active" title="Classes virtuelles">
             <i class="bi bi-camera-video"></i><span>Classes virtuelles</span></a></li>
+          <li *ngIf="authService.isStudent">
+            <a class="nav-link" routerLink="/scolarite" routerLinkActive="active" title="Ma scolarité">
+              <i class="bi bi-wallet2"></i><span>Ma scolarité</span></a></li>
 
           <ng-container *ngIf="authService.isTeacher || authService.isAdmin">
             <li class="sidebar-heading"><span>Espace professeur</span></li>
@@ -63,6 +66,12 @@ import { LayoutService } from '../../core/services/layout.service';
               <a class="nav-link" routerLink="/admin/registrations" routerLinkActive="active" title="Inscriptions">
                 <i class="bi bi-person-check"></i><span>Inscriptions</span>
                 <span *ngIf="pendingCount > 0" class="sidebar-badge">{{ pendingCount }}</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/admin/scolarite" routerLinkActive="active" title="Scolarité">
+                <i class="bi bi-bank"></i><span>Scolarité</span>
+                <span *ngIf="pendingPayments > 0" class="sidebar-badge">{{ pendingPayments }}</span>
               </a>
             </li>
             <li>
@@ -89,6 +98,7 @@ import { LayoutService } from '../../core/services/layout.service';
 })
 export class SidebarComponent implements OnInit {
   pendingCount = 0;
+  pendingPayments = 0;
 
   constructor(public authService: AuthService, public userScope: UserScopeService, private http: HttpClient,
               public layout: LayoutService) {}
@@ -102,6 +112,10 @@ export class SidebarComponent implements OnInit {
   loadPendingCount() {
     this.http.get<{count: number}>('/api/admin/registrations/count').subscribe({
       next: (res) => this.pendingCount = res.count,
+      error: () => {}
+    });
+    this.http.get<unknown[]>('/api/admin/scolarite/payments', { params: { status: 'PENDING' } }).subscribe({
+      next: (res) => this.pendingPayments = res.length,
       error: () => {}
     });
   }

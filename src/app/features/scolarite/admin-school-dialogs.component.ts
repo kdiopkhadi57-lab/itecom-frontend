@@ -6,6 +6,7 @@ import {
   CERTIFICATE_TYPES, ENROLLMENT_STATUS, EnrollmentFile, Fee, LEVELS, METHOD_LABELS, PAYMENT_STATUS, SPECIALIZATIONS,
   SchoolService, apiError, fcfa
 } from '../../core/services/school.service';
+import { emailError, phoneError } from '../../core/validators/contact';
 import { SchoolScheduleComponent, SchoolTranscriptComponent } from './school-shared.component';
 
 /** Création / modification d'un barème de frais. */
@@ -84,7 +85,7 @@ export class FeeDialogComponent {
 }
 
 /**
- * Inscription administrative : un nouvel étudiant (identité et pièces scannées en PDF),
+ * Inscription administrative : un nouvel étudiant (identité et pièces scannées en PDF selon son profil),
  * ou réinscription de tous les étudiants existants d'un niveau.
  */
 @Component({
@@ -119,12 +120,16 @@ export class FeeDialogComponent {
         </div>
         <div class="col-md-6">
           <label class="form-label fw-semibold small" for="nsEmail">Email</label>
-          <input id="nsEmail" type="email" class="form-control" name="email" [(ngModel)]="form.email" required>
-          <div class="form-text">Identifiant de connexion : les accès lui sont envoyés à cette adresse.</div>
+          <input id="nsEmail" type="email" class="form-control" name="email" [(ngModel)]="form.email" required
+                 [class.is-invalid]="touched.email && emailMsg" (blur)="touched.email = true" placeholder="prenom.nom@gmail.com">
+          <div *ngIf="touched.email && emailMsg" class="invalid-feedback d-block">{{ emailMsg }}</div>
+          <div *ngIf="!(touched.email && emailMsg)" class="form-text">Identifiant de connexion : les accès lui sont envoyés à cette adresse.</div>
         </div>
         <div class="col-md-6">
           <label class="form-label fw-semibold small" for="nsPhone">Téléphone <span class="text-muted fw-normal">(facultatif)</span></label>
-          <input id="nsPhone" type="tel" class="form-control" name="phone" [(ngModel)]="form.phone">
+          <input id="nsPhone" type="tel" class="form-control" name="phone" [(ngModel)]="form.phone" inputmode="tel"
+                 [class.is-invalid]="touched.phone && phoneMsg" (blur)="touched.phone = true" placeholder="77 123 45 67">
+          <div *ngIf="touched.phone && phoneMsg" class="invalid-feedback d-block">{{ phoneMsg }}</div>
         </div>
       </div>
 
@@ -162,15 +167,16 @@ export class FeeDialogComponent {
           </button>
         </div>
         <div class="col-md-6">
-          <button type="button" class="method-card text-start" [class.active]="form.profile === 'ALREADY_STUDENT'" (click)="form.profile = 'ALREADY_STUDENT'">
-            <span class="method-name"><i class="bi bi-person-badge me-1"></i>Déjà étudiant</span>
-            <span class="small text-muted">A fait une année dans le supérieur</span>
+          <button type="button" class="method-card text-start" [class.active]="form.profile === 'TRANSFER'" (click)="form.profile = 'TRANSFER'">
+            <span class="method-name"><i class="bi bi-building me-1"></i>Étudiant d'un autre établissement</span>
+            <span class="small text-muted">Vient d'une autre école ou université</span>
           </button>
         </div>
       </div>
 
       <h6 class="fw-bold mt-4 mb-2">Pièces scannées (PDF, 10 Mo maximum chacune)</h6>
-      <div class="row g-3">
+      <!-- Nouveau bachelier : pièces du bac -->
+      <div class="row g-3" *ngIf="form.profile === 'NEW_BACHELOR'">
         <div class="col-md-6">
           <label class="form-label fw-semibold small" for="nsBac">Attestation du bac</label>
           <input id="nsBac" type="file" class="form-control" accept="application/pdf,.pdf" (change)="pick($event, 'bacAttestation')">
@@ -179,11 +185,19 @@ export class FeeDialogComponent {
           <label class="form-label fw-semibold small" for="nsBacNotes">Relevé de notes du bac</label>
           <input id="nsBacNotes" type="file" class="form-control" accept="application/pdf,.pdf" (change)="pick($event, 'bacTranscript')">
         </div>
-        <div class="col-12" *ngIf="form.profile === 'ALREADY_STUDENT'">
+      </div>
+      <!-- Autre établissement : relevés de l'année passée et attestation de réussite -->
+      <div class="row g-3" *ngIf="form.profile === 'TRANSFER'">
+        <div class="col-md-6">
           <label class="form-label fw-semibold small" for="nsPrev">Relevés de notes de l'année passée</label>
           <input id="nsPrev" type="file" class="form-control" accept="application/pdf,.pdf" multiple (change)="pickMany($event)">
           <div class="form-text">Un ou plusieurs PDF (par semestre, par exemple).
             <span *ngIf="previous.length">{{ previous.length }} fichier(s) : {{ previousNames }}</span></div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-semibold small" for="nsSuccess">Attestation de réussite</label>
+          <input id="nsSuccess" type="file" class="form-control" accept="application/pdf,.pdf" (change)="pick($event, 'successAttestation')">
+          <div class="form-text">Délivrée par l'établissement d'origine.</div>
         </div>
       </div>
 
@@ -232,8 +246,9 @@ export class EnrollmentDialogComponent {
   year: string;
   level = 'L1';
   form = { lastName: '', firstName: '', birthDate: '', birthPlace: '', email: '', phone: '',
-           specialization: null as string | null, discount: 0, profile: 'NEW_BACHELOR' as 'NEW_BACHELOR' | 'ALREADY_STUDENT' };
-  files: { bacAttestation?: File; bacTranscript?: File } = {};
+           specialization: null as string | null, discount: 0, profile: 'NEW_BACHELOR' as 'NEW_BACHELOR' | 'TRANSFER' };
+  files: { bacAttestation?: File; bacTranscript?: File; successAttestation?: File } = {};
+  touched = { email: false, phone: false };
   previous: File[] = [];
   saving = false;
   error = '';
@@ -249,8 +264,10 @@ export class EnrollmentDialogComponent {
   }
 
   get previousNames(): string { return this.previous.map(f => f.name).join(', '); }
+  get emailMsg(): string | null { return emailError(this.form.email); }
+  get phoneMsg(): string | null { return this.form.phone.trim() ? phoneError(this.form.phone) : null; }
 
-  pick(event: Event, key: 'bacAttestation' | 'bacTranscript') {
+  pick(event: Event, key: 'bacAttestation' | 'bacTranscript' | 'successAttestation') {
     this.files[key] = (event.target as HTMLInputElement).files?.[0];
   }
 
@@ -265,11 +282,19 @@ export class EnrollmentDialogComponent {
     if (!f.birthDate) return 'Indiquez la date de naissance.';
     if (f.birthDate > this.today) return 'La date de naissance ne peut pas être dans le futur.';
     if (!f.birthPlace.trim()) return 'Indiquez le lieu de naissance.';
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(f.email.trim())) return 'Adresse email invalide.';
-    if (!this.files.bacAttestation) return 'Joignez l\'attestation du bac scannée en PDF.';
-    if (!this.files.bacTranscript) return 'Joignez le relevé de notes du bac scanné en PDF.';
-    if (f.profile === 'ALREADY_STUDENT' && this.previous.length === 0) return 'Joignez les relevés de notes de l\'année passée (PDF).';
-    const all = [this.files.bacAttestation, this.files.bacTranscript, ...(f.profile === 'ALREADY_STUDENT' ? this.previous : [])];
+    this.touched = { email: true, phone: true };
+    if (this.emailMsg) return this.emailMsg;
+    if (this.phoneMsg) return this.phoneMsg;
+    let all: File[];
+    if (f.profile === 'NEW_BACHELOR') {
+      if (!this.files.bacAttestation) return 'Joignez l\'attestation du bac scannée en PDF.';
+      if (!this.files.bacTranscript) return 'Joignez le relevé de notes du bac scanné en PDF.';
+      all = [this.files.bacAttestation, this.files.bacTranscript];
+    } else {
+      if (this.previous.length === 0) return 'Joignez les relevés de notes de l\'année passée (PDF).';
+      if (!this.files.successAttestation) return 'Joignez l\'attestation de réussite de l\'établissement d\'origine (PDF).';
+      all = [...this.previous, this.files.successAttestation];
+    }
     const notPdf = all.find(x => !x.name.toLowerCase().endsWith('.pdf'));
     if (notPdf) return `« ${notPdf.name} » n'est pas un PDF.`;
     const tooBig = all.find(x => x.size > 10 * 1024 * 1024);
@@ -297,9 +322,13 @@ export class EnrollmentDialogComponent {
     if (f.specialization) body.append('specialization', f.specialization);
     body.append('discount', String(f.discount || 0));
     body.append('profile', f.profile);
-    body.append('bacAttestation', this.files.bacAttestation!);
-    body.append('bacTranscript', this.files.bacTranscript!);
-    if (f.profile === 'ALREADY_STUDENT') this.previous.forEach(p => body.append('previousTranscripts', p));
+    if (f.profile === 'NEW_BACHELOR') {
+      body.append('bacAttestation', this.files.bacAttestation!);
+      body.append('bacTranscript', this.files.bacTranscript!);
+    } else {
+      this.previous.forEach(p => body.append('previousTranscripts', p));
+      body.append('successAttestation', this.files.successAttestation!);
+    }
 
     this.saving = true;
     this.school.admit(body).subscribe({

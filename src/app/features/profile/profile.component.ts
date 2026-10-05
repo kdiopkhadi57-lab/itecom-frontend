@@ -4,6 +4,7 @@ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } 
 import { AuthService } from '../../core/services/auth.service';
 import { ProgressService } from '../../core/services/progress.service';
 import { HttpClient } from '@angular/common/http';
+import { phoneValidator } from '../../core/validators/contact';
 
 @Component({
   selector: 'app-profile',
@@ -76,7 +77,10 @@ import { HttpClient } from '@angular/common/http';
               </div>
               <div class="mb-3">
                 <label class="form-label fw-semibold">Téléphone</label>
-                <input type="tel" class="form-control" formControlName="phone" placeholder="+221 77 000 00 00">
+                <input type="tel" class="form-control" formControlName="phone" placeholder="77 123 45 67" inputmode="tel"
+                       [class.is-invalid]="profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched">
+                <div *ngIf="profileForm.get('phone')?.touched && profileForm.get('phone')?.errors?.['contact']" class="invalid-feedback d-block">
+                  {{ profileForm.get('phone')?.errors?.['contact'] }}</div>
               </div>
               <div class="mb-4">
                 <label class="form-label fw-semibold">Bio</label>
@@ -146,7 +150,7 @@ export class ProfileComponent implements OnInit {
       firstName: [this.authService.currentUser?.firstName || '', Validators.required],
       lastName: [this.authService.currentUser?.lastName || '', Validators.required],
       email: [{ value: this.authService.currentUser?.email || '', disabled: true }],
-      phone: [''],
+      phone: ['', phoneValidator()],
       bio: ['']
     });
 
@@ -168,7 +172,11 @@ export class ProfileComponent implements OnInit {
     this.saveError = '';
     this.saveSuccess = false;
     // Le formulaire invalide n'envoyait rien et n'affichait aucun message
-    if (this.profileForm.invalid) { this.saveError = 'Le prénom et le nom sont obligatoires.'; return; }
+    if (this.profileForm.invalid) {
+      this.profileForm.markAllAsTouched();
+      this.saveError = this.profileForm.get('phone')?.errors?.['contact'] ?? 'Le prénom et le nom sont obligatoires.';
+      return;
+    }
     this.savingProfile = true;
     this.http.put('/api/users/profile', this.profileForm.value).subscribe({
       next: () => {

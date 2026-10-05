@@ -7,6 +7,7 @@ import {
   Certificate, ENROLLMENT_STATUS, Enrollment, METHOD_LABELS, PAYMENT_STATUS, Payment, SPECIALIZATIONS, ScheduleItem,
   SchoolService, Transcript, apiError, fcfa
 } from '../../core/services/school.service';
+import { phoneError, phoneUsageFor } from '../../core/validators/contact';
 import { SchoolScheduleComponent, SchoolTranscriptComponent } from './school-shared.component';
 
 interface MyEnrollment {
@@ -54,7 +55,9 @@ interface MyEnrollment {
     <div class="row g-3">
       <div class="col-md-6">
         <label class="form-label fw-semibold small" for="mpPhone">3. Numéro utilisé</label>
-        <input id="mpPhone" type="tel" class="form-control" [(ngModel)]="phone" placeholder="77 123 45 67" autocomplete="tel">
+        <input id="mpPhone" type="tel" class="form-control" [(ngModel)]="phone" placeholder="77 123 45 67" autocomplete="tel" inputmode="tel"
+               [class.is-invalid]="phoneTouched && phoneMsg" (blur)="phoneTouched = true">
+        <div *ngIf="phoneTouched && phoneMsg" class="invalid-feedback d-block">{{ phoneMsg }}</div>
       </div>
       <div class="col-md-6">
         <label class="form-label fw-semibold small" for="mpRef">4. Référence de transaction</label>
@@ -89,9 +92,16 @@ export class MobilePaymentDialogComponent {
     this.amount = data.nextDue > 0 ? Math.min(data.nextDue, data.balance) : data.balance;
   }
 
+  phoneTouched = false;
+
   label(m: string) { return METHOD_LABELS[m]; }
 
+  /** Le numéro doit correspondre à l'opérateur choisi (Orange Money : 77/78, Free Money : 76). */
+  get phoneMsg(): string | null { return phoneError(this.phone, phoneUsageFor(this.method)); }
+
   submit() {
+    this.phoneTouched = true;
+    if (this.phoneMsg) { this.error = this.phoneMsg; return; }
     this.saving = true;
     this.error = '';
     this.school.pay({ enrollmentId: this.data.enrollmentId, amount: this.amount, method: this.method,

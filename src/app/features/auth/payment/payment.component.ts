@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { phoneError, phoneUsageFor } from '../../../core/validators/contact';
 
 @Component({
   selector: 'app-payment',
@@ -88,8 +89,10 @@ import { HttpClient } from '@angular/common/http';
             <div class="input-group">
               <span class="input-group-text"><i class="bi bi-phone"></i></span>
               <input type="tel" class="form-control" [(ngModel)]="paymentPhone"
-                     placeholder="Ex: 77 123 45 67" [disabled]="!method">
+                     placeholder="Ex: 77 123 45 67" [disabled]="!method" inputmode="tel"
+                     [class.is-invalid]="phoneTouched && phoneMsg" (blur)="phoneTouched = true">
             </div>
+            <div *ngIf="phoneTouched && phoneMsg" class="invalid-feedback d-block">{{ phoneMsg }}</div>
           </div>
 
           <div class="mb-4">
@@ -144,8 +147,13 @@ export class PaymentComponent implements OnInit {
   submitted = false;
   private email = '';
 
+  phoneTouched = false;
+
+  /** Numéro conforme à l'opérateur choisi (Orange Money : 77/78) ; mêmes règles que le serveur. */
+  get phoneMsg(): string | null { return phoneError(this.paymentPhone, phoneUsageFor(this.method)); }
+
   get canSubmit(): boolean {
-    return !!this.method && this.paymentPhone.trim().length >= 8 && this.paymentReference.trim().length >= 4;
+    return !!this.method && !this.phoneMsg && this.paymentReference.trim().length >= 4;
   }
 
   constructor(private http: HttpClient, private route: ActivatedRoute, private router: Router) {}

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { DialogRef } from '../../../core/services/dialog.service';
+import { emailError } from '../../../core/validators/contact';
 
 export interface CreatedAccount {
   user: any;
@@ -167,6 +168,8 @@ export class CreateAccountDialogComponent {
 
   create() {
     if (this.saving || !this.role) return;
+    const invalidEmail = emailError(this.form.email);
+    if (invalidEmail) { this.error = invalidEmail; return; }
     this.saving = true;
     this.error = '';
     const student = this.role === 'STUDENT';

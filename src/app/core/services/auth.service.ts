@@ -4,13 +4,14 @@ import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { Router } from '@angular/router';
 import { AuthResponse, LoginRequest, RegisterRequest, User } from '../models/user.model';
 import { ApiResponse } from '../models/api-response.model';
+import { OfflineService } from './offline.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient, private router: Router) {
+  constructor(private http: HttpClient, private router: Router, private offline: OfflineService) {
     let stored = localStorage.getItem('user');
     if (stored) this.currentUserSubject.next(JSON.parse(stored));
   }
@@ -49,13 +50,19 @@ export class AuthService {
   }
 
   logout(): void {
+    // Déconnexion volontaire : les cours téléchargés sur cet appareil sont effacés (appareil partagé)
+    this.offline.clearUserData();
     this.clearSession();
     this.router.navigate(['/auth/login']);
   }
 
   /** Efface la session (stockage et utilisateur en mémoire) sans naviguer. */
   clearSession(): void {
+    // Une session expirée ne doit pas effacer la progression faite hors connexion ni les réglages hors ligne
+    const kept = Object.keys(localStorage).filter(k => k.startsWith('itecom-offline'))
+      .map(k => [k, localStorage.getItem(k)!] as const);
     localStorage.clear();
+    kept.forEach(([k, v]) => localStorage.setItem(k, v));
     this.currentUserSubject.next(null);
   }
 

@@ -38,6 +38,8 @@ export interface Lesson {
   description: string;
   content?: string;
   videoUrl?: string;
+  /** Version légère (360p) pour les connexions faibles et le hors connexion. */
+  videoLightUrl?: string | null;
   pdfUrl?: string;
   duration: number;
   orderIndex: number;

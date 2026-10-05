@@ -6,6 +6,9 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CourseService } from '../../../core/services/course.service';
 import { ProgressService } from '../../../core/services/progress.service';
 import { Course, Lesson } from '../../../core/models/course.model';
+import { OfflineService, formatSize } from '../../../core/services/offline.service';
+import { DialogService } from '../../../core/services/dialog.service';
+import { VideoQuality, getVideoQuality, pickVideoUrl, setVideoQuality } from '../../../core/utils/video-quality';
 
 type CoursePlayerTab = 'cours' | 'pratique';
 
@@ -45,8 +48,57 @@ export class CoursePlayerComponent implements OnInit, OnDestroy {
     private route: ActivatedRoute,
     private courseService: CourseService,
     private progressService: ProgressService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    public offline: OfflineService,
+    private dialogs: DialogService
   ) {}
+
+  // ─── Vidéo et hors connexion ─────────────────────────────────────────────
+
+  quality: VideoQuality = getVideoQuality();
+
+  get isDownloaded(): boolean { return this.offline.isDownloaded(this.courseId); }
+
+  get downloadProgress(): number | null {
+    return this.offline.downloading$.value[this.courseId] ?? null;
+  }
+
+  /** Vidéo stockée sur l'appareil pour cette leçon (cours téléchargé). */
+  get playingDownloaded(): boolean {
+    return !!this.currentLesson && !!this.offline.downloadedVideo(this.courseId, this.currentLesson.id);
+  }
+
+  /** Cours téléchargé : version stockée ; sinon qualité choisie (légère si connexion faible). */
+  get videoSrc(): string | null {
+    if (!this.currentLesson) return null;
+    return this.offline.downloadedVideo(this.courseId, this.currentLesson.id)
+      ?? pickVideoUrl(this.currentLesson.videoUrl, this.currentLesson.videoLightUrl);
+  }
+
+  setQuality(q: VideoQuality) {
+    this.quality = q;
+    setVideoQuality(q);
+  }
+
+  async downloadForOffline() {
+    if (!this.course) return;
+    try {
+      const saved = await this.offline.download(this.course);
+      this.dialogs.toast(`« ${saved.title} » est disponible hors connexion (${formatSize(saved.sizeBytes)}).`, 'success', 6000);
+    } catch (e: any) {
+      this.dialogs.toast(e?.message || 'Téléchargement impossible. Réessayez avec une meilleure connexion.', 'danger', 7000);
+    }
+  }
+
+  async removeOffline() {
+    const ok = await this.dialogs.confirm({ title: 'Retirer ce cours de l\'appareil ?',
+      message: 'Il ne sera plus disponible sans connexion. Vous pourrez le télécharger à nouveau.', icon: 'bi-trash3',
+      tone: 'danger', confirmText: 'Retirer' });
+    if (ok) {
+      await this.offline.remove(this.courseId);
+      this.dialogs.toast('Cours retiré de l\'appareil.', 'info');
+    }
+  }
 
   ngOnInit(): void {
     this.courseId = +this.route.snapshot.paramMap.get('id')!;

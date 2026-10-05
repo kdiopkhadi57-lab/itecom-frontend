@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { pickVideoUrl } from '../../core/utils/video-quality';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -14,6 +15,7 @@ interface VirtualClass {
   durationMinutes: number;
   roomName: string;
   recordingUrl: string | null;
+  recordingLightUrl?: string | null;
   status: string;
   teacherName: string | null;
   teacherId: number | null;
@@ -103,7 +105,9 @@ interface VirtualClass {
               <!-- Lecteur vidéo inline -->
               <video *ngIf="playingVcId === vc.id && playingObjectUrl"
                      [src]="playingObjectUrl"
+                     preload="metadata" playsinline
                      (canplay)="onVideoReady($event)"
+                     (error)="onVideoError()"
                      (pause)="videoIsPaused = true"
                      (play)="videoIsPaused = false"
                      (ended)="videoIsPaused = true"
@@ -374,6 +378,13 @@ export class VirtualClassComponent implements OnInit {
     this.loadingVcId = vc.id;
     this.videoIsPaused = true;
 
+    // Enregistrement en fichier : lecture en streaming (démarre tout de suite, version légère si la connexion est faible)
+    const url = pickVideoUrl(vc.recordingUrl, vc.recordingLightUrl);
+    if (url && !url.startsWith('/api/')) {
+      this.playingObjectUrl = url;
+      return;
+    }
+    // Ancien enregistrement encore stocké en base : téléchargement avec le jeton de connexion
     this.http.get(`/api/virtual-classes/${vc.id}/recording`, { responseType: 'blob' }).subscribe({
       next: (blob) => {
         this.playingObjectUrl = URL.createObjectURL(blob);
@@ -386,7 +397,14 @@ export class VirtualClassComponent implements OnInit {
     });
   }
 
+  onVideoError() {
+    this.stopCurrentVideo();
+    this.inlineError = 'Impossible de lire la vidéo. Vérifiez votre connexion puis réessayez.';
+  }
+
   onVideoReady(event: Event) {
+    // « canplay » revient après chaque avance rapide : on ne relance la lecture qu'à l'ouverture
+    if (this.currentVideoEl === event.target) return;
     this.loadingVcId = null;
     this.currentVideoEl = event.target as HTMLVideoElement;
     this.currentVideoEl.play();
@@ -399,7 +417,7 @@ export class VirtualClassComponent implements OnInit {
       this.currentVideoEl = null;
     }
     if (this.playingObjectUrl) {
-      URL.revokeObjectURL(this.playingObjectUrl);
+      if (this.playingObjectUrl.startsWith('blob:')) URL.revokeObjectURL(this.playingObjectUrl);
       this.playingObjectUrl = null;
     }
     this.playingVcId = null;

@@ -567,8 +567,8 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
     try {
       // 1. Capturer l'écran (+ audio système si l'utilisateur l'autorise)
       this.displayStream = await (navigator.mediaDevices as any).getDisplayMedia({
-        // Qualité réduite : la vidéo est stockée en base64 dans MySQL (64 Mo max par requête)
-        video: { width: 1280, height: 720, frameRate: 15 },
+        // Qualité adaptée à un cours (écran partagé, tableau) : fichiers légers, rapides à revoir
+        video: { width: 960, height: 540, frameRate: 12 },
         audio: true
       });
 
@@ -608,10 +608,10 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
       const mimeType = MediaRecorder.isTypeSupported('video/webm;codecs=vp9,opus')
         ? 'video/webm;codecs=vp9,opus'
         : 'video/webm';
-      // ~280 kbit/s au total, soit environ 20 minutes d'enregistrement possibles
+      // ~200 kbit/s au total (≈ 90 Mo par heure) ; le serveur en tire ensuite une version encore plus légère
       this.mediaRecorder = new MediaRecorder(combined, {
         mimeType,
-        videoBitsPerSecond: 250_000,
+        videoBitsPerSecond: 170_000,
         audioBitsPerSecond: 32_000
       });
       this.mediaRecorder.ondataavailable = (e: BlobEvent) => {
@@ -655,40 +655,32 @@ export class VirtualClassRoomComponent implements OnInit, OnDestroy {
     const blob = new Blob(this.recordedChunks, { type: 'video/webm' });
     const filename = `session-${this.vc.id}.webm`;
 
-    // Le base64 ajoute ~33 % : au-delà de ~45 Mo de vidéo, MySQL refuse la requête
-    if (blob.size > 45 * 1024 * 1024) {
+    // Envoyé en fichier (plus de base64) : jusqu'à 600 Mo, soit plus de 6 heures à ce débit
+    if (blob.size > 600 * 1024 * 1024) {
       const sizeMb = Math.round(blob.size / (1024 * 1024));
-      this.uploadError = `Enregistrement trop volumineux (${sizeMb} Mo, maximum 45 Mo, soit environ 20 minutes). `
-        + 'Faites des enregistrements plus courts.';
+      this.uploadError = `Enregistrement trop volumineux (${sizeMb} Mo, maximum 600 Mo). Faites des enregistrements plus courts.`;
       onDone?.();
       return;
     }
 
     this.uploading = true;
     this.extractThumbnailFromBlob(blob).then(thumbnailBase64 => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = (reader.result as string).split(',')[1];
-        this.http.post(`/api/teacher/virtual-classes/${this.vc!.id}/recording`, {
-          videoBase64: base64,
-          mimeType: 'video/webm',
-          filename,
-          thumbnailBase64
-        }).subscribe({
-          next: () => {
-            this.uploading = false;
-            this.uploadSuccess = true;
-            if (this.vc) this.vc.status = 'COMPLETED';
-            onDone?.();
-          },
-          error: () => {
-            this.uploading = false;
-            this.uploadError = "Erreur lors de l'envoi de l'enregistrement vers la plateforme.";
-            onDone?.();
-          }
-        });
-      };
-      reader.readAsDataURL(blob);
+      const body = new FormData();
+      body.append('file', blob, filename);
+      if (thumbnailBase64) body.append('thumbnail', thumbnailBase64);
+      this.http.post(`/api/teacher/virtual-classes/${this.vc!.id}/recording`, body).subscribe({
+        next: () => {
+          this.uploading = false;
+          this.uploadSuccess = true;
+          if (this.vc) this.vc.status = 'COMPLETED';
+          onDone?.();
+        },
+        error: () => {
+          this.uploading = false;
+          this.uploadError = "Erreur lors de l'envoi de l'enregistrement vers la plateforme.";
+          onDone?.();
+        }
+      });
     });
   }
 

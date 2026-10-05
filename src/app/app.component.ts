@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { NavigationEnd, Router, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 import { NavbarComponent } from './shared/components/navbar.component';
 import { SidebarComponent } from './shared/components/sidebar.component';
@@ -7,6 +7,7 @@ import { AuthService } from './core/services/auth.service';
 import { UiChromeService } from './core/services/ui-chrome.service';
 import { CommonModule } from '@angular/common';
 import { DialogHostComponent } from './shared/components/dialog-host.component';
+import { OfflineService } from './core/services/offline.service';
 
 /** Pages affichées sans menu, même connecté : connexion et vérification publique d'un document. */
 function isStandalonePage(url: string): boolean {
@@ -16,7 +17,7 @@ function isStandalonePage(url: string): boolean {
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, NavbarComponent, SidebarComponent, CommonModule, DialogHostComponent],
+  imports: [RouterOutlet, RouterLink, NavbarComponent, SidebarComponent, CommonModule, DialogHostComponent],
   template: `
     <!-- Les pages /auth (connexion…) et /verification (QR code) s'affichent toujours sans le menu du tableau de bord -->
     <ng-container *ngIf="authService.isAuthenticated && !(isAuthPage$ | async); else publicLayout">
@@ -25,6 +26,11 @@ function isStandalonePage(url: string): boolean {
         <app-sidebar></app-sidebar>
       </ng-container>
       <main class="main-content fade-in-up" [class.main-content-full]="uiChrome.hidden$ | async">
+        <div *ngIf="!(offline.online$ | async)" class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-3" role="status">
+          <i class="bi bi-wifi-off"></i>
+          <span class="flex-grow-1">Vous êtes hors connexion. Les cours téléchargés restent disponibles ; votre progression sera envoyée au retour de la connexion.</span>
+          <a routerLink="/courses/my-learning" class="btn btn-sm btn-outline-dark">Mes cours</a>
+        </div>
         <router-outlet></router-outlet>
       </main>
     </ng-container>
@@ -41,5 +47,6 @@ export class AppComponent {
     startWith(isStandalonePage(location.pathname))
   );
 
-  constructor(public authService: AuthService, public uiChrome: UiChromeService, private router: Router) {}
+  constructor(public authService: AuthService, public uiChrome: UiChromeService, private router: Router,
+              public offline: OfflineService) {}
 }

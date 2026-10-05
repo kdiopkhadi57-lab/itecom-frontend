@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
+import { OfflineService } from '../../../core/services/offline.service';
 import { CourseService } from '../../../core/services/course.service';
 import { ProgressService } from '../../../core/services/progress.service';
 import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course.model';
@@ -69,7 +70,11 @@ import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course
               <span><i class="bi" [ngClass]="getCategoryIcon(course.category)"></i></span>
             </div>
             <div class="card-body d-flex flex-column p-4">
-              <span class="badge-category mb-2">{{ getCategoryLabel(course.category) }}</span>
+              <div class="d-flex flex-wrap gap-1 mb-2">
+                <span class="badge-category">{{ getCategoryLabel(course.category) }}</span>
+                <span *ngIf="offline.isDownloaded(course.id)" class="badge bg-success-subtle text-success-emphasis border">
+                  <i class="bi bi-check2-circle me-1"></i>Hors connexion</span>
+              </div>
               <h5 class="fw-bold flex-grow-1">{{ course.title }}</h5>
 
               <div class="my-3" *ngIf="getProgress(course.id) as p">
@@ -86,10 +91,15 @@ import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course
               </div>
 
               <div class="d-flex gap-2 mt-auto">
-                <a [routerLink]="['/courses', course.id, 'learn']" class="btn btn-primary-custom flex-grow-1">
+                <a *ngIf="(offline.online$ | async) || offline.isDownloaded(course.id); else notDownloaded"
+                   [routerLink]="['/courses', course.id, 'learn']" class="btn btn-primary-custom flex-grow-1">
                   <i class="bi bi-play-fill me-1"></i>
                   {{ getProgress(course.id)?.overallPercentage === 0 ? 'Commencer' : 'Continuer' }}
                 </a>
+                <ng-template #notDownloaded>
+                  <span class="btn btn-light flex-grow-1 disabled small" title="Téléchargez ce cours quand vous avez internet">
+                    <i class="bi bi-wifi-off me-1"></i>Non téléchargé</span>
+                </ng-template>
                 <a [routerLink]="['/courses', course.id]" class="btn btn-outline-secondary">
                   <i class="bi bi-info-circle"></i>
                 </a>
@@ -108,18 +118,29 @@ export class MyLearningComponent implements OnInit {
   totalCompleted = 0;
   avgProgress = 0;
 
-  constructor(private courseService: CourseService, private progressService: ProgressService) {}
+  constructor(private courseService: CourseService, private progressService: ProgressService,
+              public offline: OfflineService) {}
 
   ngOnInit() {
-    this.courseService.getEnrolledCourses().subscribe(courses => {
-      this.courses = courses;
-      this.progressService.getMyProgress().subscribe(progressList => {
-        progressList.forEach(p => this.progressMap[p.courseId] = p);
-        this.totalCompleted = progressList.reduce((s, p) => s + p.completedLessons, 0);
-        this.avgProgress = progressList.length > 0
-          ? Math.round(progressList.reduce((s, p) => s + p.overallPercentage, 0) / progressList.length) : 0;
+    this.courseService.getEnrolledCourses().subscribe({
+      next: courses => {
+        this.courses = courses;
+        this.progressService.getMyProgress().subscribe({
+          next: progressList => {
+            progressList.forEach(p => this.progressMap[p.courseId] = p);
+            this.totalCompleted = progressList.reduce((s, p) => s + p.completedLessons, 0);
+            this.avgProgress = progressList.length > 0
+              ? Math.round(progressList.reduce((s, p) => s + p.overallPercentage, 0) / progressList.length) : 0;
+            this.loading = false;
+          },
+          error: () => this.loading = false
+        });
+      },
+      // Hors connexion sans liste en mémoire : on affiche au moins les cours téléchargés
+      error: () => {
+        this.courses = this.offline.courses$.value.map(c => ({ id: c.courseId, title: c.title } as Course));
         this.loading = false;
-      });
+      }
     });
   }
 

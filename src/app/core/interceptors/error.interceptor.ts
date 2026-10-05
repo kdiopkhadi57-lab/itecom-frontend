@@ -37,6 +37,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 };
 
 function globalErrorMessage(error: HttpErrorResponse): string | null {
+  if (!navigator.onLine || error.headers?.get('X-Itecom-Offline')) {
+    return 'Vous êtes hors connexion : seuls les cours téléchargés sont disponibles.';
+  }
   if (error.status === 0) return 'Serveur injoignable. Vérifiez votre connexion internet puis réessayez.';
   if (error.status === 403) return 'Accès refusé : vous n\'avez pas les droits pour cette action.';
   if (error.status >= 500) return 'Le serveur a rencontré une erreur. Réessayez dans un instant.';

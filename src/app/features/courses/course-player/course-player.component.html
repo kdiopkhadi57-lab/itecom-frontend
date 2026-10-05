@@ -11,6 +11,22 @@
       </div>
       <span class="small text-muted fw-semibold">{{ overallProgress | number:'1.0-0' }}%</span>
     </div>
+    <!-- Hors connexion : télécharger le cours sur l'appareil -->
+    <ng-container *ngIf="course && offline.supported">
+      <span *ngIf="downloadProgress !== null" class="small text-muted text-nowrap">
+        <span class="spinner-border spinner-border-sm me-1"></span>Téléchargement {{ downloadProgress }} %
+      </span>
+      <button *ngIf="downloadProgress === null && !isDownloaded" type="button" class="btn btn-sm btn-outline-primary text-nowrap"
+              [disabled]="!(offline.online$ | async)" (click)="downloadForOffline()"
+              title="Enregistrer le cours (vidéos légères et documents) pour le suivre sans internet">
+        <i class="bi bi-cloud-arrow-down me-1"></i>Télécharger pour hors connexion
+      </button>
+      <span *ngIf="downloadProgress === null && isDownloaded" class="d-flex align-items-center gap-1 text-nowrap">
+        <span class="badge bg-success-subtle text-success-emphasis border"><i class="bi bi-check2-circle me-1"></i>Disponible hors connexion</span>
+        <button type="button" class="btn btn-sm btn-link text-muted p-0 ms-1" (click)="removeOffline()" title="Retirer de l'appareil">
+          <i class="bi bi-trash3"></i></button>
+      </span>
+    </ng-container>
   </div>
 
   <!-- Tab bar -->
@@ -151,12 +167,22 @@
               <p class="mt-2 opacity-75">Vidéo non disponible pour cette démo</p>
               <p class="small opacity-50">URL : {{ currentLesson.videoUrl || 'Non configuré' }}</p>
             </div>
-            <video *ngIf="currentLesson.videoUrl" controls class="w-100" style="max-height:400px">
-              <source [src]="currentLesson.videoUrl" type="video/mp4">
+            <video *ngIf="currentLesson.videoUrl" [src]="videoSrc" controls preload="metadata" playsinline
+                   class="w-100" style="max-height:400px">
               Votre navigateur ne supporte pas la vidéo.
             </video>
           </div>
         </div>
+        <!-- Qualité : légère pour les connexions faibles -->
+        <div *ngIf="currentLesson.videoLightUrl && !playingDownloaded" class="d-flex align-items-center gap-2 small">
+          <span class="text-muted">Qualité :</span>
+          <div class="btn-group btn-group-sm" role="group" aria-label="Qualité vidéo">
+            <button type="button" class="btn" [class.btn-primary]="quality === 'auto'" [class.btn-outline-secondary]="quality !== 'auto'" (click)="setQuality('auto')">Auto</button>
+            <button type="button" class="btn" [class.btn-primary]="quality === 'hd'" [class.btn-outline-secondary]="quality !== 'hd'" (click)="setQuality('hd')">Normale</button>
+            <button type="button" class="btn" [class.btn-primary]="quality === 'light'" [class.btn-outline-secondary]="quality !== 'light'" (click)="setQuality('light')">Légère (économie de données)</button>
+          </div>
+        </div>
+        <div *ngIf="playingDownloaded" class="small text-success"><i class="bi bi-phone me-1"></i>Lecture depuis l'appareil (cours téléchargé), sans consommer de données.</div>
       </div>
 
       <!-- PDF / Document -->

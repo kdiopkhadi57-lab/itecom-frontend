@@ -1,20 +1,20 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { DialogService } from '../../core/services/dialog.service';
 import {
-  Certificate, ENROLLMENT_STATUS, Enrollment, Fee, LEVELS, METHOD_LABELS, PAYMENT_STATUS, Payment, SPECIALIZATIONS,
+  Certificate, ENROLLMENT_STATUS, Enrollment, LEVELS, METHOD_LABELS, SPECIALIZATIONS,
   SchoolService, SchoolStats, SheetRow, apiError, fcfa
 } from '../../core/services/school.service';
-import { EnrollmentDialogComponent, EnrollmentFileDialogComponent, FeeDialogComponent } from './admin-school-dialogs.component';
+import { EnrollmentDialogComponent, EnrollmentFileDialogComponent } from './admin-school-dialogs.component';
 
-type Tab = 'dashboard' | 'enrollments' | 'payments' | 'grades' | 'certificates' | 'fees' | 'announcements';
+type Tab = 'dashboard' | 'enrollments' | 'grades' | 'certificates' | 'announcements';
 
 @Component({
   selector: 'app-admin-scolarite',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   template: `
     <div class="fade-in-up">
       <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
@@ -35,7 +35,6 @@ type Tab = 'dashboard' | 'enrollments' | 'payments' | 'grades' | 'certificates' 
         <li class="nav-item" *ngFor="let t of tabs">
           <button type="button" class="nav-link" [class.active]="tab === t.key" (click)="setTab(t.key)">
             <i class="bi me-1" [ngClass]="t.icon"></i>{{ t.label }}
-            <span *ngIf="t.key === 'payments' && pendingCount > 0" class="tab-count">{{ pendingCount }}</span>
           </button>
         </li>
       </ul>
@@ -87,7 +86,7 @@ type Tab = 'dashboard' | 'enrollments' | 'payments' | 'grades' | 'certificates' 
               </div></div>
               <div class="card"><div class="card-body">
                 <h6 class="fw-bold mb-2">Actions</h6>
-                <button class="btn btn-light w-100 mb-2 text-start" (click)="setTab('payments')">
+                <button class="btn btn-light w-100 mb-2 text-start" routerLink="/admin/paiements">
                   <i class="bi bi-phone me-2"></i>{{ s.pendingPayments }} paiement(s) mobile(s) à vérifier · {{ fcfa(s.pendingAmount) }}</button>
                 <button class="btn btn-light w-100 mb-2 text-start" [disabled]="busy" (click)="remind()">
                   <i class="bi bi-bell me-2"></i>Relancer les étudiants en retard</button>
@@ -137,43 +136,6 @@ type Tab = 'dashboard' | 'enrollments' | 'payments' | 'grades' | 'certificates' 
             </tbody>
           </table>
         </div></div>
-      </ng-container>
-
-      <!-- ── Paiements ── -->
-      <ng-container *ngIf="tab === 'payments'">
-        <div class="d-flex flex-wrap gap-2 mb-3" role="group" aria-label="Filtrer les paiements">
-          <button *ngFor="let s of paymentFilters" type="button" class="btn btn-sm" [class.btn-primary]="paymentStatus === s[0]" [class.btn-light]="paymentStatus !== s[0]"
-                  (click)="paymentStatus = s[0]; loadPayments()">{{ s[1] }}</button>
-        </div>
-        <div class="card"><div class="table-responsive">
-          <table class="table align-middle mb-0">
-            <thead class="table-light"><tr><th>Date</th><th>Étudiant</th><th>Mode</th><th>Téléphone / Réf.</th><th class="text-end">Montant</th><th>État</th><th class="text-end">Actions</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let p of payments">
-                <td class="small">{{ p.submittedAt | date:'dd/MM/yyyy HH:mm' }}</td>
-                <td>{{ p.studentName }}<div class="small text-muted">{{ p.matricule }} · {{ p.purpose === 'INSCRIPTION' ? 'Inscription' : 'Scolarité' }}</div></td>
-                <td>{{ methodLabel(p.method) }}</td>
-                <td class="small">{{ p.phone || '—' }}<div class="fw-semibold">{{ p.transactionRef || '—' }}</div></td>
-                <td class="text-end amount fw-semibold">{{ fcfa(p.amount) }}</td>
-                <td>
-                  <span class="status-badge" [ngClass]="paymentStatusMap[p.status].tone">{{ paymentStatusMap[p.status].label }}</span>
-                  <div *ngIf="p.rejectionReason" class="small text-muted">{{ p.rejectionReason }}</div>
-                </td>
-                <td class="text-end text-nowrap">
-                  <ng-container *ngIf="p.status === 'PENDING'">
-                    <button class="btn btn-sm btn-success me-1" [disabled]="busy" (click)="validate(p)"><i class="bi bi-check-lg me-1"></i>Valider</button>
-                    <button class="btn btn-sm btn-outline-danger" [disabled]="busy" (click)="reject(p)">Refuser</button>
-                  </ng-container>
-                  <button *ngIf="p.status === 'VALIDATED'" class="btn btn-sm btn-light" (click)="school.openPdf('/api/admin/scolarite/payments/' + p.id + '/receipt', p.receiptNumber!)">
-                    <i class="bi bi-receipt me-1"></i>Reçu</button>
-                </td>
-              </tr>
-              <tr *ngIf="payments.length === 0"><td colspan="7" class="text-center text-muted py-4">
-                {{ paymentStatus === 'PENDING' ? 'Aucun paiement mobile en attente de vérification.' : 'Aucun paiement.' }}</td></tr>
-            </tbody>
-          </table>
-        </div></div>
-        <p class="small text-muted mt-2"><i class="bi bi-info-circle me-1"></i>Comparez le numéro, le montant et la référence avec le relevé de votre compte marchand avant de valider. Le reçu avec QR code est généré à la validation.</p>
       </ng-container>
 
       <!-- ── Notes ── -->
@@ -261,31 +223,6 @@ type Tab = 'dashboard' | 'enrollments' | 'payments' | 'grades' | 'certificates' 
         </div></div>
       </ng-container>
 
-      <!-- ── Frais ── -->
-      <ng-container *ngIf="tab === 'fees'">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <p class="text-muted mb-0">Barème appliqué automatiquement à chaque nouvelle inscription.</p>
-          <button class="btn btn-primary" (click)="openFee()"><i class="bi bi-plus-lg me-1"></i>Nouveau barème</button>
-        </div>
-        <div class="card"><div class="table-responsive">
-          <table class="table align-middle mb-0">
-            <thead class="table-light"><tr><th>Année</th><th>Niveau</th><th>Filière</th><th class="text-end">Inscription</th><th class="text-end">Scolarité</th><th class="text-center">Mensualités</th><th class="text-end">Total</th><th></th></tr></thead>
-            <tbody>
-              <tr *ngFor="let f of fees">
-                <td>{{ f.academicYear }}</td><td class="fw-semibold">{{ f.level }}</td><td>{{ f.specialization ? spec(f.specialization) : 'Toutes' }}</td>
-                <td class="text-end amount">{{ fcfa(f.registrationFee) }}</td><td class="text-end amount">{{ fcfa(f.tuitionFee) }}</td>
-                <td class="text-center">{{ f.installments }}</td><td class="text-end amount fw-semibold">{{ fcfa(f.registrationFee + f.tuitionFee) }}</td>
-                <td class="text-end text-nowrap">
-                  <button class="btn btn-sm btn-light me-1" (click)="openFee(f)" aria-label="Modifier"><i class="bi bi-pencil"></i></button>
-                  <button class="btn btn-sm btn-light text-danger" (click)="deleteFee(f)" aria-label="Supprimer"><i class="bi bi-trash3"></i></button>
-                </td>
-              </tr>
-              <tr *ngIf="fees.length === 0"><td colspan="8" class="text-center text-muted py-4">Aucun barème. Créez-en un par niveau avant d'inscrire les étudiants.</td></tr>
-            </tbody>
-          </table>
-        </div></div>
-      </ng-container>
-
       <!-- ── Annonces ── -->
       <ng-container *ngIf="tab === 'announcements'">
         <div class="card" style="max-width:720px"><div class="card-body">
@@ -331,15 +268,11 @@ export class AdminScolariteComponent implements OnInit {
 
   stats: SchoolStats | null = null;
   enrollments: Enrollment[] = [];
-  payments: Payment[] = [];
-  pendingCount = 0;
   certificates: Certificate[] = [];
-  fees: Fee[] = [];
 
   search = '';
   levelFilter = '';
   statusFilter = '';
-  paymentStatus = 'PENDING';
   certSearch = '';
 
   sheet = { level: 'L1', semester: 'S1', session: 'NORMALE', subject: '' };
@@ -353,17 +286,13 @@ export class AdminScolariteComponent implements OnInit {
   readonly tabs: { key: Tab; label: string; icon: string }[] = [
     { key: 'dashboard', label: 'Tableau de bord', icon: 'bi-speedometer2' },
     { key: 'enrollments', label: 'Inscriptions', icon: 'bi-person-vcard' },
-    { key: 'payments', label: 'Paiements', icon: 'bi-phone' },
     { key: 'grades', label: 'Notes', icon: 'bi-journal-text' },
     { key: 'certificates', label: 'Attestations', icon: 'bi-qr-code' },
-    { key: 'fees', label: 'Frais', icon: 'bi-tags' },
     { key: 'announcements', label: 'Annonces', icon: 'bi-megaphone' }
   ];
-  readonly paymentFilters = [['PENDING', 'À vérifier'], ['VALIDATED', 'Validés'], ['REJECTED', 'Refusés'], ['', 'Tous']];
   readonly levels = LEVELS;
   readonly enrollmentStatus = ENROLLMENT_STATUS;
   readonly enrollmentStatuses = Object.entries(ENROLLMENT_STATUS);
-  readonly paymentStatusMap = PAYMENT_STATUS;
   readonly fcfa = fcfa;
 
   constructor(public school: SchoolService, private dialogs: DialogService, private route: ActivatedRoute, private router: Router) {}
@@ -393,7 +322,6 @@ export class AdminScolariteComponent implements OnInit {
 
   reload() {
     this.sheetRows = null;
-    this.loadPendingCount();
     this.loadTab();
   }
 
@@ -401,22 +329,9 @@ export class AdminScolariteComponent implements OnInit {
     switch (this.tab) {
       case 'dashboard': this.stats = null; this.school.stats(this.year).subscribe(s => this.stats = s); break;
       case 'enrollments': this.school.enrollments(this.year).subscribe(e => this.enrollments = e); break;
-      case 'payments': this.loadPayments(); break;
       case 'grades': this.loadSubjects(); break;
       case 'certificates': this.school.certificates().subscribe(c => this.certificates = c); break;
-      case 'fees': this.school.fees().subscribe(f => this.fees = f); break;
     }
-  }
-
-  loadPendingCount() {
-    this.school.payments('PENDING').subscribe(p => this.pendingCount = p.length);
-  }
-
-  loadPayments() {
-    this.school.payments(this.paymentStatus).subscribe(p => {
-      this.payments = p;
-      if (this.paymentStatus === 'PENDING') this.pendingCount = p.length;
-    });
   }
 
   // ── Inscriptions ──
@@ -436,27 +351,7 @@ export class AdminScolariteComponent implements OnInit {
 
   openFile(id: number, tab?: string) {
     this.dialogs.open(EnrollmentFileDialogComponent, { title: 'Dossier de scolarité', icon: 'bi-folder2-open', size: 'xl', data: { id, tab } })
-      .afterClosed.then(() => { this.loadTab(); this.loadPendingCount(); });
-  }
-
-  // ── Paiements ──
-  validate(p: Payment) {
-    this.busy = true;
-    this.school.validatePayment(p.id).subscribe({
-      next: v => { this.busy = false; this.dialogs.toast(`Paiement validé — reçu ${v.receiptNumber}`); this.loadPayments(); },
-      error: err => { this.busy = false; this.dialogs.toast(apiError(err), 'danger', 6000); }
-    });
-  }
-
-  async reject(p: Payment) {
-    const reason = await this.dialogs.prompt({ title: 'Refuser ce paiement ?', message: `${p.studentName} — ${fcfa(p.amount)} (réf. ${p.transactionRef})`,
-      placeholder: 'Motif communiqué à l\'étudiant (ex. référence introuvable)', multiline: true, tone: 'danger', confirmText: 'Refuser', icon: 'bi-x-circle' });
-    if (reason === null) return;
-    this.busy = true;
-    this.school.rejectPayment(p.id, reason).subscribe({
-      next: () => { this.busy = false; this.dialogs.toast('Paiement refusé, étudiant notifié.', 'info'); this.loadPayments(); },
-      error: err => { this.busy = false; this.dialogs.toast(apiError(err), 'danger', 6000); }
-    });
+      .afterClosed.then(() => this.loadTab());
   }
 
   // ── Notes ──
@@ -508,17 +403,6 @@ export class AdminScolariteComponent implements OnInit {
   get filteredCertificates(): Certificate[] {
     const q = this.certSearch.trim().toLowerCase();
     return this.certificates.filter(c => !q || `${c.studentName} ${c.matricule} ${c.reference}`.toLowerCase().includes(q));
-  }
-
-  // ── Frais ──
-  openFee(fee?: Fee) {
-    this.dialogs.open<boolean>(FeeDialogComponent, { title: fee ? 'Modifier le barème' : 'Nouveau barème', icon: 'bi-tags', size: 'md', data: { fee, year: this.year } })
-      .afterClosed.then(saved => { if (saved) this.school.fees().subscribe(f => this.fees = f); });
-  }
-
-  async deleteFee(fee: Fee) {
-    if (!await this.dialogs.confirmDelete(`le barème ${fee.level} ${fee.academicYear}`, 'Les inscriptions existantes gardent leurs montants.')) return;
-    this.school.deleteFee(fee.id!).subscribe(() => this.school.fees().subscribe(f => this.fees = f));
   }
 
   // ── Relances et annonces ──

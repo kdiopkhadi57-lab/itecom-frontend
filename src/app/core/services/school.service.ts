@@ -30,9 +30,9 @@ export interface Certificate {
   average: number | null; mention: string | null; issuedAt: string; issuedBy: string | null; revoked: boolean;
 }
 
+/** Montants d'un niveau pour une année : inscription et mensualité. */
 export interface Fee {
-  id?: number; academicYear: string; level: string; specialization: string | null;
-  registrationFee: number; tuitionFee: number; installments: number;
+  id: number; academicYear: string; level: string; registrationFee: number; monthlyFee: number; months: number; annualTotal: number;
 }
 
 export interface SchoolDocument { id: number; type: string; typeLabel: string; originalName: string; size: number; uploadedAt: string; }
@@ -116,8 +116,10 @@ export class SchoolService {
   // Administration
   options() { return this.http.get<{ currentYear: string; levels: string[]; methods: string[] }>(`${this.admin}/options`); }
   stats(year: string) { return this.http.get<SchoolStats>(`${this.admin}/stats`, { params: { year } }); }
-  fees() { return this.http.get<Fee[]>(`${this.admin}/fees`); }
-  saveFee(fee: Fee) { return fee.id ? this.http.put<Fee>(`${this.admin}/fees/${fee.id}`, fee) : this.http.post<Fee>(`${this.admin}/fees`, fee); }
+  fees(year: string) { return this.http.get<{ months: number; fees: Fee[] }>(`${this.admin}/fees`, { params: { year } }); }
+  saveFee(body: { academicYear: string; level: string; registrationFee: number; monthlyFee: number }) {
+    return this.http.put<Fee>(`${this.admin}/fees`, body);
+  }
   deleteFee(id: number) { return this.http.delete(`${this.admin}/fees/${id}`); }
   enrollments(year: string) { return this.http.get<Enrollment[]>(`${this.admin}/enrollments`, { params: { year } }); }
   enrollmentFile(id: number) { return this.http.get<EnrollmentFile>(`${this.admin}/enrollments/${id}`); }

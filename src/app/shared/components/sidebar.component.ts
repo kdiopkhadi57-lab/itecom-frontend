@@ -71,6 +71,11 @@ import { LayoutService } from '../../core/services/layout.service';
             <li>
               <a class="nav-link" routerLink="/admin/scolarite" routerLinkActive="active" title="Scolarité">
                 <i class="bi bi-bank"></i><span>Scolarité</span>
+              </a>
+            </li>
+            <li>
+              <a class="nav-link" routerLink="/admin/paiements" routerLinkActive="active" title="Paiements">
+                <i class="bi bi-cash-coin"></i><span>Paiements</span>
                 <span *ngIf="pendingPayments > 0" class="sidebar-badge">{{ pendingPayments }}</span>
               </a>
             </li>

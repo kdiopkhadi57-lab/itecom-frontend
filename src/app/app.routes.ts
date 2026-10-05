@@ -82,6 +82,11 @@ export const routes: Routes = [
     loadComponent: () => import('./features/scolarite/admin-scolarite.component').then(m => m.AdminScolariteComponent)
   },
   {
+    path: 'admin/paiements',
+    canActivate: [authGuard, adminGuard],
+    loadComponent: () => import('./features/scolarite/admin-paiements.component').then(m => m.AdminPaiementsComponent)
+  },
+  {
     path: 'scolarite',
     canActivate: [authGuard, studentGuard],
     loadComponent: () => import('./features/scolarite/my-scolarite.component').then(m => m.MyScolariteComponent)

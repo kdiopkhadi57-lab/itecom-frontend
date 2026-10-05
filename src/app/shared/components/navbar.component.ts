@@ -34,6 +34,7 @@ const PAGE_TITLES: [string, PageTitle][] = [
   ['/admin/registrations', { title: 'Inscriptions', subtitle: 'Administration' }],
   ['/admin/users', { title: 'Étudiants et professeurs', subtitle: 'Administration' }],
   ['/admin/scolarite', { title: 'Scolarité', subtitle: 'Administration' }],
+  ['/admin/paiements', { title: 'Paiements', subtitle: 'Administration' }],
   ['/scolarite', { title: 'Ma scolarité', subtitle: 'Frais, notes et attestations' }],
   ['/library', { title: 'Bibliothèque', subtitle: 'Ressources' }],
   ['/references', { title: 'Références', subtitle: 'Ressources' }]

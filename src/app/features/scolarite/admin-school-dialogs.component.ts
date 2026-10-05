@@ -9,81 +9,6 @@ import {
 import { emailError, phoneError } from '../../core/validators/contact';
 import { SchoolScheduleComponent, SchoolTranscriptComponent } from './school-shared.component';
 
-/** Création / modification d'un barème de frais. */
-@Component({
-  selector: 'app-fee-dialog',
-  standalone: true,
-  imports: [CommonModule, FormsModule],
-  template: `
-    <form (ngSubmit)="save()">
-      <div class="row g-3">
-        <div class="col-md-6">
-          <label class="form-label fw-semibold small" for="feeYear">Année universitaire</label>
-          <input id="feeYear" class="form-control" name="year" [(ngModel)]="fee.academicYear" placeholder="2026-2027" required>
-        </div>
-        <div class="col-md-6">
-          <label class="form-label fw-semibold small" for="feeLevel">Niveau</label>
-          <select id="feeLevel" class="form-select" name="level" [(ngModel)]="fee.level">
-            <option *ngFor="let l of levels" [value]="l">{{ l }}</option>
-          </select>
-        </div>
-        <div class="col-12">
-          <label class="form-label fw-semibold small" for="feeSpec">Filière</label>
-          <select id="feeSpec" class="form-select" name="spec" [(ngModel)]="fee.specialization">
-            <option [ngValue]="null">Toutes les filières</option>
-            <option *ngFor="let s of specs" [value]="s[0]">{{ s[1] }}</option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label fw-semibold small" for="feeReg">Frais d'inscription (FCFA)</label>
-          <input id="feeReg" type="number" min="0" step="500" class="form-control" name="reg" [(ngModel)]="fee.registrationFee" required>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label fw-semibold small" for="feeTuition">Scolarité annuelle (FCFA)</label>
-          <input id="feeTuition" type="number" min="0" step="500" class="form-control" name="tuition" [(ngModel)]="fee.tuitionFee" required>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label fw-semibold small" for="feeInst">Mensualités</label>
-          <input id="feeInst" type="number" min="1" max="12" class="form-control" name="inst" [(ngModel)]="fee.installments" required>
-        </div>
-      </div>
-      <p class="small text-muted mt-3 mb-0">
-        Total annuel : <strong>{{ fcfa((fee.registrationFee || 0) + (fee.tuitionFee || 0)) }}</strong> —
-        mensualité de {{ fcfa((fee.tuitionFee || 0) / (fee.installments || 1)) }} le 5 de chaque mois à partir d'octobre.
-      </p>
-      <div *ngIf="error" class="alert alert-danger mt-3 mb-0 py-2">{{ error }}</div>
-      <div class="d-flex justify-content-end gap-2 mt-4">
-        <button type="button" class="btn btn-light" (click)="ref.close()">Annuler</button>
-        <button type="submit" class="btn btn-primary" [disabled]="saving">
-          <span *ngIf="saving" class="spinner-border spinner-border-sm me-1"></span>Enregistrer
-        </button>
-      </div>
-    </form>
-  `
-})
-export class FeeDialogComponent {
-  fee: Fee;
-  saving = false;
-  error = '';
-  readonly levels = LEVELS;
-  readonly specs = Object.entries(SPECIALIZATIONS);
-  readonly fcfa = fcfa;
-
-  constructor(@Inject(DIALOG_DATA) data: { fee?: Fee; year: string }, public ref: DialogRef<boolean>, private school: SchoolService) {
-    this.fee = data.fee ? { ...data.fee }
-      : { academicYear: data.year, level: 'L1', specialization: null, registrationFee: 50000, tuitionFee: 450000, installments: 9 };
-  }
-
-  save() {
-    this.saving = true;
-    this.error = '';
-    this.school.saveFee(this.fee).subscribe({
-      next: () => this.ref.close(true),
-      error: err => { this.saving = false; this.error = apiError(err); }
-    });
-  }
-}
-
 /**
  * Inscription administrative : un nouvel étudiant (identité et pièces scannées en PDF selon son profil),
  * ou réinscription de tous les étudiants existants d'un niveau.
@@ -158,6 +83,8 @@ export class FeeDialogComponent {
         </div>
       </div>
 
+      <ng-container *ngTemplateOutlet="feeBox"></ng-container>
+
       <h6 class="fw-bold mt-4 mb-2">Profil</h6>
       <div class="row g-2">
         <div class="col-md-6">
@@ -224,6 +151,7 @@ export class FeeDialogComponent {
           </select>
         </div>
       </div>
+      <ng-container *ngTemplateOutlet="feeBox"></ng-container>
       <p class="text-muted mt-3 mb-0">
         Les étudiants qui ont déjà un compte en {{ level }} et ne sont pas encore inscrits pour {{ year }} seront inscrits
         avec le barème de leur filière, et prévenus par notification et email.
@@ -239,9 +167,38 @@ export class FeeDialogComponent {
         </button>
       </div>
     </ng-container>
+
+    <!-- Montants du niveau : affichés, ou à saisir ici s'ils n'existent pas encore -->
+    <ng-template #feeBox>
+      <div class="p-3 rounded-3 mt-3" style="background:var(--surface-muted)">
+        <ng-container *ngIf="currentFee as fee; else noFee">
+          <div class="d-flex flex-wrap gap-3 align-items-center small">
+            <span><i class="bi bi-tag me-1"></i>Inscription <strong class="amount">{{ fcfa(fee.registrationFee) }}</strong></span>
+            <span>Mensualité <strong class="amount">{{ fcfa(fee.monthlyFee) }}</strong> × {{ fee.months }} mois</span>
+            <span class="text-muted">Total de l'année {{ fcfa(fee.annualTotal) }}</span>
+          </div>
+        </ng-container>
+        <ng-template #noFee>
+          <div class="small fw-semibold mb-2"><i class="bi bi-exclamation-triangle text-warning me-1"></i>Aucun montant défini pour {{ level }} {{ year }} : renseignez-les.</div>
+          <div class="row g-2 align-items-end">
+            <div class="col-sm-4">
+              <label class="form-label small mb-1" for="qfReg">Inscription (FCFA)</label>
+              <input id="qfReg" type="number" min="0" step="500" class="form-control form-control-sm" name="qfReg" [(ngModel)]="quickFee.registrationFee">
+            </div>
+            <div class="col-sm-4">
+              <label class="form-label small mb-1" for="qfMonth">Mensualité (FCFA)</label>
+              <input id="qfMonth" type="number" min="0" step="500" class="form-control form-control-sm" name="qfMonth" [(ngModel)]="quickFee.monthlyFee">
+            </div>
+            <div class="col-sm-4">
+              <button type="button" class="btn btn-sm btn-outline-primary w-100" [disabled]="savingFee" (click)="saveQuickFee()">Enregistrer ces montants</button>
+            </div>
+          </div>
+        </ng-template>
+      </div>
+    </ng-template>
   `
 })
-export class EnrollmentDialogComponent {
+export class EnrollmentDialogComponent implements OnInit {
   mode: 'new' | 'level' = 'new';
   year: string;
   level = 'L1';
@@ -249,6 +206,11 @@ export class EnrollmentDialogComponent {
            specialization: null as string | null, discount: 0, profile: 'NEW_BACHELOR' as 'NEW_BACHELOR' | 'TRANSFER' };
   files: { bacAttestation?: File; bacTranscript?: File; successAttestation?: File } = {};
   touched = { email: false, phone: false };
+  fees: Fee[] = [];
+  private feesYear = '';
+  quickFee = { registrationFee: null as number | null, monthlyFee: null as number | null };
+  savingFee = false;
+  readonly fcfa = fcfa;
   previous: File[] = [];
   saving = false;
   error = '';
@@ -261,6 +223,34 @@ export class EnrollmentDialogComponent {
   constructor(@Inject(DIALOG_DATA) data: { year: string }, public ref: DialogRef<boolean>, private school: SchoolService,
               private dialogs: DialogService) {
     this.year = data.year;
+  }
+
+  ngOnInit() { this.loadFees(); }
+
+  /** Montants du niveau choisi pour l'année (rechargés si l'année change). */
+  get currentFee(): Fee | null {
+    if (this.year !== this.feesYear) this.loadFees();
+    return this.fees.find(f => f.academicYear === this.year && f.level === this.level) ?? null;
+  }
+
+  private loadFees() {
+    if (!/^\d{4}-\d{4}$/.test(this.year)) return;
+    this.feesYear = this.year;
+    this.school.fees(this.year).subscribe(r => this.fees = r.fees);
+  }
+
+  saveQuickFee() {
+    const { registrationFee, monthlyFee } = this.quickFee;
+    if (registrationFee === null || monthlyFee === null || registrationFee < 0 || monthlyFee < 0) {
+      this.error = 'Saisissez le montant de l\'inscription et celui de la mensualité.';
+      return;
+    }
+    this.savingFee = true;
+    this.error = '';
+    this.school.saveFee({ academicYear: this.year, level: this.level, registrationFee, monthlyFee }).subscribe({
+      next: f => { this.savingFee = false; this.fees = [...this.fees.filter(x => x.id !== f.id), f]; this.dialogs.toast(`Montants ${f.level} enregistrés.`); },
+      error: err => { this.savingFee = false; this.error = apiError(err); }
+    });
   }
 
   get previousNames(): string { return this.previous.map(f => f.name).join(', '); }
@@ -278,6 +268,7 @@ export class EnrollmentDialogComponent {
   /** Contrôles avant envoi ; le serveur refait les mêmes vérifications. */
   private validateNew(): string | null {
     const f = this.form;
+    if (!this.currentFee) return `Renseignez d'abord le montant de l'inscription et la mensualité de ${this.level}.`;
     if (!f.lastName.trim() || !f.firstName.trim()) return 'Indiquez le nom et le prénom.';
     if (!f.birthDate) return 'Indiquez la date de naissance.';
     if (f.birthDate > this.today) return 'La date de naissance ne peut pas être dans le futur.';

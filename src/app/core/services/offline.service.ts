@@ -15,10 +15,17 @@ export interface OfflineCourse {
   files: string[];
 }
 
-interface QueuedRequest { url: string; body: unknown; at: number; }
+interface QueuedRequest { method: string; url: string; body: unknown; email: string; at: number; }
 
-const API_CACHE = 'itecom-api';
+/** État de la synchronisation automatique des cours. */
+export interface SyncState { running: boolean; done: number; total: number; lastSync: number | null; error: string | null; }
+
+const API_CACHE_PREFIX = 'itecom-api';
 const MEDIA_CACHE = 'itecom-offline';
+const AUTOSYNC_KEY = 'itecom-offline-autosync';
+const LAST_SYNC_KEY = 'itecom-offline-last-sync';
+/** Synchronisation automatique au plus toutes les 6 heures (ou après une connexion). */
+const SYNC_EVERY_MS = 6 * 3600_000;
 const INDEX_KEY = '/__offline__/courses.json';
 /** Préfixe conservé par AuthService.clearSession (une session expirée n'efface pas le travail hors ligne). */
 const QUEUE_KEY = 'itecom-offline-queue';
@@ -34,12 +41,67 @@ export class OfflineService {
   /** Téléchargements en cours : identifiant du cours → pourcentage. */
   readonly downloading$ = new BehaviorSubject<Record<number, number>>({});
   readonly supported = typeof caches !== 'undefined' && 'serviceWorker' in navigator;
+  readonly sync$ = new BehaviorSubject<SyncState>({ running: false, done: 0, total: 0, lastSync: this.lastSync, error: null });
 
   constructor(private http: HttpClient, zone: NgZone) {
-    window.addEventListener('online', () => zone.run(() => { this.online$.next(true); this.flushQueue(); }));
+    window.addEventListener('online', () => zone.run(() => {
+      this.online$.next(true);
+      this.flushQueue();
+      this.syncAll();
+    }));
     window.addEventListener('offline', () => zone.run(() => this.online$.next(false)));
     this.loadIndex();
-    if (navigator.onLine) setTimeout(() => this.flushQueue(), 3000);
+    if (navigator.onLine) setTimeout(() => { this.flushQueue(); this.syncAll(); }, 3000);
+  }
+
+  // ── Synchronisation automatique : tous les cours disponibles hors connexion ──
+
+  get autoSync(): boolean {
+    try { return localStorage.getItem(AUTOSYNC_KEY) !== '0'; } catch { return true; }
+  }
+
+  set autoSync(on: boolean) {
+    try { localStorage.setItem(AUTOSYNC_KEY, on ? '1' : '0'); } catch { }
+    if (on) this.syncAll(true);
+  }
+
+  private get lastSync(): number | null {
+    try { return Number(localStorage.getItem(LAST_SYNC_KEY)) || null; } catch { return null; }
+  }
+
+  /**
+   * Garde tous les cours sur l'appareil : catalogue et contenu de chaque cours (pour tous),
+   * et, pour un étudiant, les vidéos légères et documents de ses cours.
+   */
+  async syncAll(force = false) {
+    const state = this.sync$.value;
+    if (!this.supported || !this.online || state.running || !localStorage.getItem('token')) return;
+    if (!force && (!this.autoSync || (this.lastSync && Date.now() - this.lastSync < SYNC_EVERY_MS))) return;
+    this.sync$.next({ ...state, running: true, done: 0, total: 0, error: null });
+    try {
+      const headers = this.authHeaders();
+      // Catalogue et fiche de chaque cours (mis en cache par le service worker)
+      const catalog: Course[] = await fetch('/api/courses/public', { headers }).then(r => r.ok ? r.json() : []).catch(() => []);
+      const enrolled: Course[] = await fetch('/api/courses/enrolled', { headers }).then(r => r.ok ? r.json() : []).catch(() => []);
+      await fetch('/api/progress/my-progress', { headers }).catch(() => null);
+      const isStudent = (() => { try { return JSON.parse(localStorage.getItem('user') || '{}').role === 'ROLE_STUDENT'; } catch { return false; } })();
+      const toDownload = isStudent ? enrolled : [];
+      const others = catalog.filter(c => !toDownload.some(e => e.id === c.id));
+      this.sync$.next({ ...this.sync$.value, total: toDownload.length + others.length });
+      for (const c of others) {
+        await fetch(`/api/courses/public/${c.id}`, { headers }).catch(() => null);
+        this.sync$.next({ ...this.sync$.value, done: this.sync$.value.done + 1 });
+      }
+      for (const c of toDownload) {
+        if (!this.online) break;
+        await this.download(c);
+        this.sync$.next({ ...this.sync$.value, done: this.sync$.value.done + 1 });
+      }
+      try { localStorage.setItem(LAST_SYNC_KEY, String(Date.now())); } catch { }
+      this.sync$.next({ ...this.sync$.value, running: false, lastSync: Date.now() });
+    } catch (e: any) {
+      this.sync$.next({ ...this.sync$.value, running: false, error: e?.message || 'Synchronisation interrompue.' });
+    }
   }
 
   get online(): boolean { return this.online$.value; }
@@ -62,19 +124,11 @@ export class OfflineService {
     const id = course.id;
     this.setProgress(id, 0);
     try {
-      // Les données du cours et la progression, telles que le lecteur les demande
-      const apiUrls = [`/api/courses/public/${id}`, `/api/progress/course/${id}`];
-      const apiCache = await caches.open(API_CACHE);
-      let fullCourse: Course = course;
-      for (const url of apiUrls) {
-        const res = await fetch(url, { headers: this.authHeaders() });
-        if (!res.ok) {
-          if (url.includes('/courses/')) throw new Error('Cours introuvable sur le serveur.');
-          continue;
-        }
-        if (url.includes('/courses/')) fullCourse = await res.clone().json();
-        await apiCache.put(url, res);
-      }
+      // Données du cours et progression : le service worker les garde (cache propre à l'utilisateur)
+      const res = await fetch(`/api/courses/public/${id}`, { headers: this.authHeaders() });
+      if (!res.ok) throw new Error('Cours introuvable sur le serveur.');
+      const fullCourse: Course = await res.json();
+      await fetch(`/api/progress/course/${id}`, { headers: this.authHeaders() }).catch(() => null);
 
       // Vidéos (légères de préférence) et documents
       const videos: Record<number, string> = {};
@@ -103,6 +157,11 @@ export class OfflineService {
         this.setProgress(id, Math.round(((i + 1) / unique.length) * 100));
       }
 
+      // Fichiers devenus inutiles (ex. vidéo remplacée par sa version légère)
+      const previous = this.courses$.value.find(c => c.courseId === id);
+      const usedElsewhere = new Set(this.courses$.value.filter(c => c.courseId !== id).flatMap(c => c.files));
+      for (const f of previous?.files ?? []) if (!unique.includes(f) && !usedElsewhere.has(f)) await media.delete(f);
+
       const entry: OfflineCourse = {
         courseId: id, title: fullCourse.title, lessonCount: fullCourse.lessons?.length ?? 0,
         sizeBytes, downloadedAt: new Date().toISOString(), videos, files: unique
@@ -125,45 +184,59 @@ export class OfflineService {
     await this.saveIndex(others);
   }
 
-  /** Déconnexion volontaire : on efface les cours téléchargés et la progression non envoyée. */
+  /** Appareil partagé : efface cours téléchargés, données gardées, connexion hors ligne et actions non envoyées. */
   async clearUserData() {
-    try { localStorage.removeItem(QUEUE_KEY); } catch { }
+    try {
+      Object.keys(localStorage).filter(k => k.startsWith('itecom-offline')).forEach(k => localStorage.removeItem(k));
+    } catch { }
     if (this.supported) {
       navigator.serviceWorker.controller?.postMessage('clear-user-data');
-      await Promise.all([caches.delete(API_CACHE), caches.delete(MEDIA_CACHE)]).catch(() => {});
+      const keys = await caches.keys();
+      await Promise.all(keys.filter(k => k.startsWith(API_CACHE_PREFIX) || k === MEDIA_CACHE).map(k => caches.delete(k)));
     }
     this.courses$.next([]);
+    this.sync$.next({ running: false, done: 0, total: 0, lastSync: null, error: null });
   }
 
   // ── Progression faite hors connexion ───────────────────────────────────────
 
   /** Garde une action (leçon terminée, temps passé…) pour l'envoyer quand la connexion revient. */
-  enqueue(url: string, body: unknown) {
+  enqueue(method: string, url: string, body: unknown) {
     const queue = this.readQueue();
-    queue.push({ url, body, at: Date.now() });
+    queue.push({ method, url, body, email: this.currentEmail(), at: Date.now() });
     try { localStorage.setItem(QUEUE_KEY, JSON.stringify(queue.slice(-500))); } catch { }
   }
 
-  get pendingCount(): number { return this.readQueue().length; }
+  get pendingCount(): number { return this.readQueue().filter(q => q.email === this.currentEmail()).length; }
+
+  private currentEmail(): string {
+    try { return (JSON.parse(localStorage.getItem('user') || '{}').email || '').toLowerCase(); } catch { return ''; }
+  }
 
   private flushing = false;
 
+  /** Envoie, dans l'ordre, les actions de l'utilisateur connecté (celles d'un autre compte attendent sa connexion). */
   async flushQueue() {
-    if (this.flushing || !this.online) return;
+    const email = this.currentEmail();
+    if (this.flushing || !this.online || !email || !localStorage.getItem('token')) return;
     this.flushing = true;
     try {
-      let queue = this.readQueue();
-      while (queue.length && this.online) {
-        const item = queue[0];
+      for (;;) {
+        const queue = this.readQueue();
+        const index = queue.findIndex(q => (q.email || email) === email);
+        if (index < 0 || !this.online) break;
+        const item = queue[index];
         try {
           await new Promise<void>((resolve, reject) =>
-            this.http.post(item.url, item.body).subscribe({ next: () => resolve(), error: e => reject(e) }));
+            this.http.request(item.method || 'POST', item.url, { body: item.body })
+              .subscribe({ next: () => resolve(), error: e => reject(e) }));
         } catch (e: any) {
-          // Réseau absent ou session expirée : on réessaiera ; autre erreur : l'action est abandonnée
+          // Réseau absent ou session à renouveler : on réessaiera ; autre erreur : l'action est abandonnée
           if (e?.status === 0 || e?.status === 401 || e?.status === 503) break;
         }
-        queue = this.readQueue().slice(1);
-        try { localStorage.setItem(QUEUE_KEY, JSON.stringify(queue)); } catch { }
+        const rest = this.readQueue();
+        rest.splice(rest.findIndex(q => q.at === item.at && q.url === item.url), 1);
+        try { localStorage.setItem(QUEUE_KEY, JSON.stringify(rest)); } catch { }
       }
     } finally {
       this.flushing = false;

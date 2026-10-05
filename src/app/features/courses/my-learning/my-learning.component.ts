@@ -2,7 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DecimalPipe } from '@angular/common';
-import { OfflineService } from '../../../core/services/offline.service';
+import { OfflineService, formatSize } from '../../../core/services/offline.service';
+import { DialogService } from '../../../core/services/dialog.service';
+import { forgetAccounts } from '../../../core/services/offline-auth';
 import { CourseService } from '../../../core/services/course.service';
 import { ProgressService } from '../../../core/services/progress.service';
 import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course.model';
@@ -21,6 +23,33 @@ import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course
         <a routerLink="/courses" class="btn btn-primary-custom">
           <i class="bi bi-plus-circle me-2"></i>Explorer d'autres cours
         </a>
+      </div>
+
+      <!-- Hors connexion : tous les cours gardés sur l'appareil -->
+      <div *ngIf="offline.supported" class="card border-0 shadow-sm mb-4" style="border-radius:16px">
+        <div class="card-body d-flex flex-wrap align-items-center gap-3">
+          <i class="bi fs-3" [ngClass]="(offline.online$ | async) ? 'bi-cloud-check text-primary' : 'bi-wifi-off text-warning'"></i>
+          <div class="flex-grow-1" style="min-width:220px">
+            <div class="fw-semibold">Cours disponibles sans internet</div>
+            <div class="small text-muted" *ngIf="offline.sync$ | async as sync">
+              <ng-container *ngIf="sync.running">Synchronisation… {{ sync.done }} / {{ sync.total }} cours</ng-container>
+              <ng-container *ngIf="!sync.running">
+                {{ (offline.courses$ | async)?.length || 0 }} cours sur l'appareil ({{ storedSize }})
+                <span *ngIf="sync.lastSync"> · mis à jour le {{ sync.lastSync | date:'dd/MM à HH:mm' }}</span>
+                <span *ngIf="offline.pendingCount"> · {{ offline.pendingCount }} action(s) à envoyer</span>
+                <span *ngIf="sync.error" class="text-danger"> · {{ sync.error }}</span>
+              </ng-container>
+            </div>
+          </div>
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" id="autoSync" [checked]="offline.autoSync" (change)="toggleAutoSync($event)">
+            <label class="form-check-label small" for="autoSync">Garder tous mes cours sur l'appareil</label>
+          </div>
+          <button type="button" class="btn btn-sm btn-outline-primary" [disabled]="!(offline.online$ | async) || (offline.sync$ | async)?.running"
+                  (click)="offline.syncAll(true)"><i class="bi bi-arrow-repeat me-1"></i>Synchroniser</button>
+          <button type="button" class="btn btn-sm btn-link text-muted" (click)="clearDevice()" title="Appareil partagé : tout effacer">
+            <i class="bi bi-trash3 me-1"></i>Effacer de cet appareil</button>
+        </div>
       </div>
 
       <!-- Global stats -->
@@ -119,7 +148,27 @@ export class MyLearningComponent implements OnInit {
   avgProgress = 0;
 
   constructor(private courseService: CourseService, private progressService: ProgressService,
-              public offline: OfflineService) {}
+              public offline: OfflineService, private dialogs: DialogService) {}
+
+  get storedSize(): string {
+    return formatSize(this.offline.courses$.value.reduce((n, c) => n + c.sizeBytes, 0));
+  }
+
+  toggleAutoSync(event: Event) {
+    this.offline.autoSync = (event.target as HTMLInputElement).checked;
+  }
+
+  /** Appareil partagé : supprime cours, données, connexion hors ligne et actions non envoyées. */
+  async clearDevice() {
+    const ok = await this.dialogs.confirm({ title: 'Effacer les données hors connexion ?',
+      message: 'Les cours téléchargés, les données gardées et la connexion sans internet seront supprimés de cet appareil. '
+        + (this.offline.pendingCount ? `${this.offline.pendingCount} action(s) pas encore envoyée(s) seront perdues.` : ''),
+      icon: 'bi-trash3', tone: 'danger', confirmText: 'Tout effacer' });
+    if (!ok) return;
+    await this.offline.clearUserData();
+    forgetAccounts();
+    this.dialogs.toast('Données hors connexion effacées de cet appareil.', 'info');
+  }
 
   ngOnInit() {
     this.courseService.getEnrolledCourses().subscribe({

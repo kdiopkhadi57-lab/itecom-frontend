@@ -54,6 +54,11 @@ import { CommonModule } from '@angular/common';
               <h2>Connexion</h2>
               <span><i class="bi bi-shield-lock me-1"></i>Espace sécurisé</span>
             </div>
+            <div *ngIf="!online" class="alert alert-warning d-flex gap-2 py-2 px-3 small mb-3" role="status">
+              <i class="bi bi-wifi-off mt-1"></i>
+              <span>Hors connexion : connectez-vous avec le même email et mot de passe que la dernière fois sur cet appareil.
+                Vos cours et votre progression sont disponibles ; tout sera envoyé au retour d'internet.</span>
+            </div>
             <form [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
               <label class="visually-hidden" for="loginEmail">Adresse email</label>
               <div class="field" [class.invalid]="form.get('email')?.invalid && form.get('email')?.touched">
@@ -305,6 +310,8 @@ export class LoginComponent {
       icon: 'bi-mortarboard', tone: 'primary', confirmText: 'Fermer'
     });
   }
+
+  get online(): boolean { return navigator.onLine; }
 
   onSubmit() {
     if (this.form.invalid) {

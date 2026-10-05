@@ -1,12 +1,14 @@
-import { HttpContextToken, HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { HttpContextToken, HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
+import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 import { DialogService } from '../services/dialog.service';
 
 /** À poser sur une requête de fond (ex. envoi du temps passé) pour ne pas afficher de message d'erreur. */
 export const SILENT_ERRORS = new HttpContextToken<boolean>(() => false);
+/** Requête déjà rejouée après un renouvellement de session (pas de boucle). */
+const RETRIED = new HttpContextToken<boolean>(() => false);
 
 // Évite d'empiler le même message quand plusieurs requêtes échouent en même temps
 let lastToast = { message: '', at: 0 };
@@ -17,6 +19,18 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   let dialogs = inject(DialogService);
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
+      // Session expirée (souvent après des jours hors connexion) : on la renouvelle et on rejoue la requête
+      if (error.status === 401 && !req.url.includes('/api/auth/') && !req.context.get(RETRIED)
+          && localStorage.getItem('refreshToken')) {
+        return authService.refreshSession().pipe(
+          switchMap(token => next(retry(req, token))),
+          catchError(() => {
+            authService.clearSession();
+            router.navigate(['/auth/login'], { queryParams: { returnUrl: router.url } });
+            return throwError(() => error);
+          })
+        );
+      }
       if (error.status === 401) {
         authService.clearSession();
         router.navigate(['/auth/login'], {
@@ -36,9 +50,13 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   );
 };
 
+function retry(req: HttpRequest<unknown>, token: string) {
+  return req.clone({ setHeaders: { Authorization: `Bearer ${token}` }, context: req.context.set(RETRIED, true) });
+}
+
 function globalErrorMessage(error: HttpErrorResponse): string | null {
   if (!navigator.onLine || error.headers?.get('X-Itecom-Offline')) {
-    return 'Vous êtes hors connexion : seuls les cours téléchargés sont disponibles.';
+    return 'Vous êtes hors connexion : cette action nécessite internet. Les cours restent disponibles.';
   }
   if (error.status === 0) return 'Serveur injoignable. Vérifiez votre connexion internet puis réessayez.';
   if (error.status === 403) return 'Accès refusé : vous n\'avez pas les droits pour cette action.';

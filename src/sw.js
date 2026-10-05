@@ -3,25 +3,26 @@
  *
  * - Application (index.html, scripts, styles) : mise en cache à l'installation à partir de precache.json
  *   (généré au build), puis servie depuis le cache ; nouvelle version à chaque déploiement.
- * - Données des cours (/api/courses, /api/lessons, /api/progress en lecture) : réseau d'abord,
- *   dernière version connue si le réseau ne répond pas.
+ * - Données (lectures /api) : réseau d'abord, dernière version connue si le réseau ne répond pas ;
+ *   un cache par utilisateur (tiré du jeton), pour qu'un autre compte du même appareil ne les voie pas.
  * - Vidéos et documents (/uploads) : servis depuis les cours téléchargés (avec lecture partielle « Range »
  *   pour avancer dans une vidéo), sinon depuis le réseau sans les stocker.
  */
 const VERSION = '__BUILD_VERSION__';
 const SHELL_CACHE = 'itecom-shell-' + VERSION;
-const API_CACHE = 'itecom-api';
+const API_CACHE_PREFIX = 'itecom-api-';
 const MEDIA_CACHE = 'itecom-offline';
 const FONT_CACHE = 'itecom-fonts';
 
-/** Lectures d'API utiles pour suivre un cours hors connexion. */
-const CACHEABLE_API = [
-  /^\/api\/courses\/public(\/\d+)?$/,
-  /^\/api\/courses\/enrolled$/,
-  /^\/api\/lessons\/\d+$/,
-  /^\/api\/progress\/course\/\d+$/,
-  /^\/api\/progress\/my-progress$/,
-  /^\/api\/users\/me$/
+/** Lectures d'API jamais gardées : connexion, salle de visioconférence, appel en cours, fichiers générés. */
+const NEVER_CACHED = [
+  /^\/api\/auth\//,
+  /\/jitsi-token$/,
+  /\/roll-calls\//,
+  /\/attendance\//,
+  /\/recording$/,
+  /\.(xlsx|pdf)$/,
+  /\/(receipt|pdf)$/
 ];
 
 self.addEventListener('install', event => {
@@ -52,7 +53,8 @@ self.addEventListener('activate', event => {
 self.addEventListener('message', event => {
   // Déconnexion volontaire : on efface les données de cours et les téléchargements de l'utilisateur
   if (event.data === 'clear-user-data') {
-    event.waitUntil(Promise.all([caches.delete(API_CACHE), caches.delete(MEDIA_CACHE)]));
+    event.waitUntil(caches.keys().then(keys => Promise.all(
+      keys.filter(k => k.startsWith(API_CACHE_PREFIX) || k === MEDIA_CACHE).map(k => caches.delete(k)))));
   }
 });
 
@@ -66,8 +68,8 @@ self.addEventListener('fetch', event => {
     if (url.pathname.startsWith('/uploads/')) {
       event.respondWith(media(request, url));
     } else if (url.pathname.startsWith('/api/')) {
-      if (CACHEABLE_API.some(r => r.test(url.pathname))) event.respondWith(networkFirstApi(request));
-      else event.respondWith(fetch(request).catch(() => offlineJson()));
+      if (NEVER_CACHED.some(r => r.test(url.pathname))) event.respondWith(fetch(request).catch(() => offlineJson()));
+      else event.respondWith(networkFirstApi(request));
     } else if (request.mode === 'navigate') {
       event.respondWith(networkFirstPage(request));
     } else if (url.pathname !== '/sw.js' && url.pathname !== '/precache.json') {
@@ -89,14 +91,28 @@ async function networkFirstPage(request) {
 }
 
 async function networkFirstApi(request) {
+  const cacheName = API_CACHE_PREFIX + userKey(request);
   try {
     const res = await fetch(request);
-    if (res.ok) (await caches.open(API_CACHE)).put(request, res.clone());
+    if (res.ok && (res.headers.get('Content-Type') || '').includes('json')) (await caches.open(cacheName)).put(request, res.clone());
     return res;
   } catch (e) {
-    const cached = await caches.match(request, { cacheName: API_CACHE, ignoreVary: true });
+    const cached = await (await caches.open(cacheName)).match(request, { ignoreVary: true });
     return cached || offlineJson();
   }
+}
+
+/** Utilisateur de la requête (email du jeton), réduit à une empreinte courte pour nommer son cache. */
+function userKey(request) {
+  const auth = request.headers.get('Authorization') || '';
+  let sub = 'public';
+  try {
+    const payload = auth.replace(/^Bearer\s+/, '').split('.')[1];
+    if (payload) sub = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/'))).sub || 'public';
+  } catch (e) { /* jeton illisible : cache public */ }
+  let h = 5381;
+  for (const c of sub.toLowerCase()) h = ((h << 5) + h + c.charCodeAt(0)) >>> 0;
+  return h.toString(36);
 }
 
 async function media(request, url) {

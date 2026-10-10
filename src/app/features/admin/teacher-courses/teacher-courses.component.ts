@@ -130,7 +130,8 @@ export class TeacherCoursesComponent implements OnInit {
 
   openCourseEditor(id: number) {
     this.dialogs.open(EditCourseComponent, { title: 'Modifier le cours', icon: 'bi-pencil-square', size: 'xl', data: { id } })
-      .afterClosed.then(saved => { if (saved) this.load(); });
+      // Leçons ajoutées ou supprimées dans la popup : enregistrées sans « Sauvegarder », on recharge toujours
+      .afterClosed.then(() => this.load());
   }
 
   togglePublish(course: Course) {

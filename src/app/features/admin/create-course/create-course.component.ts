@@ -130,62 +130,6 @@ interface PendingUpload {
                 </button>
               </div>
             </div>
-
-            <!-- Lessons -->
-            <div class="card border-0 shadow-sm p-4" style="border-radius:16px">
-              <div class="d-flex justify-content-between align-items-center mb-4">
-                <h5 class="fw-bold mb-0"><i class="bi bi-clipboard-check me-1"></i>Leçons</h5>
-                <button type="button" class="btn btn-sm btn-primary-custom" (click)="addLesson()">
-                  <i class="bi bi-plus-circle me-1"></i>Ajouter une leçon
-                </button>
-              </div>
-
-              <div *ngIf="lessons.length === 0" class="text-center py-4 text-muted bg-light rounded-3">
-                <div style="font-size:2rem"><i class="bi bi-inbox"></i></div>
-                <p class="mb-0 small">Ajoutez des leçons à votre cours, ou importez des fichiers ci-dessus</p>
-              </div>
-
-              <div formArrayName="lessons">
-                <div *ngFor="let lesson of lessons.controls; let i = index" [formGroupName]="i"
-                     class="border rounded-3 p-3 mb-3" style="background:var(--surface-muted)">
-                  <div class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="fw-semibold">Leçon {{ i+1 }}</span>
-                    <button type="button" class="btn btn-sm btn-outline-danger" (click)="removeLesson(i)">
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
-
-                  <div class="row g-2 mb-2">
-                    <div class="col-md-8">
-                      <input type="text" class="form-control form-control-sm" formControlName="title"
-                        placeholder="Titre de la leçon">
-                    </div>
-                    <div class="col-md-4">
-                      <select class="form-select form-select-sm" formControlName="type">
-                        <option value="VIDEO">Vidéo</option>
-                        <option value="PDF">PDF</option>
-                        <option value="CODE_EXERCISE">Exercice code</option>
-                        <option value="EXCEL_EXERCISE">Exercice Excel</option>
-                        <option value="QUIZ">Quiz</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div class="row g-2">
-                    <div class="col-md-8">
-                      <input type="text" class="form-control form-control-sm" formControlName="description"
-                        placeholder="Description courte">
-                    </div>
-                    <div class="col-md-4">
-                      <div class="input-group input-group-sm">
-                        <input type="number" class="form-control" formControlName="duration" placeholder="Durée">
-                        <span class="input-group-text">min</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
           <!-- Sidebar -->
@@ -274,8 +218,6 @@ export class CreateCourseComponent {
       orderIndex: [this.lessons.length]
     }));
   }
-
-  removeLesson(i: number) { this.lessons.removeAt(i); }
 
   // ─── Import multiple fichiers ──────────────────────────────────────
 

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
@@ -10,6 +10,14 @@ export interface CreatedAccount {
   emailSent: boolean;
   message: string;
 }
+
+/** Matières proposées par défaut, complétées par celles déjà attribuées aux professeurs. */
+const DEFAULT_SUBJECTS = [
+  'Algorithmique', 'Programmation', 'Bases de données', 'Développement web', 'Génie logiciel', 'Systèmes d\'exploitation',
+  'Réseaux informatiques', 'Sécurité informatique', 'Mathématiques', 'Statistiques', 'Comptabilité générale',
+  'Comptabilité analytique', 'Fiscalité', 'Gestion financière', 'Économie', 'Droit', 'Marketing digital',
+  'Communication', 'Management', 'Anglais', 'Français', 'Santé publique', 'Développement personnel'
+];
 
 /** Création d'un compte dans une popup : choix Étudiant / Professeur, puis formulaire adapté. */
 @Component({
@@ -89,9 +97,27 @@ export interface CreatedAccount {
 
         <div class="col-12" *ngIf="role === 'TEACHER'">
           <label class="form-label fw-semibold small" for="accSubjects">Matières enseignées</label>
-          <input id="accSubjects" class="form-control" name="subjects" [(ngModel)]="form.subjects" required
-                 placeholder="Ex. Comptabilité analytique, Fiscalité">
-          <div class="form-text">Séparez les matières par des virgules : le professeur apparaîtra dans chacune.</div>
+          <div class="input-group">
+            <select id="accSubjects" class="form-select" name="subjectChoice" [(ngModel)]="subjectChoice" (ngModelChange)="onSubjectChosen()">
+              <option value="">— Choisir une matière —</option>
+              <option *ngFor="let s of availableSubjects" [value]="s">{{ s }}</option>
+              <option [value]="OTHER">Autre matière…</option>
+            </select>
+          </div>
+          <div *ngIf="subjectChoice === OTHER" class="input-group mt-2">
+            <input class="form-control" name="customSubject" [(ngModel)]="customSubject" placeholder="Nom de la matière"
+                   (keydown.enter)="$event.preventDefault(); addSubject(customSubject)">
+            <button type="button" class="btn btn-outline-primary" (click)="addSubject(customSubject)" [disabled]="!customSubject.trim()">
+              <i class="bi bi-plus-lg me-1"></i>Ajouter
+            </button>
+          </div>
+          <div class="d-flex flex-wrap gap-2 mt-2">
+            <span *ngFor="let s of selectedSubjects" class="subject-chip">
+              {{ s }}
+              <button type="button" class="btn-close btn-close-sm" (click)="removeSubject(s)" [attr.aria-label]="'Retirer ' + s"></button>
+            </span>
+            <span *ngIf="!selectedSubjects.length" class="form-text mt-0">Choisissez une ou plusieurs matières : le professeur apparaîtra dans chacune.</span>
+          </div>
         </div>
 
         <div class="col-md-6">
@@ -110,7 +136,7 @@ export interface CreatedAccount {
 
       <div class="d-flex justify-content-end gap-2 mt-4">
         <button type="button" class="btn btn-light" (click)="ref.close()">Annuler</button>
-        <button type="submit" class="btn btn-primary fw-semibold" [disabled]="saving || f.invalid">
+        <button type="submit" class="btn btn-primary fw-semibold" [disabled]="saving || f.invalid || (role === 'TEACHER' && !selectedSubjects.length)">
           <span *ngIf="saving" class="spinner-border spinner-border-sm me-2"></span>
           <i *ngIf="!saving" class="bi bi-send me-2"></i>Créer et envoyer les identifiants
         </button>
@@ -131,9 +157,20 @@ export interface CreatedAccount {
     .small-icon { width: 36px; height: 36px; font-size: 1.1rem; }
     .role-title { font-weight: 700; font-size: 1.05rem; color: var(--dark); }
     .role-text { color: var(--muted); font-size: .88rem; }
+    .subject-chip {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 6px 4px 10px; border-radius: 999px;
+      background: var(--primary-soft); color: var(--primary); font-size: .85rem; font-weight: 600;
+    }
+    .btn-close-sm { width: .5em; height: .5em; padding: .25em; }
   `]
 })
-export class CreateAccountDialogComponent {
+export class CreateAccountDialogComponent implements OnInit {
+  readonly OTHER = '__other__';
+  subjectOptions: string[] = [...DEFAULT_SUBJECTS].sort((a, b) => a.localeCompare(b, 'fr'));
+  selectedSubjects: string[] = [];
+  subjectChoice = '';
+  customSubject = '';
+
   role: 'STUDENT' | 'TEACHER' | null = null;
   saving = false;
   error = '';
@@ -151,8 +188,42 @@ export class CreateAccountDialogComponent {
 
   constructor(private http: HttpClient, public ref: DialogRef<CreatedAccount>) {}
 
+  ngOnInit() {
+    // Matières déjà enseignées par les professeurs existants
+    this.http.get<{ subjects?: string | null }[]>('/api/admin/users/teachers').subscribe({
+      next: teachers => {
+        const known = new Map(this.subjectOptions.map(s => [s.toLowerCase(), s]));
+        teachers.flatMap(t => (t.subjects || '').split(',')).map(s => s.trim()).filter(Boolean)
+          .forEach(s => { if (!known.has(s.toLowerCase())) known.set(s.toLowerCase(), s); });
+        this.subjectOptions = [...known.values()].sort((a, b) => a.localeCompare(b, 'fr'));
+      },
+      error: () => {}
+    });
+  }
+
+  /** Matières pas encore choisies. */
+  get availableSubjects(): string[] {
+    return this.subjectOptions.filter(s => !this.selectedSubjects.some(x => x.toLowerCase() === s.toLowerCase()));
+  }
+
+  onSubjectChosen() {
+    if (this.subjectChoice && this.subjectChoice !== this.OTHER) this.addSubject(this.subjectChoice);
+  }
+
+  addSubject(subject: string) {
+    const s = subject.trim();
+    if (s && !this.selectedSubjects.some(x => x.toLowerCase() === s.toLowerCase())) this.selectedSubjects.push(s);
+    this.customSubject = '';
+    // Remise à zéro après le cycle de détection : la liste reste prête pour la matière suivante
+    setTimeout(() => this.subjectChoice = '');
+  }
+
+  removeSubject(subject: string) {
+    this.selectedSubjects = this.selectedSubjects.filter(s => s !== subject);
+  }
+
   private empty() {
-    return { firstName: '', lastName: '', email: '', level: '', birthDate: '', birthPlace: '', specialization: '', subjects: '', password: this.generatePassword() };
+    return { firstName: '', lastName: '', email: '', level: '', birthDate: '', birthPlace: '', specialization: '', password: this.generatePassword() };
   }
 
   choose(role: 'STUDENT' | 'TEACHER') {
@@ -180,7 +251,7 @@ export class CreateAccountDialogComponent {
       birthDate: student ? this.form.birthDate : '',
       birthPlace: student ? this.form.birthPlace : '',
       level: student ? this.form.level : '',
-      subjects: student ? '' : this.form.subjects
+      subjects: student ? '' : this.selectedSubjects.join(', ')
     };
     this.http.post<CreatedAccount>('/api/admin/users', body).subscribe({
       next: res => { this.saving = false; this.ref.close(res); },

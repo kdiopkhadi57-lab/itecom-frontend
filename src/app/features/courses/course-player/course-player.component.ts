@@ -402,7 +402,13 @@ export class CoursePlayerComponent implements OnInit, OnDestroy {
     return /\.pdf$/i.test(url);
   }
 
+  /**
+   * Adresse sûre du document, gardée tant que le document ne change pas : une nouvelle valeur à chaque
+   * rafraîchissement de l'écran rechargerait l'iframe (retour à la 1re page du PDF, clignotements).
+   */
   safeDocUrl(url: string): SafeResourceUrl {
-    return this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    if (url !== this.safeDoc?.url) this.safeDoc = { url, safe: this.sanitizer.bypassSecurityTrustResourceUrl(url) };
+    return this.safeDoc.safe;
   }
+  private safeDoc: { url: string; safe: SafeResourceUrl } | null = null;
 }

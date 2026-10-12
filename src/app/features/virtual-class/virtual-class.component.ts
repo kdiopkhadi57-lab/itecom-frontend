@@ -334,10 +334,8 @@ export class VirtualClassComponent implements OnInit {
     this.http.get<VirtualClass[]>('/api/virtual-classes').subscribe({
       next: (data) => { this.classes = data; this.loading = false; if (session) this.showSession(session); },
       error: () => {
-        this.classes = [
-          { id: 1, title: 'Introduction à Java - Session Live', description: 'Cours en direct sur les bases de Java OOP', scheduledAt: new Date(Date.now() + 3600000).toISOString(), durationMinutes: 90, roomName: 'elearning-demo-1', recordingUrl: null, status: 'ONGOING', teacherName: 'Prof. Martin', teacherId: null, courseTitle: 'Java', thumbnailData: null, hasRecording: false },
-          { id: 2, title: 'Angular Deep Dive', description: 'Composants, Services et Routing avancé', scheduledAt: new Date(Date.now() + 86400000).toISOString(), durationMinutes: 120, roomName: 'elearning-demo-2', recordingUrl: null, status: 'SCHEDULED', teacherName: 'Dr. Diallo', teacherId: null, courseTitle: 'Angular', thumbnailData: null, hasRecording: false }
-        ];
+        // Liste vide plutôt que des séances fictives : chacun ne voit que ses propres séances
+        this.classes = [];
         this.loading = false;
       }
     });

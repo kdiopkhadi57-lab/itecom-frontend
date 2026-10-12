@@ -172,6 +172,11 @@ export class CourseDetailComponent implements OnInit {
     let id = +this.route.snapshot.paramMap.get('id')!;
     this.courseService.getCourseById(id).subscribe({
       next: (course) => {
+        // Un professeur ne consulte que ses propres cours
+        if (this.authService.isTeacher && course.teacher?.id !== this.authService.currentUser?.id) {
+          this.router.navigate(['/teacher/courses']);
+          return;
+        }
         this.course = course;
         if (this.authService.isAuthenticated) {
           this.courseService.getEnrolledCourses().subscribe(enrolled => {

@@ -1,6 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule, DecimalPipe } from '@angular/common';
-import { RouterLink, ActivatedRoute } from '@angular/router';
+import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { CourseService } from '../../../core/services/course.service';
@@ -8,6 +8,7 @@ import { ProgressService } from '../../../core/services/progress.service';
 import { Course, Lesson } from '../../../core/models/course.model';
 import { OfflineService, formatSize } from '../../../core/services/offline.service';
 import { DialogService } from '../../../core/services/dialog.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { VideoQuality, getVideoQuality, pickVideoUrl, setVideoQuality } from '../../../core/utils/video-quality';
 import { MAX_COUNTED_RATE, WatchTracker } from '../../../core/utils/watch-tracker';
 
@@ -51,7 +52,9 @@ export class CoursePlayerComponent implements OnInit, OnDestroy {
     private progressService: ProgressService,
     private sanitizer: DomSanitizer,
     public offline: OfflineService,
-    private dialogs: DialogService
+    private dialogs: DialogService,
+    private authService: AuthService,
+    private router: Router
   ) {}
 
   // ─── Vidéo et hors connexion ─────────────────────────────────────────────
@@ -104,6 +107,11 @@ export class CoursePlayerComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.courseId = +this.route.snapshot.paramMap.get('id')!;
     this.courseService.getCourseById(this.courseId).subscribe(course => {
+      // Un professeur ne consulte que ses propres cours
+      if (this.authService.isTeacher && course.teacher?.id !== this.authService.currentUser?.id) {
+        this.router.navigate(['/teacher/courses']);
+        return;
+      }
       this.course = course;
       if (course.lessons?.length) {
         this.selectLesson(course.lessons[0]);

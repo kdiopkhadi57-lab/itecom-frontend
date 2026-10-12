@@ -239,7 +239,7 @@ const MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Aoû
             </div>
           </div>
         </div>
-        <div class="col-12 col-xl-7">
+        <div *ngIf="!authService.isTeacher" class="col-12 col-xl-7">
           <div class="db-card db-chart">
             <div class="db-chart-title">Catégories</div>
             <div class="d-flex flex-wrap gap-2">

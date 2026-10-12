@@ -34,7 +34,7 @@ import { LayoutService } from '../../core/services/layout.service';
         <ul class="nav flex-column">
           <li><a class="nav-link" routerLink="/dashboard" routerLinkActive="active" title="Tableau de bord">
             <i class="bi bi-bar-chart-line"></i><span>Tableau de bord</span></a></li>
-          <li><a class="nav-link" routerLink="/courses" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" title="Explorer les cours">
+          <li *ngIf="!authService.isTeacher"><a class="nav-link" routerLink="/courses" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" title="Explorer les cours">
             <i class="bi bi-compass"></i><span>Explorer les cours</span></a></li>
           <li *ngIf="authService.isStudent || authService.isAdmin">
             <a class="nav-link" routerLink="/courses/my-learning" routerLinkActive="active" title="Mon apprentissage">

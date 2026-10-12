@@ -1,9 +1,10 @@
 import { Routes } from '@angular/router';
-import { authGuard } from '../../core/guards/auth.guard';
+import { authGuard, catalogGuard } from '../../core/guards/auth.guard';
 
 export const coursesRoutes: Routes = [
   {
     path: '',
+    canActivate: [catalogGuard],
     loadComponent: () => import('./course-list/course-list.component').then(m => m.CourseListComponent)
   },
   {

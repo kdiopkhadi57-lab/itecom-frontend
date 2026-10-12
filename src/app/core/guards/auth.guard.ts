@@ -22,6 +22,12 @@ export const teacherGuard: CanActivateFn = (route, state) => {
   return inject(Router).createUrlTree([authService.isAuthenticated ? '/dashboard' : '/auth/login']);
 };
 
+/** Catalogue des cours : réservé aux étudiants (et à l'administrateur) ; le professeur va sur ses cours. */
+export const catalogGuard: CanActivateFn = () => {
+  let authService = inject(AuthService);
+  return authService.isTeacher ? inject(Router).createUrlTree(['/teacher/courses']) : true;
+};
+
 export const adminGuard: CanActivateFn = () => {
   let authService = inject(AuthService);
   if (authService.isAuthenticated && authService.isAdmin) return true;

@@ -63,7 +63,7 @@ import { EditCourseComponent } from '../edit-course/edit-course.component';
               <div class="flex-grow-1 min-w-0">
                 <div class="fw-bold" style="color:#1f2a5c">{{ course.title }}</div>
                 <div class="d-flex gap-2 mt-1 flex-wrap">
-                  <span class="status-badge status-draft">{{ getCategoryLabel(course.category) }}</span>
+                  <span *ngIf="course.category" class="status-badge status-draft">{{ getCategoryLabel(course.category) }}</span>
                   <span class="status-badge" [class.status-published]="course.published" [class.status-draft]="!course.published">
                     {{ course.published ? 'Publié' : 'Brouillon' }}
                   </span>

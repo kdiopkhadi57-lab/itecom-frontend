@@ -98,7 +98,7 @@ import { UserScopeService } from '../../../core/services/user-scope.service';
 
               <div class="card-body d-flex flex-column p-4">
                 <div class="d-flex gap-2 mb-2 flex-wrap">
-                  <span class="badge-category">{{ getCategoryLabel(course.category) }}</span>
+                  <span *ngIf="course.category" class="badge-category">{{ getCategoryLabel(course.category) }}</span>
                   <span class="badge-level {{ course.level }}">{{ getLevelLabel(course.level) }}</span>
                 </div>
 
@@ -193,7 +193,7 @@ export class CourseListComponent implements OnInit {
     if (this.selectedCategory) result = result.filter(c => c.category === this.selectedCategory);
     if (this.selectedLevel) result = result.filter(c => c.level === this.selectedLevel);
     if (this.userCategoryKeys && this.userCategoryKeys.length > 0)
-      result = result.filter(c => this.userCategoryKeys!.includes(c.category));
+      result = result.filter(c => !c.category || this.userCategoryKeys!.includes(c.category)); // cours sans catégorie : visibles par tous
     this.filteredCourses = result;
   }
 

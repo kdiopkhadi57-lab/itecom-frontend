@@ -101,7 +101,7 @@ import { Course, Progress, COURSE_CATEGORIES } from '../../../core/models/course
             </div>
             <div class="card-body d-flex flex-column p-4">
               <div class="d-flex flex-wrap gap-1 mb-2">
-                <span class="badge-category">{{ getCategoryLabel(course.category) }}</span>
+                <span *ngIf="course.category" class="badge-category">{{ getCategoryLabel(course.category) }}</span>
                 <span *ngIf="offline.isDownloaded(course.id)" class="badge bg-success-subtle text-success-emphasis border">
                   <i class="bi bi-check2-circle me-1"></i>Hors connexion</span>
               </div>

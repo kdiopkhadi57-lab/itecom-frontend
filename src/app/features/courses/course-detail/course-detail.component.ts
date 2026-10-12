@@ -18,7 +18,7 @@ import { Course, COURSE_CATEGORIES, courseLevelLabel } from '../../../core/model
         <div class="row align-items-center">
           <div class="col-lg-8">
             <div class="d-flex gap-2 mb-3">
-              <span class="badge bg-white text-dark rounded-pill fw-semibold">
+              <span *ngIf="course.category" class="badge bg-white text-dark rounded-pill fw-semibold">
                 <i class="bi me-1" [ngClass]="getCategoryIcon(course.category)"></i>{{ getCategoryLabel(course.category) }}
               </span>
               <span class="badge rounded-pill fw-semibold text-white"

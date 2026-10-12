@@ -207,7 +207,17 @@ const CODE_FILE_EXTENSIONS: Record<string, string> = {
 
                 <!-- VIDEO specific -->
                 <div *ngIf="lessonForm.get('type')?.value === 'VIDEO'" class="mb-3">
-                  <label class="form-label fw-semibold">URL de la vidéo</label>
+                  <label class="form-label fw-semibold">Fichier vidéo</label>
+                  <div class="d-flex gap-2 align-items-center mb-2">
+                    <input type="file" class="form-control" accept="video/*"
+                           (change)="onVideoFileSelected($event)" [disabled]="uploadingVideo">
+                    <span *ngIf="uploadingVideo" class="spinner-border spinner-border-sm text-primary"></span>
+                  </div>
+                  <div *ngIf="lessonForm.get('videoUrl')?.value" class="small text-success mb-2">
+                    <i class="bi bi-check-circle me-1"></i>Vidéo prête : {{ lessonForm.get('videoUrl')?.value }}
+                  </div>
+                  <div *ngIf="videoUploadError" class="small text-danger mb-2">{{ videoUploadError }}</div>
+                  <label class="form-label fw-semibold small text-muted">ou collez une URL directement</label>
                   <input type="text" class="form-control" formControlName="videoUrl" placeholder="https://...">
                 </div>
 
@@ -237,7 +247,7 @@ const CODE_FILE_EXTENSIONS: Record<string, string> = {
                 <div *ngIf="lessonError" class="alert alert-danger py-2">{{ lessonError }}</div>
 
                 <div class="d-flex gap-2">
-                  <button type="submit" class="btn btn-primary-custom" [disabled]="savingLesson">
+                  <button type="submit" class="btn btn-primary-custom" [disabled]="savingLesson || uploadingPdf || uploadingVideo">
                     <span *ngIf="savingLesson" class="spinner-border spinner-border-sm me-2"></span>
                     {{ editingLessonId ? 'Enregistrer' : 'Ajouter' }}
                   </button>
@@ -271,6 +281,8 @@ export class EditCourseComponent implements OnInit {
   lessonError = '';
   uploadingPdf = false;
   pdfUploadError = '';
+  uploadingVideo = false;
+  videoUploadError = '';
 
   typeLabels: Record<string, string> = {
     VIDEO: 'Vidéo',
@@ -326,6 +338,7 @@ export class EditCourseComponent implements OnInit {
     this.editingLessonId = null;
     this.lessonError = '';
     this.pdfUploadError = '';
+    this.videoUploadError = '';
     this.lessonForm = this.fb.group({
       title: ['', Validators.required],
       type: ['CODE_EXERCISE', Validators.required],
@@ -344,6 +357,7 @@ export class EditCourseComponent implements OnInit {
     this.editingLessonId = lesson.id;
     this.lessonError = '';
     this.pdfUploadError = '';
+    this.videoUploadError = '';
     this.lessonForm = this.fb.group({
       title: [lesson.title, Validators.required],
       type: [lesson.type, Validators.required],
@@ -366,9 +380,18 @@ export class EditCourseComponent implements OnInit {
 
   onSubmitLesson() {
     if (!this.lessonForm) return;
+    const value = this.lessonForm.value;
+    // Sans fichier ni texte, l'étudiant verrait « Document non disponible »
+    if (value.type === 'PDF' && !value.pdfUrl?.trim() && !value.content?.trim()) {
+      this.lessonError = 'Importez un document (PDF ou Word) ou rédigez le support de cours.';
+      return;
+    }
+    if (value.type === 'VIDEO' && !value.videoUrl?.trim() && !value.content?.trim()) {
+      this.lessonError = 'Importez une vidéo, collez son URL ou rédigez le support de cours.';
+      return;
+    }
     this.savingLesson = true;
     this.lessonError = '';
-    const value = this.lessonForm.value;
 
     if (this.editingLessonId) {
       this.courseService.updateLesson(this.editingLessonId, value).subscribe({
@@ -407,6 +430,26 @@ export class EditCourseComponent implements OnInit {
       error: (err) => {
         this.pdfUploadError = err.error?.message || "Erreur lors de l'import du document";
         this.uploadingPdf = false;
+      }
+    });
+    input.value = '';
+  }
+
+  onVideoFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file || !this.lessonForm) return;
+
+    this.uploadingVideo = true;
+    this.videoUploadError = '';
+    this.uploadService.uploadOne(file).subscribe({
+      next: (res) => {
+        this.lessonForm!.patchValue({ videoUrl: res.data.url });
+        this.uploadingVideo = false;
+      },
+      error: (err) => {
+        this.videoUploadError = err.error?.message || "Erreur lors de l'import de la vidéo";
+        this.uploadingVideo = false;
       }
     });
     input.value = '';

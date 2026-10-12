@@ -258,9 +258,10 @@ export class CreateCourseComponent {
   hasPendingFiles() { return this.pendingUploads.some(u => u.status === 'pending' || u.status === 'error'); }
   pendingCount() { return this.pendingUploads.filter(u => u.status === 'pending' || u.status === 'error').length; }
 
-  uploadAllPending() {
+  /** Importe les fichiers en attente ; `then` est appelé si tous ont réussi. */
+  uploadAllPending(then?: () => void) {
     const toUpload = this.pendingUploads.filter(u => u.status === 'pending' || u.status === 'error');
-    if (!toUpload.length) return;
+    if (!toUpload.length) { then?.(); return; }
     this.uploadingAll = true;
     toUpload.forEach(u => u.status = 'uploading');
 
@@ -285,10 +286,13 @@ export class CreateCourseComponent {
           }
         });
         this.uploadingAll = false;
+        if (toUpload.every(u => u.status === 'done')) then?.();
+        else this.failSubmit('Certains fichiers n\'ont pas pu être importés : réessayez avant de créer le cours.', !!then);
       },
       error: (err) => {
         toUpload.forEach(u => { u.status = 'error'; u.error = err.error?.message || 'Erreur réseau'; });
         this.uploadingAll = false;
+        this.failSubmit('Import des fichiers impossible : le cours n\'a pas été créé.', !!then);
       }
     });
   }
@@ -304,10 +308,21 @@ export class CreateCourseComponent {
     else this.router.navigate(['/teacher/courses']);
   }
 
+  private failSubmit(message: string, submitting: boolean) {
+    if (!submitting) return;
+    this.error = message;
+    this.loading = false;
+  }
+
   onSubmit() {
     if (this.courseForm.invalid) return;
     this.loading = true;
     this.error = '';
+    // Fichiers choisis mais pas encore importés : on les importe d'abord, sinon le cours serait créé sans eux
+    this.uploadAllPending(() => this.createCourse());
+  }
+
+  private createCourse() {
     this.courseService.createCourse(this.courseForm.value).subscribe({
       next: (course) => {
         this.loading = false;

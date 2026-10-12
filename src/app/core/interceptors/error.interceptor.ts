@@ -19,14 +19,21 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   let dialogs = inject(DialogService);
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
+      // Le même compte s'est connecté ailleurs : cette session est terminée, inutile de la renouveler
+      if (error.status === 401 && isSessionReplaced(error)) {
+        authService.clearSession();
+        router.navigate(['/auth/login'], { queryParams: { reason: 'session-replaced' } });
+        return throwError(() => error);
+      }
       // Session expirée (souvent après des jours hors connexion) : on la renouvelle et on rejoue la requête
       if (error.status === 401 && !req.url.includes('/api/auth/') && !req.context.get(RETRIED)
           && localStorage.getItem('refreshToken')) {
         return authService.refreshSession().pipe(
           switchMap(token => next(retry(req, token))),
-          catchError(() => {
+          catchError(refreshError => {
             authService.clearSession();
-            router.navigate(['/auth/login'], { queryParams: { returnUrl: router.url } });
+            router.navigate(['/auth/login'], { queryParams: isSessionReplaced(refreshError)
+              ? { reason: 'session-replaced' } : { returnUrl: router.url } });
             return throwError(() => error);
           })
         );
@@ -49,6 +56,12 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
     })
   );
 };
+
+/** Réponse du serveur quand une connexion plus récente du même compte a remplacé cette session. */
+function isSessionReplaced(error: unknown): boolean {
+  const body = (error as HttpErrorResponse)?.error;
+  return body?.code === 'SESSION_REPLACED' || /autre appareil/.test(body?.message || '');
+}
 
 function retry(req: HttpRequest<unknown>, token: string) {
   return req.clone({ setHeaders: { Authorization: `Bearer ${token}` }, context: req.context.set(RETRIED, true) });

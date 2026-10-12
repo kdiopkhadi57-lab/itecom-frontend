@@ -54,6 +54,11 @@ import { CommonModule } from '@angular/common';
               <h2>Connexion</h2>
               <span><i class="bi bi-shield-lock me-1"></i>Espace sécurisé</span>
             </div>
+            <div *ngIf="sessionReplaced" class="alert alert-warning d-flex gap-2 py-2 px-3 small mb-3" role="alert">
+              <i class="bi bi-person-lock mt-1"></i>
+              <span>Votre compte a été ouvert sur un autre appareil : vous avez été déconnecté.
+                Un compte ne peut être connecté qu'à un seul endroit à la fois.</span>
+            </div>
             <div *ngIf="!online" class="alert alert-warning d-flex gap-2 py-2 px-3 small mb-3" role="status">
               <i class="bi bi-wifi-off mt-1"></i>
               <span>Hors connexion : connectez-vous avec le même email et mot de passe que la dernière fois sur cet appareil.
@@ -275,6 +280,8 @@ export class LoginComponent {
   loading = false;
   error = '';
   showPassword = false;
+  /** Déconnecté parce que le même compte s'est connecté ailleurs (une seule session par compte). */
+  get sessionReplaced(): boolean { return this.route.snapshot.queryParamMap.get('reason') === 'session-replaced'; }
   readonly year = new Date().getFullYear();
 
   constructor(

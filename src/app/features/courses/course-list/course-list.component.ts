@@ -44,10 +44,10 @@ import { UserScopeService } from '../../../core/services/user-scope.service';
         </button>
       </div>
 
-      <!-- Level filter -->
-      <div class="d-flex gap-2 mb-4 align-items-center">
+      <!-- Level filter : inutile si tous les cours sont du même niveau (étudiant : cours de son niveau seulement) -->
+      <div *ngIf="availableLevels.length > 1" class="d-flex gap-2 mb-4 align-items-center">
         <span class="text-muted small fw-semibold">Niveau :</span>
-        <button *ngFor="let lvl of levels"
+        <button *ngFor="let lvl of availableLevels"
           class="btn btn-sm rounded-pill"
           [class.btn-primary]="selectedLevel === lvl.key"
           [class.btn-outline-secondary]="selectedLevel !== lvl.key"
@@ -147,6 +147,9 @@ export class CourseListComponent implements OnInit {
   userCategoryKeys: string[] | null = null;
   levels = COURSE_LEVELS;
 
+  /** Niveaux présents dans les cours reçus (le serveur ne renvoie à un étudiant que ceux de son niveau). */
+  availableLevels = COURSE_LEVELS;
+
   get visibleCategories() {
     if (this.userCategoryKeys && this.userCategoryKeys.length > 0)
       return this.categories.filter(c => this.userCategoryKeys!.includes(c.key));
@@ -172,7 +175,12 @@ export class CourseListComponent implements OnInit {
   loadCourses() {
     this.loading = true;
     this.courseService.getPublicCourses().subscribe({
-      next: (courses) => { this.courses = courses; this.applyFilters(); this.loading = false; },
+      next: (courses) => {
+        this.courses = courses;
+        this.availableLevels = this.levels.filter(l => courses.some(c => c.level === l.key));
+        this.applyFilters();
+        this.loading = false;
+      },
       error: () => { this.loading = false; }
     });
   }

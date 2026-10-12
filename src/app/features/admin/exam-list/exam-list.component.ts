@@ -36,31 +36,6 @@ interface Qcm { id: number; title: string; description: string; status: string; 
         </div>
       </div>
 
-      <!-- Onglets -->
-      <div class="d-flex gap-2 mb-4">
-       <!-- <button class="btn px-4 fw-semibold"
-                [style.background]="tab === 'exams' ? '#2b3ea8' : '#f3f4f6'"
-                [style.color]="tab === 'exams' ? 'white' : '#374151'"
-                style="border-radius:12px;border:none"
-                (click)="tab = 'exams'">
-          <i class="bi bi-clipboard-text me-2"></i>
-          Examens
-          <span class="badge ms-1 rounded-pill"
-                [style.background]="tab === 'exams' ? 'rgba(255,255,255,.3)' : '#2b3ea8'"
-                style="color:white">{{ exams.length }}</span>
-        </button>-->
-        <button class="btn px-4 fw-semibold"
-                [style.background]="tab === 'qcm' ? '#2b3ea8' : '#f3f4f6'"
-                [style.color]="tab === 'qcm' ? 'white' : '#374151'"
-                style="border-radius:12px;border:none"
-                (click)="tab = 'qcm'; loadQcms()">
-          <i class="bi bi-list-check me-2"></i>Devoirs ou Examens
-          <span class="badge ms-1 rounded-pill"
-                [style.background]="tab === 'qcm' ? 'rgba(255,255,255,.3)' : '#2b3ea8'"
-                style="color:white">{{ qcms.length }}</span>
-        </button>
-      </div>
-
       <!-- ═══════════════════════ ONGLET EXAMENS ════════════════════════════ -->
       <ng-container *ngIf="tab === 'exams'">
         <div *ngIf="loadingExams" class="text-center py-5">
@@ -176,7 +151,8 @@ export class ExamListComponent implements OnInit {
   /** Pagination des listes. */
   examsPg = new Pager(9);
   qcmsPg = new Pager(9);
-  tab: 'exams' | 'qcm' = 'exams';
+  /** Seule la liste des devoirs / examens (QCM) est affichée ; l'ancien onglet « Examens » n'est plus proposé. */
+  tab: 'exams' | 'qcm' = 'qcm';
 
   exams: Exam[] = [];
   loadingExams = true;
@@ -192,6 +168,7 @@ export class ExamListComponent implements OnInit {
   ) {}
 
   ngOnInit() {
+    this.loadQcms();
     const obs = this.authService.isAdmin ? this.examService.getAllExams() : this.examService.getMyExams();
     obs.subscribe({
       next: r => { this.exams = r.data || []; this.loadingExams = false; },

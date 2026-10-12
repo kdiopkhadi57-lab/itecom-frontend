@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
 import { CourseService } from '../../core/services/course.service';
@@ -23,11 +23,12 @@ interface VirtualClassItem { id: number; title: string; scheduledAt: string; dur
 /** État affiché : SCHEDULED dont l'heure de fin est passée = « non tenue » */
 type VcState = 'ONGOING' | 'UPCOMING' | 'MISSED' | 'COMPLETED';
 
-const VC_STATES: Record<VcState, { label: string; icon: string; color: string }> = {
-  ONGOING: { label: 'En cours', icon: 'bi-record-circle', color: '#dc2626' },
-  UPCOMING: { label: 'À venir', icon: 'bi-clock', color: '#2b3ea8' },
-  MISSED: { label: 'Non tenue', icon: 'bi-exclamation-circle', color: '#94a3b8' },
-  COMPLETED: { label: 'Terminée', icon: 'bi-check-circle', color: '#16a34a' }
+/** `tab` : onglet de la page Classes virtuelles qui liste ces séances */
+const VC_STATES: Record<VcState, { label: string; icon: string; color: string; tab: string }> = {
+  ONGOING: { label: 'En cours', icon: 'bi-record-circle', color: '#dc2626', tab: 'ongoing' },
+  UPCOMING: { label: 'À venir', icon: 'bi-clock', color: '#2b3ea8', tab: 'upcoming' },
+  MISSED: { label: 'Non tenue', icon: 'bi-exclamation-circle', color: '#94a3b8', tab: 'past' },
+  COMPLETED: { label: 'Terminée', icon: 'bi-check-circle', color: '#16a34a', tab: 'past' }
 };
 
 interface Kpi { label: string; value: string | number; link?: string; hint?: string; }
@@ -89,10 +90,13 @@ const MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Aoû
 
     .db-vc-counts { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin-bottom: 1.25rem; }
     @media (max-width: 576px) { .db-vc-counts { grid-template-columns: repeat(2, 1fr); } }
-    .db-vc-count { border: 1px solid var(--surface-border); border-radius: 12px; padding: .75rem 1rem; }
+    .db-vc-count { display: block; text-decoration: none; border: 1px solid var(--surface-border); border-radius: 12px; padding: .75rem 1rem; }
+    .db-vc-count:hover { border-color: var(--db-navy-2); }
     .db-vc-count-value { font-size: 1.6rem; font-weight: 800; color: var(--db-ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
     .db-vc-count-label { font-size: .78rem; font-weight: 600; color: var(--db-muted); }
-    .db-vc-row { display: flex; align-items: center; gap: .75rem; padding: .7rem 0; border-top: 1px solid var(--surface-border); }
+    .db-vc-row { display: flex; align-items: center; gap: .75rem; padding: .7rem .5rem; margin: 0 -.5rem; border-top: 1px solid var(--surface-border);
+                 text-decoration: none; color: inherit; border-radius: 10px; }
+    .db-vc-row:hover { background: var(--surface-muted); color: inherit; }
     .db-vc-row:first-child { border-top: 0; }
     .db-vc-badge { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .6rem; border-radius: 999px; color: #fff; font-size: .75rem; font-weight: 600; white-space: nowrap; }
     @media (max-width: 576px) {
@@ -187,14 +191,15 @@ const MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Aoû
         <div class="db-chart-sub">État actuel de {{ authService.isAdmin ? 'toutes les séances' : 'vos séances' }}, sans tenir compte de la période</div>
 
         <div class="db-vc-counts">
-          <div *ngFor="let st of vcStateKeys" class="db-vc-count">
+          <a *ngFor="let st of vcStateKeys" class="db-vc-count" routerLink="/virtual-class" [queryParams]="{ tab: vcStates[st].tab }">
             <div class="db-vc-count-value" [style.color]="vcCounts[st] && st === 'ONGOING' ? vcStates[st].color : null">{{ loading ? '—' : vcCounts[st] }}</div>
             <div class="db-vc-count-label"><i class="bi me-1" [ngClass]="vcStates[st].icon" [style.color]="vcStates[st].color"></i>{{ vcStates[st].label }}</div>
-          </div>
+          </a>
         </div>
 
         <div *ngIf="!loading && !vcUpcoming.length" class="text-muted small">Aucune séance en cours ni à venir.</div>
-        <div *ngFor="let vc of vcUpcoming" class="db-vc-row">
+        <a *ngFor="let vc of vcUpcoming" class="db-vc-row" routerLink="/virtual-class" [queryParams]="{ session: vc.id }"
+           [attr.aria-label]="'Ouvrir la séance ' + vc.title">
           <span class="db-vc-badge" [style.background]="vcStates[vcState(vc)].color">
             <i class="bi" [ngClass]="vcStates[vcState(vc)].icon"></i>{{ vcStates[vcState(vc)].label }}
           </span>
@@ -204,11 +209,12 @@ const MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Aoû
               {{ vc.scheduledAt | date:'EEE d MMM · HH:mm':'':'fr' }} · {{ vc.durationMinutes }} min<span *ngIf="vc.courseTitle"> · {{ vc.courseTitle }}</span>
             </div>
           </div>
-          <a *ngIf="vcState(vc) === 'ONGOING'" [routerLink]="['/virtual-class', vc.id, 'room']" class="btn btn-sm btn-danger text-nowrap">
+          <!-- Séance en cours : directement dans la salle -->
+          <button *ngIf="vcState(vc) === 'ONGOING'" type="button" class="btn btn-sm btn-danger text-nowrap" (click)="joinRoom($event, vc)">
             <i class="bi bi-box-arrow-in-right me-1"></i>Rejoindre
-          </a>
-          <a *ngIf="vcState(vc) === 'UPCOMING'" routerLink="/virtual-class" class="btn btn-sm btn-outline-primary text-nowrap">Ouvrir</a>
-        </div>
+          </button>
+          <i *ngIf="vcState(vc) !== 'ONGOING'" class="bi bi-chevron-right text-muted"></i>
+        </a>
       </section>
 
       <!-- ── Statistiques de l'administrateur ───────────────────────── -->
@@ -291,7 +297,8 @@ export class DashboardComponent implements OnInit {
     private courseService: CourseService,
     private progressService: ProgressService,
     public userScope: UserScopeService,
-    private http: HttpClient
+    private http: HttpClient,
+    private router: Router
   ) {}
 
   get isStaff(): boolean { return this.authService.isTeacher || this.authService.isAdmin; }
@@ -393,6 +400,12 @@ export class DashboardComponent implements OnInit {
 
   private recompute() {
     if (this.isStaff) this.computeStaff(); else this.computeStudent();
+  }
+
+  joinRoom(event: Event, vc: VirtualClassItem) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.router.navigate(['/virtual-class', vc.id, 'room']);
   }
 
   vcState(vc: VirtualClassItem): VcState {

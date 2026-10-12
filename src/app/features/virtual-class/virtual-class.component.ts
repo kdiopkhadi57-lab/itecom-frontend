@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { PaginatePipe, PaginationComponent, Pager } from '../../shared/components/pagination.component';
 import { CommonModule } from '@angular/common';
 import { pickVideoUrl } from '../../core/utils/video-quality';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../core/services/auth.service';
@@ -46,17 +46,17 @@ interface VirtualClass {
       <!-- Tabs -->
       <ul class="nav nav-pills mb-4">
         <li class="nav-item">
-          <button class="nav-link" [class.active]="activeTab === 'upcoming'" (click)="activeTab = 'upcoming'">
+          <button class="nav-link" [class.active]="activeTab === 'upcoming'" (click)="activeTab = 'upcoming'; classesPg.reset()">
             <i class="bi bi-calendar3 me-1"></i>À venir
           </button>
         </li>
         <li class="nav-item">
-          <button class="nav-link" [class.active]="activeTab === 'ongoing'" (click)="activeTab = 'ongoing'">
+          <button class="nav-link" [class.active]="activeTab === 'ongoing'" (click)="activeTab = 'ongoing'; classesPg.reset()">
             <i class="bi bi-record-circle me-1"></i>En cours
           </button>
         </li>
         <li class="nav-item">
-          <button class="nav-link" [class.active]="activeTab === 'past'" (click)="activeTab = 'past'">
+          <button class="nav-link" [class.active]="activeTab === 'past'" (click)="activeTab = 'past'; classesPg.reset()">
             <i class="bi bi-folder me-1"></i>Passées
           </button>
         </li>
@@ -74,8 +74,9 @@ interface VirtualClass {
           <h4 class="mt-3">Aucune classe {{ getTabLabel() }}</h4>
         </div>
 
-        <div class="col-md-6 col-xl-4" *ngFor="let vc of filteredClasses | paginate: classesPg.page : classesPg.size">
-          <div class="card border-0 shadow-sm h-100" style="border-radius:16px; overflow:hidden">
+        <div class="col-md-6 col-xl-4" *ngFor="let vc of filteredClasses | paginate: classesPg.page : classesPg.size" [id]="'vc-' + vc.id">
+          <div class="card border-0 shadow-sm h-100" style="border-radius:16px; overflow:hidden; transition: box-shadow .3s"
+               [style.box-shadow]="highlightId === vc.id ? '0 0 0 3px #2b3ea8' : null">
             <!-- Status banner -->
             <div class="p-3 text-white text-center fw-semibold"
                  [style.background]="isOverdue(vc) ? '#94a3b8' : getStatusColor(vc.status)">
@@ -313,17 +314,25 @@ export class VirtualClassComponent implements OnInit {
     return this.classes.filter(vc => {
       let date = new Date(vc.scheduledAt);
       if (this.activeTab === 'ongoing') return vc.status === 'ONGOING';
-      if (this.activeTab === 'upcoming') return vc.status === 'SCHEDULED' && date >= now;
-      if (this.activeTab === 'past') return vc.status === 'COMPLETED' || date < now;
+      // « À venir » tant que la séance n'est pas finie ; une fois l'heure de fin passée sans démarrage : « Non tenue » (Passées)
+      if (this.activeTab === 'upcoming') return vc.status === 'SCHEDULED' && !this.isOverdue(vc);
+      if (this.activeTab === 'past') return vc.status === 'COMPLETED' || this.isOverdue(vc);
       return true;
     });
   }
 
-  constructor(private http: HttpClient, private router: Router, public authService: AuthService) {}
+  /** Séance ouverte depuis le tableau de bord (?session=id), mise en évidence */
+  highlightId: number | null = null;
+
+  constructor(private http: HttpClient, private router: Router, private route: ActivatedRoute, public authService: AuthService) {}
 
   ngOnInit() {
+    const params = this.route.snapshot.queryParamMap;
+    const tab = params.get('tab');
+    if (tab === 'upcoming' || tab === 'ongoing' || tab === 'past') this.activeTab = tab;
+    const session = Number(params.get('session')) || null;
     this.http.get<VirtualClass[]>('/api/virtual-classes').subscribe({
-      next: (data) => { this.classes = data; this.loading = false; },
+      next: (data) => { this.classes = data; this.loading = false; if (session) this.showSession(session); },
       error: () => {
         this.classes = [
           { id: 1, title: 'Introduction à Java - Session Live', description: 'Cours en direct sur les bases de Java OOP', scheduledAt: new Date(Date.now() + 3600000).toISOString(), durationMinutes: 90, roomName: 'elearning-demo-1', recordingUrl: null, status: 'ONGOING', teacherName: 'Prof. Martin', teacherId: null, courseTitle: 'Java', thumbnailData: null, hasRecording: false },
@@ -332,6 +341,18 @@ export class VirtualClassComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  /** Ouvre l'onglet et la page de la liste où se trouve la séance, puis la fait défiler à l'écran. */
+  private showSession(id: number) {
+    const vc = this.classes.find(c => c.id === id);
+    if (!vc) return;
+    this.activeTab = vc.status === 'ONGOING' ? 'ongoing' : (vc.status === 'COMPLETED' || this.isOverdue(vc)) ? 'past' : 'upcoming';
+    const index = this.filteredClasses.findIndex(c => c.id === id);
+    this.classesPg.page = Math.floor(Math.max(0, index) / this.classesPg.size) + 1;
+    this.highlightId = id;
+    setTimeout(() => document.getElementById('vc-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+    setTimeout(() => this.highlightId = null, 4000);
   }
 
   isOverdue(vc: VirtualClass): boolean {

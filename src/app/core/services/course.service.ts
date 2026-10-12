@@ -39,6 +39,10 @@ export class CourseService {
     return this.http.put<Course>(`/api/teacher/courses/${id}`, course);
   }
 
+  deleteCourse(id: number): Observable<ApiResponse<string>> {
+    return this.http.delete<ApiResponse<string>>(`/api/teacher/courses/${id}`);
+  }
+
   getLessonById(id: number): Observable<Lesson> {
     return this.http.get<Lesson>(`/api/lessons/${id}`);
   }

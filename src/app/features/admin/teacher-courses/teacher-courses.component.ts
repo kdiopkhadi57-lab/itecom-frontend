@@ -99,6 +99,11 @@ import { EditCourseComponent } from '../edit-course/edit-course.component';
                         (click)="togglePublish(course)">
                   <i class="bi" [class.bi-eye-slash]="course.published" [class.bi-eye]="!course.published"></i>
                 </button>
+                <button class="btn btn-sm btn-outline-danger" title="Supprimer le cours"
+                        (click)="deleteCourse(course)" [disabled]="deletingId === course.id">
+                  <span *ngIf="deletingId === course.id" class="spinner-border spinner-border-sm"></span>
+                  <i *ngIf="deletingId !== course.id" class="bi bi-trash"></i>
+                </button>
               </div>
             </div>
           </div>
@@ -113,6 +118,7 @@ export class TeacherCoursesComponent implements OnInit {
   coursesPg = new Pager(10);
   courses: Course[] = [];
   loading = true;
+  deletingId: number | null = null;
 
   get publishedCount() { return this.courses.filter(c => c.published).length; }
   get draftCount() { return this.courses.filter(c => !c.published).length; }
@@ -137,6 +143,23 @@ export class TeacherCoursesComponent implements OnInit {
   togglePublish(course: Course) {
     this.courseService.updateCourse(course.id, { ...course, published: !course.published }).subscribe({
       next: (updated) => { course.published = updated.published; }
+    });
+  }
+
+  async deleteCourse(course: Course) {
+    if (!(await this.dialogs.confirmDelete(`le cours « ${course.title} »`,
+      'Son PDF et la progression des étudiants seront aussi supprimés. Cette action est définitive.'))) return;
+    this.deletingId = course.id;
+    this.courseService.deleteCourse(course.id).subscribe({
+      next: () => {
+        this.courses = this.courses.filter(c => c.id !== course.id);
+        this.deletingId = null;
+        this.dialogs.toast('Cours supprimé');
+      },
+      error: (err) => {
+        this.deletingId = null;
+        this.dialogs.toast(err.error?.message || 'Suppression impossible', 'danger');
+      }
     });
   }
 

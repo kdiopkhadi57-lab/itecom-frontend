@@ -18,6 +18,18 @@ interface StaffQcm { id: number; title: string; status: string; studentCount: nu
 /** Devoir vu par un étudiant (GET /api/qcm) */
 interface StudentQcm { id: number; title: string; alreadyTaken: boolean; score: number | null; maxScore: number | null; createdAt: string | null; }
 
+/** Séance de classe virtuelle (GET /api/virtual-classes) */
+interface VirtualClassItem { id: number; title: string; scheduledAt: string; durationMinutes: number; status: string; teacherId: number | null; courseTitle: string | null; }
+/** État affiché : SCHEDULED dont l'heure de fin est passée = « non tenue » */
+type VcState = 'ONGOING' | 'UPCOMING' | 'MISSED' | 'COMPLETED';
+
+const VC_STATES: Record<VcState, { label: string; icon: string; color: string }> = {
+  ONGOING: { label: 'En cours', icon: 'bi-record-circle', color: '#dc2626' },
+  UPCOMING: { label: 'À venir', icon: 'bi-clock', color: '#2b3ea8' },
+  MISSED: { label: 'Non tenue', icon: 'bi-exclamation-circle', color: '#94a3b8' },
+  COMPLETED: { label: 'Terminée', icon: 'bi-check-circle', color: '#16a34a' }
+};
+
 interface Kpi { label: string; value: string | number; link?: string; hint?: string; }
 interface TypeOption { value: string; label: string; }
 
@@ -74,6 +86,15 @@ const MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Aoû
     .db-chart-sub { font-size: .82rem; color: var(--db-muted); margin: -1rem 0 1.1rem; }
 
     .db-quick a { border-radius: 10px; }
+
+    .db-vc-counts { display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; margin-bottom: 1.25rem; }
+    @media (max-width: 576px) { .db-vc-counts { grid-template-columns: repeat(2, 1fr); } }
+    .db-vc-count { border: 1px solid var(--surface-border); border-radius: 12px; padding: .75rem 1rem; }
+    .db-vc-count-value { font-size: 1.6rem; font-weight: 800; color: var(--db-ink); line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .db-vc-count-label { font-size: .78rem; font-weight: 600; color: var(--db-muted); }
+    .db-vc-row { display: flex; align-items: center; gap: .75rem; padding: .7rem 0; border-top: 1px solid var(--surface-border); }
+    .db-vc-row:first-child { border-top: 0; }
+    .db-vc-badge { display: inline-flex; align-items: center; gap: .3rem; padding: .2rem .6rem; border-radius: 999px; color: #fff; font-size: .75rem; font-weight: 600; white-space: nowrap; }
     @media (max-width: 576px) {
       .db-hero { padding: 1.5rem; }
       .db-hero h1 { font-size: 1.6rem; }
@@ -157,6 +178,39 @@ const MONTHS = ['Janv.', 'Févr.', 'Mars', 'Avr.', 'Mai', 'Juin', 'Juil.', 'Aoû
         </div>
       </section>
 
+      <!-- ── Classes virtuelles (enseignant : ses séances ; administrateur : toutes) ── -->
+      <section *ngIf="isStaff" class="db-card db-chart mb-4">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <div class="db-chart-title"><i class="bi bi-camera-video"></i>Classes virtuelles</div>
+          <a routerLink="/virtual-class" class="btn btn-sm db-btn-ghost d-inline-flex align-items-center" style="min-height:36px">Tout voir</a>
+        </div>
+        <div class="db-chart-sub">État actuel de {{ authService.isAdmin ? 'toutes les séances' : 'vos séances' }}, sans tenir compte de la période</div>
+
+        <div class="db-vc-counts">
+          <div *ngFor="let st of vcStateKeys" class="db-vc-count">
+            <div class="db-vc-count-value" [style.color]="vcCounts[st] && st === 'ONGOING' ? vcStates[st].color : null">{{ loading ? '—' : vcCounts[st] }}</div>
+            <div class="db-vc-count-label"><i class="bi me-1" [ngClass]="vcStates[st].icon" [style.color]="vcStates[st].color"></i>{{ vcStates[st].label }}</div>
+          </div>
+        </div>
+
+        <div *ngIf="!loading && !vcUpcoming.length" class="text-muted small">Aucune séance en cours ni à venir.</div>
+        <div *ngFor="let vc of vcUpcoming" class="db-vc-row">
+          <span class="db-vc-badge" [style.background]="vcStates[vcState(vc)].color">
+            <i class="bi" [ngClass]="vcStates[vcState(vc)].icon"></i>{{ vcStates[vcState(vc)].label }}
+          </span>
+          <div class="flex-grow-1" style="min-width:0">
+            <div class="fw-semibold text-truncate">{{ vc.title }}</div>
+            <div class="small text-muted">
+              {{ vc.scheduledAt | date:'EEE d MMM · HH:mm':'':'fr' }} · {{ vc.durationMinutes }} min<span *ngIf="vc.courseTitle"> · {{ vc.courseTitle }}</span>
+            </div>
+          </div>
+          <a *ngIf="vcState(vc) === 'ONGOING'" [routerLink]="['/virtual-class', vc.id, 'room']" class="btn btn-sm btn-danger text-nowrap">
+            <i class="bi bi-box-arrow-in-right me-1"></i>Rejoindre
+          </a>
+          <a *ngIf="vcState(vc) === 'UPCOMING'" routerLink="/virtual-class" class="btn btn-sm btn-outline-primary text-nowrap">Ouvrir</a>
+        </div>
+      </section>
+
       <!-- ── Statistiques de l'administrateur ───────────────────────── -->
       <app-admin-stats *ngIf="authService.isAdmin"></app-admin-stats>
 
@@ -211,6 +265,13 @@ export class DashboardComponent implements OnInit {
   studentQcms: StudentQcm[] = [];
   adminStats: { students: number; teachers: number; pending: number } | null = null;
   pendingPayments = 0;
+  virtualClasses: VirtualClassItem[] = [];
+
+  readonly vcStates = VC_STATES;
+  readonly vcStateKeys = Object.keys(VC_STATES) as VcState[];
+  vcCounts: Record<VcState, number> = { ONGOING: 0, UPCOMING: 0, MISSED: 0, COMPLETED: 0 };
+  /** Séances en cours puis prochaines séances (5 au plus) */
+  vcUpcoming: VirtualClassItem[] = [];
 
   // Filtres : brouillon (formulaire) et appliqués
   draftFrom = '';
@@ -244,7 +305,7 @@ export class DashboardComponent implements OnInit {
       return "Bienvenue sur votre espace d'administration. Suivez en un coup d'œil les inscriptions, les devoirs et l'activité des étudiants de la plateforme.";
     }
     if (this.authService.isTeacher) {
-      return "Bienvenue sur votre espace professeur. Suivez vos cours, vos devoirs et le nombre d'étudiants inscrits à chacun.";
+      return "Bienvenue sur votre espace professeur. Suivez vos cours, vos devoirs, vos classes virtuelles et le nombre d'étudiants inscrits à chacun.";
     }
     return "Bienvenue sur votre espace d'apprentissage. Suivez votre progression dans vos cours, vos devoirs à rendre et vos notes.";
   }
@@ -292,6 +353,7 @@ export class DashboardComponent implements OnInit {
 
     if (this.isStaff) {
       load<StaffQcm[]>('/api/teacher/qcms', v => this.staffQcms = v || []);
+      load<VirtualClassItem[]>('/api/virtual-classes', v => this.virtualClasses = v || []);
       pending++;
       this.courseService.getTeacherCourses().subscribe({ next: c => { this.teacherCourses = c || []; done(); }, error: () => done() });
       if (this.authService.isAdmin) {
@@ -333,7 +395,26 @@ export class DashboardComponent implements OnInit {
     if (this.isStaff) this.computeStaff(); else this.computeStudent();
   }
 
+  vcState(vc: VirtualClassItem): VcState {
+    if (vc.status === 'ONGOING') return 'ONGOING';
+    if (vc.status === 'COMPLETED') return 'COMPLETED';
+    const end = new Date(vc.scheduledAt).getTime() + (vc.durationMinutes || 0) * 60000;
+    return end < Date.now() ? 'MISSED' : 'UPCOMING';
+  }
+
+  private computeVirtualClasses() {
+    const me = this.authService.currentUser?.id;
+    const mine = this.authService.isAdmin ? this.virtualClasses : this.virtualClasses.filter(vc => vc.teacherId === me);
+    this.vcCounts = { ONGOING: 0, UPCOMING: 0, MISSED: 0, COMPLETED: 0 };
+    mine.forEach(vc => this.vcCounts[this.vcState(vc)]++);
+    const rank = (vc: VirtualClassItem) => this.vcState(vc) === 'ONGOING' ? 0 : 1;
+    this.vcUpcoming = mine.filter(vc => rank(vc) === 0 || this.vcState(vc) === 'UPCOMING')
+      .sort((a, b) => rank(a) - rank(b) || a.scheduledAt.localeCompare(b.scheduledAt))
+      .slice(0, 5);
+  }
+
   private computeStaff() {
+    this.computeVirtualClasses();
     const periodQcms = this.staffQcms.filter(q => this.inPeriod(q.createdAt));
     const qcms = this.type === 'ALL' ? periodQcms : periodQcms.filter(q => q.status === this.type);
     const count = (status: string) => periodQcms.filter(q => q.status === status).length;

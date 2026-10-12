@@ -88,8 +88,8 @@ interface PendingUpload {
 
             <!-- Upload multiple fichiers / vidéos -->
             <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius:16px">
-              <h5 class="fw-bold mb-2"><i class="bi bi-upload me-1"></i>Importer des fichiers</h5>
-              <p class="text-muted small mb-3">Sélectionnez plusieurs vidéos et/ou documents (PDF, Word) en une seule fois. Une leçon sera créée automatiquement pour chaque fichier.</p>
+              <h5 class="fw-bold mb-2"><i class="bi bi-upload me-1"></i>Importer des fichiers *</h5>
+              <p class="text-muted small mb-3">Sélectionnez plusieurs vidéos et/ou documents (PDF, Word) en une seule fois. Une leçon sera créée automatiquement pour chaque fichier. Au moins un fichier est obligatoire.</p>
 
               <div class="upload-dropzone"
                    [class.dragover]="isDragOver"
@@ -149,18 +149,19 @@ interface PendingUpload {
 
               <div class="border-top pt-3">
                 <div class="d-flex gap-3 text-muted small mb-4">
-                  <div><i class="bi bi-collection me-1"></i>{{ lessons.length }} leçon(s)</div>
+                  <div><i class="bi bi-collection me-1"></i>{{ lessonCount }} leçon(s)</div>
                 </div>
               </div>
 
               <div *ngIf="error" class="alert alert-danger py-2 small">{{ error }}</div>
               <div *ngIf="success" class="alert alert-success py-2 small"><i class="bi bi-check-circle me-1"></i>Cours créé avec succès !</div>
 
-              <button type="submit" class="btn btn-primary-custom w-100" [disabled]="loading || courseForm.invalid">
+              <button type="submit" class="btn btn-primary-custom w-100" [disabled]="loading || courseForm.invalid || !lessonCount">
                 <span *ngIf="loading" class="spinner-border spinner-border-sm me-2"></span>
                 <i *ngIf="!loading" class="bi bi-save me-2"></i>
                 {{ loading ? 'Création...' : 'Créer le cours' }}
               </button>
+              <div *ngIf="!lessonCount" class="text-muted small mt-2 text-center">Ajoutez au moins une vidéo ou un document pour créer le cours.</div>
               <button type="button" class="btn btn-outline-secondary w-100 mt-2" (click)="finish(false)">Annuler</button>
             </div>
           </div>
@@ -256,6 +257,8 @@ export class CreateCourseComponent {
   removePending(i: number) { this.pendingUploads.splice(i, 1); }
 
   hasPendingFiles() { return this.pendingUploads.some(u => u.status === 'pending' || u.status === 'error'); }
+  /** Leçons déjà importées + fichiers qui le seront à la création du cours */
+  get lessonCount() { return this.lessons.length + this.pendingCount(); }
   pendingCount() { return this.pendingUploads.filter(u => u.status === 'pending' || u.status === 'error').length; }
 
   /** Importe les fichiers en attente ; `then` est appelé si tous ont réussi. */
@@ -316,6 +319,8 @@ export class CreateCourseComponent {
 
   onSubmit() {
     if (this.courseForm.invalid) return;
+    // Sans fichier, le cours serait créé vide (0 leçon) : les étudiants n'auraient rien à suivre
+    if (!this.lessonCount) { this.error = 'Ajoutez au moins une vidéo ou un document.'; return; }
     this.loading = true;
     this.error = '';
     // Fichiers choisis mais pas encore importés : on les importe d'abord, sinon le cours serait créé sans eux
